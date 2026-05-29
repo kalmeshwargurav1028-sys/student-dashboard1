@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-center justify-between">
+        <h1 class="text-2xl font-bold text-gray-900">System Settings</h1>
+    </div>
+
+    <div
+        class="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-100 flex flex-col md:flex-row min-h-[500px]">
+        <!-- Tabs on Left -->
+        <div class="w-full md:w-64 bg-gray-50 border-r border-gray-200">
+            <nav class="flex flex-col space-y-1 p-4" aria-label="Settings Tabs">
+                <a href="#"
+                    class="bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                    <span class="mr-2">⚙️</span> General
+                </a>
+                <a href="#"
+                    class="text-gray-700 hover:bg-gray-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                    <span class="mr-2">📚</span> Academic Setup
+                </a>
+                <a href="#"
+                    class="text-gray-700 hover:bg-gray-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                    <span class="mr-2">⚠️</span> Alert Thresholds
+                </a>
+                <a href="#"
+                    class="text-gray-700 hover:bg-gray-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                    <span class="mr-2">🔒</span> Access Control
+                </a>
+            </nav>
+        </div>
+
+        <!-- Content Area on Right -->
+        <div class="flex-1 p-6 sm:p-8">
+            <div class="border-b border-gray-200 pb-4 mb-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">School Profile</h3>
+                <p class="mt-1 text-sm text-gray-500">Update your school's global settings and branding.</p>
+            </div>
+
+            <form action="{{ url_for('settings') }}" method="POST" enctype="multipart/form-data"
+                class="space-y-6 max-w-2xl">
+                <!-- School Name -->
+                <div>
+                    <label for="school_name" class="block text-sm font-medium text-gray-700">School Name</label>
+                    <div class="mt-1">
+                        <input type="text" name="school_name" id="school_name"
+                            value="{{ config_data.get('school_name', 'Indus International School') }}"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                    </div>
+                </div>
+
+                <!-- Portal Logo -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Portal Logo</label>
+                    <div class="mt-1 flex items-center gap-4">
+                        {% if config_data.get('logo_url') %}
+                        <img src="{{ config_data.get('logo_url') }}" alt="Current Logo"
+                            class="h-12 w-12 object-contain border border-gray-200 rounded p-1 bg-gray-50">
+                        {% endif %}
+                        <input type="file" name="logo" accept="image/*"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white cursor-pointer">
+                    </div>
+                    {% if config_data.get('logo_url') %}
+                    <p class="mt-1 text-xs text-gray-500">Current: {{ config_data.get('logo_filename', 'logo.png') }}
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Academic Year -->
+                <div>
+                    <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
+                    <div class="mt-1">
+                        <select id="academic_year" name="academic_year"
+                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white">
+                            <option value="2023 - 2024" {% if config_data.get('academic_year')=='2023 - 2024'
+                                %}selected{% endif %}>2023 - 2024</option>
+                            <option value="2024 - 2025" {% if config_data.get('academic_year')=='2024 - 2025'
+                                %}selected{% endif %}>2024 - 2025</option>
+                            <option value="2025 - 2026" {% if config_data.get('academic_year', '2025 - 2026'
+                                )=='2025 - 2026' %}selected{% endif %}>2025 - 2026</option>
+                            <option value="2026 - 2027" {% if config_data.get('academic_year')=='2026 - 2027'
+                                %}selected{% endif %}>2026 - 2027</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="pt-4">
+                    <button type="submit"
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

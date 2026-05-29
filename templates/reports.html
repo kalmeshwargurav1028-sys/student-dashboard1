@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Student Reports & Analytics{% endblock %}
+
+{% block content %}
+<!-- Include Libraries -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
+<script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Actions -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Comprehensive Report</h1>
+            <p class="text-sm text-gray-500 mt-1">Overview of student performance and demographics.</p>
+        </div>
+        <button onclick="downloadPDF()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
+            <svg class="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+            Download PDF Report
+        </button>
+    </div>
+
+    <!-- Container to be converted to PDF -->
+    <div id="report-container" class="bg-white shadow sm:rounded-lg border border-gray-100 p-8">
+        
+        <!-- Report Header (Visible only in PDF or at top of container) -->
+        <div class="border-b border-gray-200 pb-5 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900">Indus International School</h2>
+            <p class="text-sm text-gray-500">Student Analytics & Performance Report - {{ now().strftime('%B %Y') if now else '2026' }}</p>
+        </div>
+
+
+        <!-- Data Table Section -->
+        <div class="mt-8">
+            <h3 class="text-lg font-medium text-gray-900 mb-4">Student Master Data</h3>
+            <div class="overflow-x-auto">
+                <table id="studentsTable" class="min-w-full divide-y divide-gray-200 w-full text-sm text-left">
+                    <thead class="bg-gray-100 text-gray-700 uppercase">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider">ID</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider">Name</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider">Class</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Math</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Eng</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Sci</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Hist</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Geo</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Att (%)</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for student in students %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-900 font-medium">{{ student.id }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ student.name }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ student.get('student_class', 'N/A') }} - {{ student.get('division', 'A') }}</td>
+                            {% set subjects = student.get('subjects', {}) %}
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Math', 'N/A') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('English', 'N/A') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Science', 'N/A') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('History', 'N/A') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Geography', 'N/A') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                {% set att = student.get('attendance', 0)|float %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if att >= 75 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ att }}%
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                {% set perf = student.get('performance', 0)|float %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if perf >= 80 %}bg-blue-100 text-blue-800{% elif perf >= 60 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ perf }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Scripts for Charts and Table -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. Initialize simple-datatables
+    const dataTable = new simpleDatatables.DataTable("#studentsTable", {
+        searchable: true,
+        fixedHeight: false,
+        perPage: 10,
+        labels: {
+            placeholder: "Search students...",
+            perPage: "records per page",
+            noRows: "No students found",
+            info: "Showing {start} to {end} of {rows} entries",
+        }
+    });
+
+
+});
+
+// PDF Export Function
+function downloadPDF() {
+    const element = document.getElementById('report-container');
+    
+    // Temporarily hide datatable pagination/search before printing to make it look clean
+    const dtWrapper = document.querySelector('.dataTable-wrapper');
+    if (dtWrapper) {
+        dtWrapper.classList.add('no-footer');
+        // Optionally expand table to show all rows for PDF if needed
+    }
+
+    const opt = {
+        margin:       0.5,
+        filename:     'Student_Analytics_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+
+    // Generate PDF
+    html2pdf().set(opt).from(element).save().then(() => {
+        // Restore table UI
+        if (dtWrapper) {
+            dtWrapper.classList.remove('no-footer');
+        }
+    });
+}
+</script>
+
+<style>
+/* Custom styling to ensure the table looks good when exported and matches Tailwind */
+.dataTable-wrapper.no-footer .dataTable-bottom,
+.dataTable-wrapper.no-footer .dataTable-top {
+    display: none; /* Hide controls during print */
+}
+.dataTable-table > thead > tr > th {
+    border-bottom: 2px solid #e5e7eb;
+}
+.dataTable-table > tbody > tr > td {
+    border-bottom: 1px solid #f3f4f6;
+}
+.dataTable-input {
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+.dataTable-input:focus {
+    outline: none;
+    ring: 2px solid #10b981;
+    border-color: #10b981;
+}
+.dataTable-selector {
+    border-radius: 0.375rem;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 2rem 0.5rem 0.75rem;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

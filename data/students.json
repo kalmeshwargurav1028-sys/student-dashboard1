@@ -1,0 +1,351 @@
+[
+    {
+        "id": "IND001",
+        "name": "rakesh",
+        "age": "15",
+        "weight": "2.2",
+        "height": "150",
+        "board": "State Board",
+        "attendance": "50",
+        "performance": "65",
+        "student_class": "10th",
+        "division": "A",
+        "photo_url": "/static/uploads/fe3fd675_WhatsApp_Image_2026-05-19_at_10.46.24_AM.jpeg",
+        "parent_details": "Vinod Kumar (Father) - 9876543210",
+        "address": "Street No. 4, Jayanagar, Bangalore",
+        "phone": "9876543210",
+        "email": "rakesh@gmail.com",
+        "blood_group": "B+",
+        "personality": [
+            "Happy"
+        ],
+        "hobbies": [
+            "Cricket",
+            "Reading"
+        ],
+        "subjects": {
+            "Math": 97,
+            "English": 76,
+            "Science": 93,
+            "History": 84,
+            "Geography": 94
+        }
+    },
+    {
+        "id": "IND002",
+        "name": "Arjun Verma",
+        "age": "7",
+        "weight": "24",
+        "height": "120",
+        "board": "CBSE",
+        "attendance": "95",
+        "performance": "90",
+        "student_class": "2nd",
+        "division": "A",
+        "photo_url": "",
+        "parent_details": "Amit Verma (Father) - 9876543220",
+        "address": "Flat 302, Green Glen Layout, Bangalore",
+        "phone": "9876543220",
+        "email": "arjun.verma@gmail.com",
+        "blood_group": "O+",
+        "personality": [
+            "Happy"
+        ],
+        "hobbies": [
+            "Drawing",
+            "Singing"
+        ],
+        "subjects": {
+            "Math": 78,
+            "English": 62,
+            "Science": 66,
+            "History": 70,
+            "Geography": 61
+        }
+    },
+    {
+        "id": "IND003",
+        "name": "Diya Sharma",
+        "age": "8",
+        "weight": "28",
+        "height": "128",
+        "board": "ICSE",
+        "attendance": "92",
+        "performance": "88",
+        "student_class": "3rd",
+        "division": "C",
+        "photo_url": "",
+        "parent_details": "Ramesh Sharma (Father) - 9876543221",
+        "address": "Villa 45, Sterling Brookside, Bangalore",
+        "phone": "9876543221",
+        "email": "diya.sharma@gmail.com",
+        "blood_group": "A-",
+        "personality": [
+            "Happy"
+        ],
+        "hobbies": [
+            "Dancing",
+            "Chess"
+        ],
+        "subjects": {
+            "Math": 98,
+            "English": 56,
+            "Science": 58,
+            "History": 62,
+            "Geography": 82
+        }
+    },
+    {
+        "id": "IND004",
+        "name": "Aarav Patel",
+        "age": "9",
+        "weight": "32",
+        "height": "135",
+        "board": "CBSE",
+        "attendance": "89",
+        "performance": "82",
+        "student_class": "4th",
+        "division": "A",
+        "photo_url": "",
+        "parent_details": "Suresh Patel (Father) - 9876543222",
+        "address": "Block B, Prestige Fountain Bleau, Bangalore",
+        "phone": "9876543222",
+        "email": "aarav.patel@gmail.com",
+        "blood_group": "B+",
+        "personality": [
+            "Extrovert"
+        ],
+        "hobbies": [
+            "Cricket",
+            "Coding"
+        ],
+        "subjects": {
+            "Math": 69,
+            "English": 62,
+            "Science": 52,
+            "History": 60,
+            "Geography": 66
+        }
+    },
+    {
+        "id": "IND005",
+        "name": "Isha Gupta",
+        "age": "10",
+        "weight": "35",
+        "height": "140",
+        "board": "State Board",
+        "attendance": "78",
+        "performance": "76",
+        "student_class": "5th",
+        "division": "B",
+        "photo_url": "",
+        "parent_details": "Rajesh Gupta (Father) - 9876543223",
+        "address": "402 Alpine Eco Apartments, Bangalore",
+        "phone": "9876543223",
+        "email": "isha.gupta@gmail.com",
+        "blood_group": "AB+",
+        "personality": [
+            "Introvert"
+        ],
+        "hobbies": [
+            "Reading",
+            "Drawing"
+        ],
+        "subjects": {
+            "Math": 76,
+            "English": 70,
+            "Science": 52,
+            "History": 56,
+            "Geography": 64
+        }
+    },
+    {
+        "id": "IND006",
+        "name": "Kabir Malhotra",
+        "age": "11",
+        "weight": "38",
+        "height": "145",
+        "board": "IB",
+        "attendance": "94",
+        "performance": "95",
+        "student_class": "6th",
+        "division": "D",
+        "photo_url": "",
+        "parent_details": "Sanjay Malhotra (Father) - 9876543224",
+        "address": "12 Sector C, HSR Layout, Bangalore",
+        "phone": "9876543224",
+        "email": "kabir.m@gmail.com",
+        "blood_group": "O-",
+        "personality": [
+            "Extrovert"
+        ],
+        "hobbies": [
+            "Football",
+            "Robotics"
+        ],
+        "subjects": {
+            "Math": 68,
+            "English": 100,
+            "Science": 98,
+            "History": 75,
+            "Geography": 60
+        }
+    },
+    {
+        "id": "IND007",
+        "name": "Ananya Sen",
+        "age": "12",
+        "weight": "42",
+        "height": "152",
+        "board": "CBSE",
+        "attendance": "87",
+        "performance": "84",
+        "student_class": "7th",
+        "division": "A",
+        "photo_url": "",
+        "parent_details": "Dipankar Sen (Father) - 9876543225",
+        "address": "Flat 101, Ferns Paradise, Bangalore",
+        "phone": "9876543225",
+        "email": "ananya.sen@gmail.com",
+        "blood_group": "A+",
+        "personality": [
+            "Introvert",
+            "Happy"
+        ],
+        "hobbies": [
+            "Singing",
+            "Chess"
+        ],
+        "subjects": {
+            "Math": 60,
+            "English": 70,
+            "Science": 99,
+            "History": 52,
+            "Geography": 67
+        }
+    },
+    {
+        "id": "IND008",
+        "name": "Rohan Joshi",
+        "age": "13",
+        "weight": "48",
+        "height": "160",
+        "board": "ICSE",
+        "attendance": "74",
+        "performance": "68",
+        "student_class": "8th",
+        "division": "B",
+        "photo_url": "",
+        "parent_details": "Prakash Joshi (Father) - 9876543226",
+        "address": "Rowhouse 7, Palm Meadows, Bangalore",
+        "phone": "9876543226",
+        "email": "rohan.joshi@gmail.com",
+        "blood_group": "B-",
+        "personality": [
+            "Angry"
+        ],
+        "hobbies": [
+            "Cricket",
+            "Football"
+        ],
+        "subjects": {
+            "Math": 59,
+            "English": 70,
+            "Science": 82,
+            "History": 80,
+            "Geography": 91
+        }
+    },
+    {
+        "id": "IND009",
+        "name": "Meera Nair",
+        "age": "14",
+        "weight": "50",
+        "height": "163",
+        "board": "State Board",
+        "attendance": "96",
+        "performance": "91",
+        "student_class": "9th",
+        "division": "C",
+        "photo_url": "",
+        "parent_details": "Radhakrishnan Nair (Father) - 9876543227",
+        "address": "G-08 Sobha Daffodil, Bangalore",
+        "phone": "9876543227",
+        "email": "meera.nair@gmail.com",
+        "blood_group": "O+",
+        "personality": [
+            "Happy"
+        ],
+        "hobbies": [
+            "Dancing",
+            "Reading"
+        ],
+        "subjects": {
+            "Math": 55,
+            "English": 56,
+            "Science": 68,
+            "History": 82,
+            "Geography": 60
+        }
+    },
+    {
+        "id": "IND010",
+        "name": "Akhil",
+        "age": "118",
+        "weight": "70",
+        "height": "172",
+        "board": "CBSE",
+        "attendance": "100",
+        "performance": "80",
+        "student_class": "10th",
+        "division": "A",
+        "photo_url": "",
+        "parent_details": "",
+        "address": "",
+        "phone": "",
+        "email": "",
+        "blood_group": "A+",
+        "personality": [
+            "Angry"
+        ],
+        "hobbies": [],
+        "subjects": {
+            "Math": 99,
+            "English": 65,
+            "Science": 61,
+            "History": 64,
+            "Geography": 76
+        }
+    },
+    {
+        "id": "IND011",
+        "name": "kalmeshwar",
+        "dob": "2003-11-28",
+        "age": "22",
+        "gender": "Male",
+        "board": "State Board",
+        "student_class": "10th",
+        "division": "A",
+        "academic_year": "2026",
+        "roll_number": "21",
+        "parent_name": null,
+        "relationship": null,
+        "parent_phone": null,
+        "parent_email": null,
+        "occupation": null,
+        "address": null,
+        "city": null,
+        "state": null,
+        "pincode": null,
+        "photo_url": "/static/uploads/b3d0f265_kalmeshwar_photo.jpeg",
+        "attendance": "100",
+        "performance": "80",
+        "subjects": {
+            "Math": 64,
+            "English": 71,
+            "Science": 94,
+            "History": 83,
+            "Geography": 56
+        }
+    }
+]

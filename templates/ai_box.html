@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block header_title %}AI Assistant Box{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8 h-[calc(100vh-5rem)] flex flex-col">
+    <!-- Main Chat Window Card -->
+    <div class="bg-white shadow-xl rounded-2xl border border-gray-100 flex-1 flex flex-col overflow-hidden">
+        
+        <!-- Header -->
+        <div class="bg-blue-600 px-6 py-4 flex items-center justify-between text-white shadow-sm shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-blue-500 rounded-lg text-blue-100">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-lg leading-tight">Dashboard AI Mentor</h2>
+                    <p class="text-xs text-blue-100">Roster insights, performance analysis & advice</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <!-- Status indicator -->
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-blue-500 rounded-full animate-ping"></span>
+                    Online
+                </span>
+            </div>
+        </div>
+        
+        <!-- Chat History -->
+        <div id="ai-box-history" class="flex-1 p-6 overflow-y-auto bg-gray-50 flex flex-col gap-4">
+            <!-- Messages will be dynamically rendered here -->
+        </div>
+        
+        <!-- Input Form Area -->
+        <div class="p-4 border-t border-gray-100 bg-white shrink-0">
+            <form id="ai-box-form" class="flex items-center gap-3">
+                <!-- Mic Button -->
+                <button type="button" id="ai-box-mic" class="p-3 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 focus:outline-none transition-all duration-200 border border-gray-200" title="Click to speak (Voice Recognition)">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                    </svg>
+                </button>
+                
+                <!-- Text Input -->
+                <input type="text" id="ai-box-input" class="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base border-gray-300 rounded-full py-3 px-5 border transition-colors" placeholder="Ask anything about student metrics, who needs help, or top performers...">
+                
+                <!-- Submit Button -->
+                <button type="submit" class="p-3 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 shadow-md">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const history = document.getElementById('ai-box-history');
+    const form = document.getElementById('ai-box-form');
+    const input = document.getElementById('ai-box-input');
+    const micBtn = document.getElementById('ai-box-mic');
+    
+    // Automatically trigger initial load greet
+    handleInitialLoad();
+
+    // Web Speech API Setup
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    if (SpeechRecognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        
+        recognition.onstart = function() {
+            micBtn.classList.add('text-red-500', 'bg-red-50', 'animate-pulse', 'border-red-200');
+            input.placeholder = "Listening...";
+        };
+        
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript;
+            input.value = transcript;
+            processMessage(transcript.trim());
+        };
+        
+        recognition.onerror = function(event) {
+            console.error(event.error);
+            resetMic();
+        };
+        
+        recognition.onend = function() {
+            resetMic();
+        };
+    } else {
+        micBtn.style.display = 'none'; // Hide if not supported
+    }
+
+    function resetMic() {
+        micBtn.classList.remove('text-red-500', 'bg-red-50', 'animate-pulse', 'border-red-200');
+        input.placeholder = "Ask anything about student metrics, who needs help, or top performers...";
+    }
+
+    micBtn.addEventListener('click', () => {
+        if (recognition) recognition.start();
+    });
+
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+    }
+
+    function addMessage(text, isUser) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`;
+        const bubble = document.createElement('div');
+        bubble.className = `max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'}`;
+        bubble.innerText = text;
+        msgDiv.appendChild(bubble);
+        history.appendChild(msgDiv);
+        history.scrollTop = history.scrollHeight;
+    }
+
+    function addTypingIndicator() {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'flex justify-start mb-2 typing-indicator-container';
+        msgDiv.innerHTML = `
+            <div class="bg-white border border-gray-100 rounded-2xl rounded-bl-none px-4 py-3 flex items-center gap-1.5 shadow-sm">
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+            </div>
+        `;
+        history.appendChild(msgDiv);
+        history.scrollTop = history.scrollHeight;
+        return msgDiv;
+    }
+
+    async function sendToBackend(message) {
+        try {
+            const response = await fetch('/api/dashboard_ai', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: message })
+            });
+            const data = await response.json();
+            return data.response || "Error communicating with AI.";
+        } catch (error) {
+            return "Connection error.";
+        }
+    }
+
+    async function handleInitialLoad() {
+        const indicator = addTypingIndicator();
+        const responseText = await sendToBackend('initial');
+        indicator.remove();
+        addMessage(responseText, false);
+        speakText(responseText);
+    }
+
+    async function processMessage(text) {
+        if (!text) return;
+        
+        addMessage(text, true);
+        input.value = '';
+        
+        const indicator = addTypingIndicator();
+        const responseText = await sendToBackend(text);
+        indicator.remove();
+        
+        addMessage(responseText, false);
+        speakText(responseText); // Speak response
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        processMessage(text);
+    });
+});
+</script>
+{% endblock %}

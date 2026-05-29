@@ -1,0 +1,11 @@
+{
+    "admin": "password123",
+    "kalmesh@gmail.com": "12345",
+    "tmsuraj19@gmail.com": {
+        "password": "1111",
+        "first_name": "kalmeshwar",
+        "last_name": "gurav",
+        "verified": true,
+        "verification_code": null
+    }
+}

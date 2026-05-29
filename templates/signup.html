@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Indus Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- Main Container -->
+    <div class="max-w-5xl w-full flex flex-col md:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 h-auto md:min-h-[600px]">
+        
+        <!-- Left Section -->
+        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#dbeafe] to-[#3b82f6] p-10 md:p-14 flex flex-col justify-center text-blue-900 relative">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Welcome Back</h1>
+            <p class="text-blue-800 text-lg mb-10 font-medium">Access your School student dashboard</p>
+        </div>
+
+        <!-- Right Section (Signup Form) -->
+        <div class="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center items-center bg-white relative">
+            <div class="max-w-sm w-full mx-auto">
+                
+                <!-- Branding -->
+                <div class="text-center mb-6">
+                    <div class="flex justify-center mb-3">
+                        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus Logo" class="h-20 mx-auto mb-2 object-contain">
+                    </div>
+                    <h2 class="text-xs font-bold text-blue-800 tracking-widest uppercase mb-4">Indus Personalized Learning</h2>
+                </div>
+
+                <h2 class="text-3xl font-bold text-gray-900 mb-6 text-center">Create Account</h2>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="w-full bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-6 text-sm text-center font-medium">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('signup') }}" method="POST" class="space-y-4" onsubmit="return validatePassword()">
+                    
+                    <div>
+                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Email Address</label>
+                        <input type="email" id="email" name="email" required 
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-[#3b82f6] transition-all"
+                            placeholder="you@example.com">
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+                        <div class="relative">
+                            <input type="password" id="password" name="password" required 
+                                class="w-full bg-white border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-[#3b82f6] transition-all"
+                                placeholder="••••••••">
+                            <div onclick="const p=document.getElementById('password'); const i=document.getElementById('toggleIcon1'); if(p.type==='password'){p.type='text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash');}else{p.type='password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye');}" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer z-20">
+                                <i class="fa-regular fa-eye text-gray-400 hover:text-gray-600 text-lg" id="toggleIcon1"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="confirm_password" class="block text-sm font-semibold text-gray-700 mb-1.5">Retype Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirm_password" name="confirm_password" required 
+                                class="w-full bg-white border border-gray-300 rounded-lg pl-4 pr-12 py-3 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:border-[#3b82f6] transition-all"
+                                placeholder="••••••••">
+                            <div onclick="const p=document.getElementById('confirm_password'); const i=document.getElementById('toggleIcon2'); if(p.type==='password'){p.type='text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash');}else{p.type='password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye');}" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer z-20">
+                                <i class="fa-regular fa-eye text-gray-400 hover:text-gray-600 text-lg" id="toggleIcon2"></i>
+                            </div>
+                        </div>
+                        <p id="password_error" class="text-red-500 text-xs mt-2 hidden font-medium">Passwords do not match.</p>
+                    </div>
+
+                    <button type="submit" 
+                        class="w-full bg-[#3b82f6] hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-200 mt-6 shadow-md text-sm uppercase tracking-wide">
+                        Sign Up
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <p class="text-sm text-gray-500 font-medium">
+                        Already have an account? 
+                        <a href="{{ url_for('login') }}" class="text-[#3b82f6] font-bold hover:text-blue-700 transition-colors">Sign In</a>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function validatePassword() {
+            var password = document.getElementById("password").value;
+            var confirmPassword = document.getElementById("confirm_password").value;
+            var errorElement = document.getElementById("password_error");
+            
+            if (password != confirmPassword) {
+                errorElement.classList.remove("hidden");
+                return false;
+            }
+            errorElement.classList.add("hidden");
+            return true;
+        }
+    </script>
+</body>
+</html>

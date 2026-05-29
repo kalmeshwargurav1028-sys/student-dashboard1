@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indus Humanoid Lab - Authentication</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+  :root {
+    --primary: #3b82f6;
+    --primary-hover: #2563eb;
+    --text-dark: #1e293b;
+    --text-muted: #64748b;
+    --bg-light: #f8fafc;
+    --border: #e2e8f0;
+    --gradient-start: #dbeafe;
+    --gradient-end: #3b82f6;
+    --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+    background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
+    background-size: 20px 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .auth-container {
+    background: #fff;
+    max-width: 1050px;
+    width: 100%;
+    min-height: 620px;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1), 0 10px 15px -3px rgba(0,0,0,0.05);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* --- Left Panel --- */
+  .left-panel {
+    flex: 1;
+    background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+    padding: 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #0f172a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .left-panel h1 { font-size: 48px; font-weight: 700; margin-bottom: 12px; color: #1e3a8a; letter-spacing: -1px; }
+  .left-panel p { font-size: 18px; font-weight: 500; color: #1e40af; margin-bottom: 40px; }
+  
+  .feature-list { list-style: none; display: flex; flex-direction: column; gap: 24px; }
+  .feature-item { display: flex; align-items: flex-start; font-size: 16px; font-weight: 500; color: #1e3a8a; }
+  .feature-item i { width: 24px; font-size: 20px; color: #1d4ed8; margin-top: 2px; margin-right: 16px; text-align: center; }
+
+  /* --- Right Panel --- */
+  .right-panel {
+    flex: 1;
+    padding: 40px 60px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #fff;
+    position: relative;
+    overflow-y: auto;
+  }
+
+  /* Hide scrollbar for cleaner look */
+  .right-panel::-webkit-scrollbar { display: none; }
+
+  .branding { text-align: center; margin-bottom: 32px; width: 100%; }
+  .logo-svg { width: 48px; height: 48px; margin-bottom: 12px; fill: var(--primary); }
+  .brand-name { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: var(--text-dark); }
+
+  .form-wrapper { width: 100%; max-width: 360px; position: relative; }
+  
+  .form-header { text-align: center; margin-bottom: 24px; }
+  .form-title { font-size: 28px; font-weight: 700; color: var(--text-dark); margin-bottom: 8px; transition: var(--transition); }
+  
+  /* Admin Badge */
+  .admin-badge {
+    display: inline-block;
+    background: #eff6ff;
+    color: #2563eb;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 12px;
+    font-weight: 600;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    max-height: 0;
+    overflow: hidden;
+  }
+  .admin-badge.active {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 30px;
+    margin-bottom: 12px;
+  }
+
+  /* Form Elements */
+  .form-group { position: relative; margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-dark); margin-bottom: 6px; }
+  
+  .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--text-dark);
+    transition: var(--transition);
+    outline: none;
+    background: #fff;
+  }
+  .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  .form-control::placeholder { color: #94a3b8; }
+
+  .password-wrapper { position: relative; }
+  .eye-toggle {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 16px;
+    padding: 4px;
+    transition: var(--transition);
+  }
+  .eye-toggle:hover { color: var(--text-dark); }
+
+  /* Tenant ID slide animation */
+  .tenant-field {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+    margin-bottom: 0;
+  }
+  .tenant-field.active {
+    max-height: 100px;
+    opacity: 1;
+    margin-bottom: 16px;
+  }
+
+  /* Admin Toggle Switch */
+  .toggle-wrapper { display: flex; align-items: center; margin-top: 8px; margin-bottom: 24px; transition: var(--transition); }
+  .toggle-switch {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    background: #cbd5e1;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    top: 2px;
+    left: 2px;
+    transition: var(--transition);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-checkbox { display: none; }
+  .toggle-checkbox:checked + .toggle-switch { background: var(--primary); }
+  .toggle-checkbox:checked + .toggle-switch::after { transform: translateX(20px); }
+  .toggle-label { margin-left: 12px; font-size: 14px; font-weight: 500; color: var(--text-muted); cursor: pointer; }
+
+  /* Submit Button */
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    background: var(--primary);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .btn:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2); }
+
+  /* Auth Links */
+  .auth-links { margin-top: 24px; text-align: center; display: flex; flex-direction: column; gap: 12px; }
+  .auth-link { color: var(--text-muted); font-size: 14px; text-decoration: none; font-weight: 500; transition: var(--transition); background: none; border: none; cursor: pointer; font-family: inherit; }
+  .auth-link:hover { color: var(--primary); }
+  
+  /* State Transitions & Visibility Managers */
+  .register-fields {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+    margin-bottom: 0;
+  }
+  .register-fields.active {
+    max-height: 100px; /* high enough for single input group */
+    opacity: 1;
+    margin-bottom: 16px;
+  }
+
+  .hide-on-register {
+    max-height: 100px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, margin 0.4s ease;
+  }
+  .hide-on-register.hidden {
+    max-height: 0;
+    opacity: 0;
+    margin-bottom: 0;
+    pointer-events: none;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 880px) {
+    .auth-container { flex-direction: column; max-width: 480px; min-height: auto; }
+    .left-panel { padding: 40px; }
+    .right-panel { padding: 40px; }
+    .left-panel h1 { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="auth-container">
+  
+  <!-- Left Panel -->
+  <div class="left-panel">
+    <h1>Welcome Back</h1>
+    <p>Access your School student dashboard</p>
+
+  </div>
+
+  <!-- Right Panel -->
+  <div class="right-panel">
+    
+    <!-- Branding Header -->
+    <div class="branding">
+      <svg class="logo-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 15.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5zm0-3.5c-.55 0-1 .45-1 1s.45 1 1 1 1-.45 1-1-.45-1-1-1zm6.91-2.91L15.4 6.57c-.77-.77-2.03-.77-2.81 0l-1.09 1.09-1.09-1.09c-.77-.77-2.03-.77-2.81 0L5.09 9.09C4.4 9.77 4 10.7 4 11.66V18h16v-6.34c0-.96-.4-1.89-1.09-2.57zM18 16H6v-4.34c0-.42.17-.83.47-1.13l2.52-2.52c.38-.38 1.04-.38 1.42 0l1.09 1.09c-.39.56-.63 1.25-.63 1.99 0 1.93 1.57 3.5 3.5 3.5s3.5-1.57 3.5-3.5c0-.74-.24-1.43-.63-1.99l1.09-1.09c.38-.38 1.04-.38 1.42 0l2.52 2.52c.3.3.47.71.47 1.13V16z"/>
+      </svg>
+      <div class="brand-name">Indus Humanoid Lab</div>
+    </div>
+
+    <!-- Forms Area -->
+    <div class="form-wrapper">
+      <div class="form-header">
+        <div class="admin-badge" id="adminBadge">School Admin Login</div>
+        <h2 class="form-title" id="formTitle">Log In</h2>
+      </div>
+
+      <form id="authForm" onsubmit="event.preventDefault(); alert('Form successfully submitted!');">
+        
+        <!-- Registration State Field: Full Name -->
+        <div class="form-group register-fields" id="nameField">
+          <label for="fullName">Full Name</label>
+          <input type="text" id="fullName" class="form-control" placeholder="Enter your full name">
+        </div>
+
+        <!-- Shared Field: Email -->
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" class="form-control" placeholder="Enter your email" required>
+        </div>
+
+        <!-- Admin State Field: Tenant ID -->
+        <div class="form-group tenant-field" id="tenantField">
+          <label for="tenantId">Tenant ID</label>
+          <input type="text" id="tenantId" class="form-control" placeholder="Enter your school's Tenant ID">
+        </div>
+
+        <!-- Shared Field: Password -->
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" class="form-control" placeholder="Enter your password" required>
+            <button type="button" class="eye-toggle" onclick="togglePassword('password', this)"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </div>
+
+        <!-- Registration State Field: Confirm Password -->
+        <div class="form-group register-fields" id="confirmPasswordField">
+          <label for="confirmPassword">Confirm Password</label>
+          <div class="password-wrapper">
+            <input type="password" id="confirmPassword" class="form-control" placeholder="Confirm your password">
+            <button type="button" class="eye-toggle" onclick="togglePassword('confirmPassword', this)"><i class="fa-regular fa-eye"></i></button>
+          </div>
+        </div>
+
+
+
+        <!-- Submit Button -->
+        <button type="submit" class="btn" id="submitBtn">
+          <span>LOGIN</span>
+          <i class="fa-solid fa-arrow-right" id="btnIcon"></i>
+        </button>
+      </form>
+
+      <!-- Action Links -->
+      <div class="auth-links">
+        <div class="hide-on-register" style="display: flex; gap: 16px; justify-content: center; width: 100%;">
+            <button type="button" class="auth-link"><i class="fa-solid fa-key"></i> Forgot Password</button>
+            <button type="button" class="auth-link"><i class="fa-regular fa-circle-question"></i> Need help?</button>
+        </div>
+        <button type="button" class="auth-link" id="switchModeLink" onclick="toggleRegisterState()" style="margin-top: 8px; font-weight: 600;">Create Account</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentState = 'LOGIN'; // States: 'LOGIN', 'ADMIN', 'REGISTER'
+
+  // DOM Elements
+  const formTitle = document.getElementById('formTitle');
+  const adminBadge = document.getElementById('adminBadge');
+  const tenantField = document.getElementById('tenantField');
+  const tenantInput = document.getElementById('tenantId');
+  const adminToggle = document.getElementById('adminToggle');
+  const registerFields = document.querySelectorAll('.register-fields');
+  const hideOnRegisterElements = document.querySelectorAll('.hide-on-register');
+  const submitBtn = document.getElementById('submitBtn');
+  const btnIcon = document.getElementById('btnIcon');
+  const switchModeLink = document.getElementById('switchModeLink');
+  const fullNameInput = document.getElementById('fullName');
+  const confirmPasswordInput = document.getElementById('confirmPassword');
+
+  // Password Visibility Toggle
+  function togglePassword(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon = btn.querySelector('i');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+  }
+
+  // Toggle Admin State
+  function toggleAdminState() {
+    if (currentState === 'REGISTER') return;
+
+    if (adminToggle.checked) {
+      currentState = 'ADMIN';
+      adminBadge.classList.add('active');
+      tenantField.classList.add('active');
+      tenantInput.required = true;
+    } else {
+      currentState = 'LOGIN';
+      adminBadge.classList.remove('active');
+      tenantField.classList.remove('active');
+      tenantInput.required = false;
+      tenantInput.value = '';
+    }
+  }
+
+  // Toggle Registration State
+  function toggleRegisterState() {
+    if (currentState === 'LOGIN' || currentState === 'ADMIN') {
+      // Switch to Registration State
+      currentState = 'REGISTER';
+      
+      // Update Headers and Button
+      formTitle.textContent = 'Create Account';
+      submitBtn.querySelector('span').textContent = 'REGISTER & CREATE ACCOUNT';
+      btnIcon.className = 'fa-solid fa-user-plus';
+      switchModeLink.textContent = 'Already have an account? Log In';
+
+      // Reset & Hide Admin Elements
+      adminBadge.classList.remove('active');
+      adminToggle.checked = false;
+      tenantField.classList.remove('active');
+      tenantInput.required = false;
+
+      // Reveal Registration Fields & Set Validation
+      registerFields.forEach(el => el.classList.add('active'));
+      fullNameInput.required = true;
+      confirmPasswordInput.required = true;
+
+      // Hide Login-specific Elements smoothly
+      hideOnRegisterElements.forEach(el => el.classList.add('hidden'));
+
+    } else {
+      // Switch back to Login State
+      currentState = 'LOGIN';
+      
+      // Update Headers and Button
+      formTitle.textContent = 'Log In';
+      submitBtn.querySelector('span').textContent = 'LOGIN';
+      btnIcon.className = 'fa-solid fa-arrow-right';
+      switchModeLink.textContent = 'Create Account';
+
+      // Hide Registration Fields & Remove Validation
+      registerFields.forEach(el => el.classList.remove('active'));
+      fullNameInput.required = false;
+      confirmPasswordInput.required = false;
+      
+      // Show Login-specific Elements smoothly
+      hideOnRegisterElements.forEach(el => el.classList.remove('hidden'));
+    }
+  }
+</script>
+
+</body>
+</html>

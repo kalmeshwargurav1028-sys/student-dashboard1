@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard</title>
+    <!-- Use Tailwind via CDN for modern UI based on prior preferences, or standard modern CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* Light background */
+            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        html.dark body {
+            background-color: #111827; /* Dark background */
+        }
+    </style>
+</head>
+<body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+
+    {% if session.get('logged_in') %}
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-[#3b82f6] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-600 dark:border-gray-950">
+        <!-- Sidebar Header -->
+        <div class="h-16 flex items-center justify-between px-4 bg-blue-600 dark:bg-gray-900 border-b border-blue-400 dark:border-gray-700">
+            <a href="{{ url_for('dashboard') }}" class="text-xl font-bold flex items-center gap-2 whitespace-nowrap overflow-hidden" id="sidebar-logo-text">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 flex-shrink-0 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                </svg>
+                <span class="sidebar-text transition-opacity duration-300">Indus Portal</span>
+            </a>
+            <button id="sidebar-toggle" class="text-blue-300 hover:text-white focus:outline-none hidden sm:block">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Sidebar Links -->
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <a href="{{ url_for('dashboard') }}" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Dashboard</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('profile_form') }}" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Students</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('attendance') }}" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Attendance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('ai_box') }}" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">AI Insights</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('reports') }}" class="flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Reports</span>
+                    </a>
+                </li>
+
+                <li>
+                    <button id="dark-mode-toggle" class="w-full flex items-center px-4 py-3 text-blue-100 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Dark Mode</span>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        
+        <!-- User Profile -->
+        <div class="p-4 bg-blue-600 dark:bg-gray-900 border-t border-blue-400 dark:border-gray-700">
+            <a href="{{ url_for('logout') }}" class="flex items-center text-blue-200 dark:text-gray-300 hover:text-white group">
+                <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                <span class="sidebar-text text-sm whitespace-nowrap">Logout</span>
+            </a>
+        </div>
+    </aside>
+    {% endif %}
+
+    <!-- Main Content Wrapper -->
+    <div class="flex-1 flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 relative">
+        
+        <!-- Top Header for Mobile/Context -->
+        {% if session.get('logged_in') %}
+        <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 shrink-0 border-b border-transparent dark:border-gray-700 transition-colors">
+            <div class="flex items-center">
+                <!-- Mobile Menu Button -->
+                <button class="sm:hidden mr-4 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                </button>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}Student Management{% endblock %}</h2>
+            </div>
+            <div class="flex items-center">
+                <span class="text-sm text-gray-500 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">{{ session.get('username') }}</span>
+            </div>
+        </header>
+        {% endif %}
+
+        <!-- Scrollable Main Area -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- Flash Messages -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 rounded shadow-sm mb-4" role="alert">
+                            <p>{{ message }}</p>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Sidebar and Dark Mode Script -->
+    <script>
+        // Dark Mode Logic
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const htmlEl = document.documentElement;
+
+        // Initialize dark mode based on localStorage
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlEl.classList.add('dark');
+        } else {
+            htmlEl.classList.remove('dark');
+        }
+
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                htmlEl.classList.toggle('dark');
+                if (htmlEl.classList.contains('dark')) {
+                    localStorage.theme = 'dark';
+                } else {
+                    localStorage.theme = 'light';
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            
+            if (toggleBtn && sidebar) {
+                let isCollapsed = false;
+                
+                toggleBtn.addEventListener('click', () => {
+                    isCollapsed = !isCollapsed;
+                    if (isCollapsed) {
+                        sidebar.classList.remove('w-64');
+                        sidebar.classList.add('w-20');
+                        sidebarTexts.forEach(el => el.classList.add('opacity-0', 'w-0', 'hidden'));
+                    } else {
+                        sidebar.classList.remove('w-20');
+                        sidebar.classList.add('w-64');
+                        sidebarTexts.forEach(el => el.classList.remove('opacity-0', 'w-0', 'hidden'));
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
