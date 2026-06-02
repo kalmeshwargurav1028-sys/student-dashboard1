@@ -110,15 +110,18 @@ def refresh_mail_config():
     app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'kalmeshwargurav1028@gmail.com'
 
 def init_sqlite_db():
-    conn = sqlite3.connect('config.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)''')
-    c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
-    row = c.fetchone()
-    if not row:
-        c.execute("INSERT INTO config (key, value) VALUES ('MAIL_PASSWORD', '12345')")
-        conn.commit()
-    conn.close()
+    try:
+        conn = sqlite3.connect('config.db')
+        c = conn.cursor()
+        c.execute('''CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)''')
+        c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
+        row = c.fetchone()
+        if not row:
+            c.execute("INSERT INTO config (key, value) VALUES ('MAIL_PASSWORD', '12345')")
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Warning: Could not initialize SQLite config DB (likely in a serverless environment): {e}")
 
 def get_mail_password():
     try:
@@ -127,9 +130,9 @@ def get_mail_password():
         c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
         row = c.fetchone()
         conn.close()
-        return row[0] if row else '12345'
+        return row[0] if row else os.environ.get('MAIL_PASSWORD', '12345')
     except Exception:
-        return '12345'
+        return os.environ.get('MAIL_PASSWORD', '12345')
 
 init_sqlite_db()
 app.config['MAIL_PASSWORD'] = get_mail_password()
