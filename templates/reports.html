@@ -42,12 +42,14 @@
                         <tr>
                             <th scope="col" class="px-6 py-3 font-semibold tracking-wider">ID</th>
                             <th scope="col" class="px-6 py-3 font-semibold tracking-wider">Name</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider">Class</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Math</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Eng</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Sci</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Hist</th>
-                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Geo</th>
+                            <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Class</th>
+                            {% if all_subjects %}
+                                {% for subj in all_subjects %}
+                                <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">{{ subj[:6] }}</th>
+                                {% endfor %}
+                            {% else %}
+                                <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Subjects</th>
+                            {% endif %}
                             <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Att (%)</th>
                             <th scope="col" class="px-6 py-3 font-semibold tracking-wider text-center">Total</th>
                         </tr>
@@ -59,11 +61,13 @@
                             <td class="px-6 py-4 whitespace-nowrap text-gray-700">{{ student.name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-gray-600">{{ student.get('student_class', 'N/A') }} - {{ student.get('division', 'A') }}</td>
                             {% set subjects = student.get('subjects', {}) %}
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Math', 'N/A') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('English', 'N/A') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Science', 'N/A') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('History', 'N/A') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get('Geography', 'N/A') }}</td>
+                            {% if all_subjects %}
+                                {% for subj in all_subjects %}
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">{{ subjects.get(subj, 'N/A') }}</td>
+                                {% endfor %}
+                            {% else %}
+                                <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium text-gray-700">No subjects added</td>
+                            {% endif %}
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 {% set att = student.get('attendance', 0)|float %}
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if att >= 75 %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
@@ -72,7 +76,7 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center">
                                 {% set perf = student.get('performance', 0)|float %}
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if perf >= 80 %}bg-blue-100 text-blue-800{% elif perf >= 60 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {% if perf >= 80 %}bg-emerald-100 text-emerald-800{% elif perf >= 60 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
                                     {{ perf }}
                                 </span>
                             </td>

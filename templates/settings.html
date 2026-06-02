@@ -14,7 +14,7 @@
         <div class="w-full md:w-64 bg-gray-50 border-r border-gray-200">
             <nav class="flex flex-col space-y-1 p-4" aria-label="Settings Tabs">
                 <a href="#"
-                    class="bg-blue-50 text-blue-700 hover:bg-blue-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
+                    class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors">
                     <span class="mr-2">⚙️</span> General
                 </a>
                 <a href="#"
@@ -47,7 +47,7 @@
                     <div class="mt-1">
                         <input type="text" name="school_name" id="school_name"
                             value="{{ config_data.get('school_name', 'Indus International School') }}"
-                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                     </div>
                 </div>
 
@@ -60,7 +60,7 @@
                             class="h-12 w-12 object-contain border border-gray-200 rounded p-1 bg-gray-50">
                         {% endif %}
                         <input type="file" name="logo" accept="image/*"
-                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white cursor-pointer">
+                            class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white cursor-pointer">
                     </div>
                     {% if config_data.get('logo_url') %}
                     <p class="mt-1 text-xs text-gray-500">Current: {{ config_data.get('logo_filename', 'logo.png') }}
@@ -73,7 +73,7 @@
                     <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year</label>
                     <div class="mt-1">
                         <select id="academic_year" name="academic_year"
-                            class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white">
+                            class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white">
                             <option value="2023 - 2024" {% if config_data.get('academic_year')=='2023 - 2024'
                                 %}selected{% endif %}>2023 - 2024</option>
                             <option value="2024 - 2025" {% if config_data.get('academic_year')=='2024 - 2025'
@@ -86,10 +86,62 @@
                     </div>
                 </div>
 
+                <!-- API Credentials Section -->
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Email & API Credentials</h3>
+                    <div class="space-y-4">
+                        <!-- Mail Configuration -->
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="MAIL_USERNAME" class="block text-sm font-medium text-gray-700">SMTP Email (Username)</label>
+                                <input type="email" name="MAIL_USERNAME" id="MAIL_USERNAME" value="{{ config_data.get('MAIL_USERNAME', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                            <div>
+                                <label for="MAIL_PASSWORD" class="block text-sm font-medium text-gray-700">SMTP App Password</label>
+                                <input type="password" name="MAIL_PASSWORD" id="MAIL_PASSWORD" value="{{ config_data.get('MAIL_PASSWORD', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                        </div>
+
+                        <!-- Gemini -->
+                        <div>
+                            <label for="GEMINI_API_KEY" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
+                            <input type="password" name="GEMINI_API_KEY" id="GEMINI_API_KEY" value="{{ config_data.get('GEMINI_API_KEY', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                        </div>
+
+                        <!-- Twilio -->
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="TWILIO_ACCOUNT_SID" class="block text-sm font-medium text-gray-700">Twilio Account SID</label>
+                                <input type="password" name="TWILIO_ACCOUNT_SID" id="TWILIO_ACCOUNT_SID" value="{{ config_data.get('TWILIO_ACCOUNT_SID', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                            <div>
+                                <label for="TWILIO_AUTH_TOKEN" class="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
+                                <input type="password" name="TWILIO_AUTH_TOKEN" id="TWILIO_AUTH_TOKEN" value="{{ config_data.get('TWILIO_AUTH_TOKEN', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                        </div>
+                        <div>
+                            <label for="TWILIO_PHONE_NUMBER" class="block text-sm font-medium text-gray-700">Twilio Phone Number</label>
+                            <input type="text" name="TWILIO_PHONE_NUMBER" id="TWILIO_PHONE_NUMBER" value="{{ config_data.get('TWILIO_PHONE_NUMBER', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                        </div>
+
+                        <!-- SendGrid -->
+                        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <div>
+                                <label for="SENDGRID_API_KEY" class="block text-sm font-medium text-gray-700">SendGrid API Key</label>
+                                <input type="password" name="SENDGRID_API_KEY" id="SENDGRID_API_KEY" value="{{ config_data.get('SENDGRID_API_KEY', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                            <div>
+                                <label for="SENDGRID_FROM_EMAIL" class="block text-sm font-medium text-gray-700">SendGrid From Email</label>
+                                <input type="email" name="SENDGRID_FROM_EMAIL" id="SENDGRID_FROM_EMAIL" value="{{ config_data.get('SENDGRID_FROM_EMAIL', '') }}" class="mt-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Save Button -->
                 <div class="pt-4">
                     <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                         Save Changes
                     </button>
                 </div>

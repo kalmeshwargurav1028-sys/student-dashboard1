@@ -8,22 +8,22 @@
     <div class="bg-white shadow-xl rounded-2xl border border-gray-100 flex-1 flex flex-col overflow-hidden">
         
         <!-- Header -->
-        <div class="bg-blue-600 px-6 py-4 flex items-center justify-between text-white shadow-sm shrink-0">
+        <div class="bg-emerald-600 px-6 py-4 flex items-center justify-between text-white shadow-sm shrink-0">
             <div class="flex items-center gap-3">
-                <div class="p-2 bg-blue-500 rounded-lg text-blue-100">
+                <div class="p-2 bg-emerald-500 rounded-lg text-emerald-100">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                 </div>
                 <div>
                     <h2 class="font-bold text-lg leading-tight">Dashboard AI Mentor</h2>
-                    <p class="text-xs text-blue-100">Roster insights, performance analysis & advice</p>
+                    <p class="text-xs text-emerald-100">Roster insights, performance analysis & advice</p>
                 </div>
             </div>
             <div class="flex items-center gap-2">
                 <!-- Status indicator -->
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                    <span class="w-1.5 h-1.5 mr-1.5 bg-blue-500 rounded-full animate-ping"></span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-500 rounded-full animate-ping"></span>
                     Online
                 </span>
             </div>
@@ -45,10 +45,10 @@
                 </button>
                 
                 <!-- Text Input -->
-                <input type="text" id="ai-box-input" class="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full text-base border-gray-300 rounded-full py-3 px-5 border transition-colors" placeholder="Ask anything about student metrics, who needs help, or top performers...">
+                <input type="text" id="ai-box-input" class="flex-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full text-base border-gray-300 rounded-full py-3 px-5 border transition-colors" placeholder="Ask anything about student metrics, who needs help, or top performers...">
                 
                 <!-- Submit Button -->
-                <button type="submit" class="p-3 text-white bg-blue-600 rounded-full hover:bg-blue-700 focus:outline-none transition-all duration-200 shadow-md">
+                <button type="submit" class="p-3 text-white bg-emerald-600 rounded-full hover:bg-emerald-700 focus:outline-none transition-all duration-200 shadow-md">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                     </svg>
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const msgDiv = document.createElement('div');
         msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'} mb-2`;
         const bubble = document.createElement('div');
-        bubble.className = `max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'}`;
+        bubble.className = `max-w-[80%] rounded-2xl px-4 py-3 shadow-sm ${isUser ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white text-gray-800 rounded-bl-none border border-gray-100'}`;
         bubble.innerText = text;
         msgDiv.appendChild(bubble);
         history.appendChild(msgDiv);

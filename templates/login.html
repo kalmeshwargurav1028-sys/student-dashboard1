@@ -19,12 +19,12 @@
 <body class="min-h-screen flex items-center justify-center p-4">
 
     <!-- Main Container -->
-    <div class="max-w-5xl w-full flex flex-col md:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 h-auto md:h-[600px]">
+    <div class="max-w-5xl w-full flex flex-col md:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 min-h-[600px]">
         
         <!-- Left Section -->
-        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#dbeafe] to-[#3b82f6] p-10 md:p-14 flex flex-col justify-center text-blue-900 relative">
+        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#dbeafe] to-[#10b981] p-10 md:p-14 flex flex-col justify-center text-emerald-900 relative">
             <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Welcome Back</h1>
-            <p class="text-blue-800 text-lg mb-10 font-medium">Access your School student dashboard</p>
+            <p class="text-emerald-800 text-lg mb-10 font-medium">Access your School student dashboard</p>
 
 
         </div>
@@ -33,11 +33,11 @@
         <div class="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center items-center bg-white">
             
             <!-- Logo -->
-            <div class="text-center mb-8">
-                <div class="flex justify-center mb-3">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School Logo" class="h-20 w-auto object-contain">
+            <div class="text-center mb-6 mt-4">
+                <div class="flex justify-center mb-4">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School Logo" class="h-28 w-auto object-contain">
                 </div>
-                <h2 class="text-xs font-bold text-blue-800 tracking-widest uppercase mb-4">Indus Personalized Learning</h2>
+                <h2 class="text-xs font-bold text-emerald-800 tracking-widest uppercase mb-4">Indus Personalized Learning</h2>
                 <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Log In</h2>
             </div>
 
@@ -51,41 +51,60 @@
                 {% endif %}
             {% endwith %}
 
+            <!-- Tabs -->
+            <div class="flex w-full max-w-sm mb-6 bg-gray-100 p-1 rounded-xl">
+                <button id="tabTeacher" onclick="switchTab('teacher')" class="flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all">Teacher</button>
+                <button id="tabStudent" onclick="switchTab('student')" class="flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all">Student</button>
+            </div>
+
             <form action="{{ url_for('login') }}" method="POST" class="w-full max-w-sm space-y-5">
+                <input type="hidden" name="login_type" id="login_type" value="teacher">
                 
-                <!-- Email -->
+                <!-- Email (Shared) -->
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Email</label>
                     <input type="email" id="email" name="email" required 
-                        class="w-full bg-blue-50/50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                        placeholder="kalmeshwargurav1028@gmail.com">
+                        class="w-full bg-emerald-50/50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                        placeholder="you@example.com" autocomplete="username">
                 </div>
 
-                <!-- Password -->
-                <div>
+                <!-- Password (Teacher) -->
+                <div id="passwordField">
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
                     <div class="relative">
                         <input type="password" id="password" name="password" required 
-                            class="w-full bg-blue-50/50 border border-gray-200 rounded-lg pl-4 pr-12 py-3.5 text-gray-900 placeholder-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-                            placeholder="•••••">
+                            class="w-full bg-emerald-50/50 border border-gray-200 rounded-lg pl-4 pr-12 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                            placeholder="Enter your password" autocomplete="current-password">
                         <div onclick="const p=document.getElementById('password'); const i=document.getElementById('toggleIcon'); if(p.type==='password'){p.type='text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash');}else{p.type='password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye');}" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer z-20">
                             <i class="fa-regular fa-eye text-gray-400 hover:text-gray-600 text-lg" id="toggleIcon"></i>
                         </div>
                     </div>
                 </div>
 
-
-
+                <!-- Password (Student) -->
+                <div id="studentIdField" class="hidden">
+                    <label for="student_id" class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
+                    <div class="relative">
+                        <input type="password" id="student_id" name="student_id" 
+                            class="w-full bg-emerald-50/50 border border-gray-200 rounded-lg pl-4 pr-12 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                            placeholder="Enter your password">
+                        <div onclick="const p=document.getElementById('student_id'); const i=document.getElementById('toggleIconStudent'); if(p.type==='password'){p.type='text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash');}else{p.type='password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye');}" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer z-20">
+                            <i class="fa-regular fa-eye text-gray-400 hover:text-gray-600 text-lg" id="toggleIconStudent"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">If you don't have a password, use your Student ID (e.g. IND001).</p>
+                </div>
+                
                 <!-- Login Button -->
                 <button type="submit" 
-                    class="w-full mt-8 bg-[#3b82f6] hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center tracking-wide uppercase text-sm">
+                    class="w-full mt-8 bg-[#10b981] hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center tracking-wide uppercase text-sm">
                     LOGIN <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                 </button>
             </form>
 
             <!-- Links -->
             <div class="mt-8 text-center space-y-4 w-full">
-                <a href="{{ url_for('forgot_password') }}" class="flex items-center justify-center text-sm text-[#3b82f6] hover:text-blue-700 font-medium transition-colors">
+                <a href="{{ url_for('forgot_password') }}" class="flex items-center justify-center text-sm text-[#10b981] hover:text-emerald-700 font-medium transition-colors">
                     <i class="fa-solid fa-key mr-2"></i> Forgot Password
                 </a>
                 <a href="#" class="flex items-center justify-center text-sm text-red-500 hover:text-red-600 font-medium transition-colors">
@@ -93,8 +112,8 @@
                 </a>
             </div>
 
-            <!-- Optional signup link since it was in the original template, though not in the screenshot -->
-            <div class="mt-4 text-center">
+            <!-- Optional signup link -->
+            <div class="mt-4 text-center" id="signupLink">
                 <a href="{{ url_for('signup') }}" class="text-xs text-gray-500 hover:text-gray-700 underline">Create New Account</a>
             </div>
             
@@ -102,7 +121,35 @@
     </div>
 
     <script>
-        // Inline JS used for password toggle
+        function switchTab(type) {
+            document.getElementById('login_type').value = type;
+            const tabTeacher = document.getElementById('tabTeacher');
+            const tabStudent = document.getElementById('tabStudent');
+            const passwordField = document.getElementById('passwordField');
+            const passwordInput = document.getElementById('password');
+            const studentIdField = document.getElementById('studentIdField');
+            const studentIdInput = document.getElementById('student_id');
+            const signupLink = document.getElementById('signupLink');
+            
+            if (type === 'teacher') {
+                tabTeacher.className = 'flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all';
+                tabStudent.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+                passwordField.classList.remove('hidden');
+                passwordInput.required = true;
+                studentIdField.classList.add('hidden');
+                studentIdInput.required = false;
+            } else {
+                tabTeacher.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+                tabStudent.className = 'flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all';
+                passwordField.classList.add('hidden');
+                passwordInput.required = false;
+                studentIdField.classList.remove('hidden');
+                studentIdInput.required = true;
+            }
+        }
+        
+        // Initialize based on any prior state if needed, or default to teacher
+        switchTab('teacher');
     </script>
 </body>
 </html>

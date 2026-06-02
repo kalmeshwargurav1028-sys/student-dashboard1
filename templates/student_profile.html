@@ -4,18 +4,24 @@
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     
     <div class="mb-6 flex items-center justify-between">
-        <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+        {% if session.get('role') != 'student' %}
+        <a href="{{ url_for('dashboard') }}" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Back to Dashboard
         </a>
+        {% else %}
+        <div></div>
+        {% endif %}
         <div class="flex gap-3">
-            <a href="{{ url_for('student_id_card', student_id=student.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <a href="{{ url_for('student_id_card', student_id=student.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                 <svg class="-ml-1 mr-2 h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
                 View ID Card
             </a>
+            {% if session.get('role') != 'student' %}
             <a href="{{ url_for('profile_form', id=student.id) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                 Edit Profile
             </a>
+            {% endif %}
         </div>
     </div>
 
@@ -24,10 +30,10 @@
         <div class="px-4 py-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between">
             <div class="flex items-center gap-6">
                 {% if student.get('photo_url') %}
-                    <img src="{{ student.get('photo_url') }}" alt="Student Photo" class="h-24 w-24 rounded-full object-cover border-4 border-blue-100">
+                    <img src="{{ student.get('photo_url') }}" alt="Student Photo" class="h-24 w-24 rounded-full object-cover border-4 border-emerald-100">
                 {% else %}
-                    <div class="h-24 w-24 rounded-full bg-blue-100 flex items-center justify-center border-4 border-blue-50">
-                        <span class="text-3xl font-bold text-blue-600">{{ student.name[0] }}</span>
+                    <div class="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-50">
+                        <span class="text-3xl font-bold text-emerald-600">{{ student.name[0] }}</span>
                     </div>
                 {% endif %}
                 <div>
@@ -37,7 +43,7 @@
                         <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if student.get('performance', 0)|float >= 80 %}bg-green-100 text-green-800{% elif student.get('performance', 0)|float >= 60 %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
                             Score: {{ student.get('performance', 0) }}
                         </span>
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
                             Att: {{ student.get('attendance', 0) }}%
                         </span>
                     </div>
@@ -114,15 +120,15 @@
                 </h3>
             </div>
             <ul role="list" class="divide-y divide-gray-200 px-4 py-3">
-                {% if student.marks %}
-                    {% for mark in student.marks %}
+                {% if student.get('subjects') %}
+                    {% for subject, score in student.get('subjects').items() %}
                     <li class="py-3 flex justify-between items-center">
-                        <span class="text-sm font-medium text-gray-700">{{ mark.subject }}</span>
+                        <span class="text-sm font-medium text-gray-700">{{ subject }}</span>
                         <div class="flex items-center gap-3">
                             <div class="w-32 bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ mark.score }}%"></div>
+                                <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ score }}%"></div>
                             </div>
-                            <span class="text-sm font-semibold text-gray-900">{{ mark.score }}</span>
+                            <span class="text-sm font-semibold text-gray-900">{{ score }}</span>
                         </div>
                     </li>
                     {% endfor %}
@@ -130,13 +136,25 @@
                     <p class="text-sm text-gray-500 py-4 text-center">No marks available.</p>
                 {% endif %}
             </ul>
+            {% if session.get('role') != 'student' %}
+            <!-- Quick Add Mark Form -->
+            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl">
+                <form action="{{ url_for('quick_add_mark', student_id=student.id) }}" method="POST" class="flex gap-2 items-center">
+                    <input type="text" name="subject" required placeholder="Subject (e.g. Science)" class="flex-1 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-1.5 px-3 border">
+                    <input type="number" name="score" required placeholder="Score (0-100)" min="0" max="100" class="w-24 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 block sm:text-sm border-gray-300 rounded-md py-1.5 px-3 border">
+                    <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Add Mark
+                    </button>
+                </form>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Attendance History -->
         <div class="bg-white shadow sm:rounded-xl border border-gray-100">
             <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
                 <h3 class="text-lg leading-6 font-medium text-gray-900 flex items-center gap-2">
-                    <svg class="h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     Attendance History
                 </h3>
             </div>
@@ -176,12 +194,12 @@
 
     <!-- AI Mentor Assistant -->
     <div class="mt-8 bg-white shadow sm:rounded-xl border border-gray-100 overflow-hidden flex flex-col h-[500px]">
-        <div class="px-4 py-3 sm:px-6 border-b border-gray-200 bg-blue-600 flex items-center justify-between">
+        <div class="px-4 py-3 sm:px-6 border-b border-gray-200 bg-emerald-600 flex items-center justify-between">
             <h3 class="text-lg leading-6 font-medium text-white flex items-center gap-2">
-                <svg class="h-6 w-6 text-blue-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                <svg class="h-6 w-6 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                 AI Mentor Assistant
             </h3>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
                 Online
             </span>
         </div>
@@ -194,8 +212,8 @@
         <!-- Input Area -->
         <div class="p-4 border-t border-gray-200 bg-white">
             <form id="ai-chat-form" class="flex gap-2">
-                <input type="text" id="ai-chat-input" class="flex-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" placeholder="Ask for tips or improvement suggestions...">
-                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <input type="text" id="ai-chat-input" class="flex-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" placeholder="Ask for tips or improvement suggestions...">
+                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                     Send
                     <svg class="ml-2 -mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
                 </button>
@@ -216,7 +234,7 @@ document.addEventListener('DOMContentLoaded', function() {
         msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
         
         const bubble = document.createElement('div');
-        bubble.className = `max-w-[75%] rounded-lg px-4 py-2 text-sm ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'}`;
+        bubble.className = `max-w-[75%] rounded-lg px-4 py-2 text-sm ${isUser ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'}`;
         bubble.innerText = text;
         
         msgDiv.appendChild(bubble);

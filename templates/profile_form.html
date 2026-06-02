@@ -4,7 +4,7 @@
 <div class="max-w-3xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     <div class="mb-6 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-900">{% if student %}Edit Student Profile{% else %}New Student Profile{% endif %}</h1>
-        <a href="{{ url_for('dashboard') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1">
+        <a href="{{ url_for('dashboard') }}" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
             Back to Dashboard
         </a>
@@ -33,7 +33,7 @@
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg>
                                 </div>
-                                <input type="text" name="name" id="name" required value="{{ student.name if student else '' }}" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="John Doe">
+                                <input type="text" name="name" id="name" required value="{{ student.name if student else '' }}" class="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-10 sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="John Doe">
                             </div>
                         </div>
 
@@ -41,7 +41,7 @@
                         <div class="sm:col-span-2">
                             <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth *</label>
                             <div class="mt-1">
-                                <input type="date" name="dob" id="dob" required value="{{ student.dob if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" onchange="calculateAge()">
+                                <input type="date" name="dob" id="dob" required value="{{ student.dob if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" onchange="calculateAge()">
                             </div>
                         </div>
 
@@ -57,11 +57,24 @@
                         <div class="sm:col-span-2">
                             <label for="gender" class="block text-sm font-medium text-gray-700">Gender *</label>
                             <div class="mt-1">
-                                <select id="gender" name="gender" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                <select id="gender" name="gender" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
                                     <option value="" disabled {% if not student or not student.get('gender') %}selected{% endif %}>Select Gender</option>
                                     <option value="Male" {% if student and student.get('gender') == 'Male' %}selected{% endif %}>Male</option>
                                     <option value="Female" {% if student and student.get('gender') == 'Female' %}selected{% endif %}>Female</option>
                                     <option value="Other" {% if student and student.get('gender') == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <!-- Blood Group -->
+                        <div class="sm:col-span-2">
+                            <label for="blood_group" class="block text-sm font-medium text-gray-700">Blood Group</label>
+                            <div class="mt-1">
+                                <select id="blood_group" name="blood_group" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                    <option value="" {% if not student or not student.get('blood_group') %}selected{% endif %}>Select Blood Group</option>
+                                    {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                    <option value="{{ bg }}" {% if student and student.get('blood_group') == bg %}selected{% endif %}>{{ bg }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                         </div>
@@ -70,7 +83,7 @@
                         <div class="sm:col-span-3">
                             <label for="phone" class="block text-sm font-medium text-gray-700">Student Phone</label>
                             <div class="mt-1">
-                                <input type="tel" name="phone" id="phone" value="{{ student.get('phone', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="+1234567890">
+                                <input type="tel" name="phone" id="phone" value="{{ student.get('phone', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="+1234567890">
                             </div>
                         </div>
 
@@ -78,7 +91,15 @@
                         <div class="sm:col-span-3">
                             <label for="email" class="block text-sm font-medium text-gray-700">Student Email</label>
                             <div class="mt-1">
-                                <input type="email" name="email" id="email" value="{{ student.get('email', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="student@example.com">
+                                <input type="email" name="email" id="email" value="{{ student.get('email', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="student@example.com">
+                            </div>
+                        </div>
+
+                        <!-- Student Password -->
+                        <div class="sm:col-span-3">
+                            <label for="password" class="block text-sm font-medium text-gray-700">Student Password (for portal login)</label>
+                            <div class="mt-1">
+                                <input type="text" name="password" id="password" value="{{ student.get('password', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="Leave blank to use Student ID">
                             </div>
                         </div>
 
@@ -87,9 +108,9 @@
                             <label for="photo" class="block text-sm font-medium text-gray-700">Student Photo</label>
                             <div class="mt-1 flex items-center gap-4">
                                 {% if student and student.get('photo_url') %}
-                                <img src="{{ student.get('photo_url') }}" alt="Current Photo" class="h-12 w-12 rounded-full object-cover border-2 border-blue-100">
+                                <img src="{{ student.get('photo_url') }}" alt="Current Photo" class="h-12 w-12 rounded-full object-cover border-2 border-emerald-100">
                                 {% endif %}
-                                <input type="file" name="photo" id="photo" accept="image/*" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white cursor-pointer">
+                                <input type="file" name="photo" id="photo" accept="image/*" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border bg-white cursor-pointer">
                             </div>
                             <p class="mt-1 text-sm text-gray-500">Upload a square image (JPG, PNG) for best results.</p>
                         </div>
@@ -105,7 +126,7 @@
                         <div class="sm:col-span-2">
                             <label for="board" class="block text-sm font-medium text-gray-700">Educational Board *</label>
                             <div class="mt-1">
-                                <select id="board" name="board" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                <select id="board" name="board" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
                                     <option value="CBSE" {% if student and student.board == 'CBSE' %}selected{% endif %}>CBSE</option>
                                     <option value="ICSE" {% if student and student.board == 'ICSE' %}selected{% endif %}>ICSE</option>
                                     <option value="State Board" {% if student and student.board == 'State Board' %}selected{% endif %}>State Board</option>
@@ -119,7 +140,7 @@
                         <div class="sm:col-span-2">
                             <label for="student_class" class="block text-sm font-medium text-gray-700">Class *</label>
                             <div class="mt-1">
-                                <select id="student_class" name="student_class" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                <select id="student_class" name="student_class" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
                                     <option value="1st" {% if student and student.student_class == '1st' %}selected{% endif %}>1st Standard</option>
                                     <option value="2nd" {% if student and student.student_class == '2nd' %}selected{% endif %}>2nd Standard</option>
                                     <option value="3rd" {% if student and student.student_class == '3rd' %}selected{% endif %}>3rd Standard</option>
@@ -140,7 +161,7 @@
                         <div class="sm:col-span-2">
                             <label for="division" class="block text-sm font-medium text-gray-700">Division *</label>
                             <div class="mt-1">
-                                <select id="division" name="division" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                <select id="division" name="division" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
                                     <option value="A" {% if student and student.division == 'A' or not student %}selected{% endif %}>Division A</option>
                                     <option value="B" {% if student and student.division == 'B' %}selected{% endif %}>Division B</option>
                                     <option value="C" {% if student and student.division == 'C' %}selected{% endif %}>Division C</option>
@@ -153,7 +174,7 @@
                         <div class="sm:col-span-3">
                             <label for="academic_year" class="block text-sm font-medium text-gray-700">Academic Year *</label>
                             <div class="mt-1">
-                                <input type="text" name="academic_year" id="academic_year" required value="{{ student.get('academic_year', '2026') if student else '2026' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="2026">
+                                <input type="text" name="academic_year" id="academic_year" required value="{{ student.get('academic_year', '2026') if student else '2026' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="2026">
                             </div>
                         </div>
 
@@ -161,7 +182,7 @@
                         <div class="sm:col-span-3">
                             <label for="roll_number" class="block text-sm font-medium text-gray-700">Roll Number *</label>
                             <div class="mt-1">
-                                <input type="number" name="roll_number" id="roll_number" required value="{{ student.get('roll_number', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="15">
+                                <input type="number" name="roll_number" id="roll_number" required value="{{ student.get('roll_number', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="15">
                             </div>
                         </div>
 
@@ -177,7 +198,7 @@
                         <div class="sm:col-span-3">
                             <label for="parent_name" class="block text-sm font-medium text-gray-700">Parent Name *</label>
                             <div class="mt-1">
-                                <input type="text" name="parent_name" id="parent_name" required value="{{ student.get('parent_name', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="Jane Doe">
+                                <input type="text" name="parent_name" id="parent_name" required value="{{ student.get('parent_name', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="Jane Doe">
                             </div>
                         </div>
 
@@ -185,7 +206,7 @@
                         <div class="sm:col-span-3">
                             <label for="relationship" class="block text-sm font-medium text-gray-700">Relationship *</label>
                             <div class="mt-1">
-                                <select id="relationship" name="relationship" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
+                                <select id="relationship" name="relationship" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
                                     <option value="" disabled {% if not student or not student.get('relationship') %}selected{% endif %}>Select Relationship</option>
                                     <option value="Father" {% if student and student.get('relationship') == 'Father' %}selected{% endif %}>Father</option>
                                     <option value="Mother" {% if student and student.get('relationship') == 'Mother' %}selected{% endif %}>Mother</option>
@@ -198,7 +219,7 @@
                         <div class="sm:col-span-2">
                             <label for="parent_phone" class="block text-sm font-medium text-gray-700">Phone *</label>
                             <div class="mt-1">
-                                <input type="tel" name="parent_phone" id="parent_phone" required value="{{ student.get('parent_phone', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="+1234567890">
+                                <input type="tel" name="parent_phone" id="parent_phone" required value="{{ student.get('parent_phone', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="+1234567890">
                             </div>
                         </div>
 
@@ -206,7 +227,7 @@
                         <div class="sm:col-span-2">
                             <label for="parent_email" class="block text-sm font-medium text-gray-700">Email</label>
                             <div class="mt-1">
-                                <input type="email" name="parent_email" id="parent_email" value="{{ student.get('parent_email', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="parent@example.com">
+                                <input type="email" name="parent_email" id="parent_email" value="{{ student.get('parent_email', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="parent@example.com">
                             </div>
                         </div>
 
@@ -214,7 +235,7 @@
                         <div class="sm:col-span-2">
                             <label for="occupation" class="block text-sm font-medium text-gray-700">Occupation</label>
                             <div class="mt-1">
-                                <input type="text" name="occupation" id="occupation" value="{{ student.get('occupation', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="Engineer">
+                                <input type="text" name="occupation" id="occupation" value="{{ student.get('occupation', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="Engineer">
                             </div>
                         </div>
 
@@ -230,7 +251,7 @@
                         <div class="sm:col-span-6">
                             <label for="address" class="block text-sm font-medium text-gray-700">Street Address</label>
                             <div class="mt-1">
-                                <input type="text" name="address" id="address" value="{{ student.get('address', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="123 Main St">
+                                <input type="text" name="address" id="address" value="{{ student.get('address', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="123 Main St">
                             </div>
                         </div>
 
@@ -238,7 +259,7 @@
                         <div class="sm:col-span-2">
                             <label for="city" class="block text-sm font-medium text-gray-700">City</label>
                             <div class="mt-1">
-                                <input type="text" name="city" id="city" value="{{ student.get('city', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="City">
+                                <input type="text" name="city" id="city" value="{{ student.get('city', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="City">
                             </div>
                         </div>
 
@@ -246,7 +267,7 @@
                         <div class="sm:col-span-2">
                             <label for="state" class="block text-sm font-medium text-gray-700">State</label>
                             <div class="mt-1">
-                                <input type="text" name="state" id="state" value="{{ student.get('state', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="State">
+                                <input type="text" name="state" id="state" value="{{ student.get('state', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="State">
                             </div>
                         </div>
 
@@ -254,10 +275,52 @@
                         <div class="sm:col-span-2">
                             <label for="pincode" class="block text-sm font-medium text-gray-700">Pincode</label>
                             <div class="mt-1">
-                                <input type="text" name="pincode" id="pincode" value="{{ student.get('pincode', '') if student else '' }}" class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="123456">
+                                <input type="text" name="pincode" id="pincode" value="{{ student.get('pincode', '') if student else '' }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border" placeholder="123456">
                             </div>
                         </div>
 
+                    </div>
+                </div>
+
+                <!-- Marks & Subjects Card -->
+                <div class="bg-gray-50 p-6 rounded-lg border border-gray-200 mt-6">
+                    <div class="flex justify-between items-center mb-4 border-b pb-2">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Marks & Subjects</h3>
+                        <button type="button" onclick="addSubjectRow()" class="text-sm bg-emerald-100 hover:bg-emerald-200 text-emerald-700 py-1.5 px-3 rounded-md font-medium transition flex items-center gap-1">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Add Subject
+                        </button>
+                    </div>
+                    
+                    <div id="subjects-container" class="space-y-3">
+                        {% if student and student.get('subjects') %}
+                            {% for subj_name, subj_score in student.get('subjects').items() %}
+                            <div class="flex gap-4 items-center subject-row">
+                                <div class="flex-1">
+                                    <input type="text" name="subject_names[]" required value="{{ subj_name }}" class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Subject Name (e.g. Math)">
+                                </div>
+                                <div class="flex-1">
+                                    <input type="number" name="subject_scores[]" required value="{{ subj_score }}" class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Score (0-100)">
+                                </div>
+                                <button type="button" onclick="this.closest('.subject-row').remove()" class="text-red-500 hover:text-red-700 p-2">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Default empty row if no subjects -->
+                            <div class="flex gap-4 items-center subject-row">
+                                <div class="flex-1">
+                                    <input type="text" name="subject_names[]" class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Subject Name (e.g. Math)">
+                                </div>
+                                <div class="flex-1">
+                                    <input type="number" name="subject_scores[]" class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Score (0-100)">
+                                </div>
+                                <button type="button" onclick="this.closest('.subject-row').remove()" class="text-red-500 hover:text-red-700 p-2">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -276,13 +339,31 @@
                             document.getElementById('age').value = age;
                         }
                     }
+
+                    function addSubjectRow() {
+                        const container = document.getElementById('subjects-container');
+                        const row = document.createElement('div');
+                        row.className = 'flex gap-4 items-center subject-row';
+                        row.innerHTML = `
+                            <div class="flex-1">
+                                <input type="text" name="subject_names[]" required class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Subject Name (e.g. Science)">
+                            </div>
+                            <div class="flex-1">
+                                <input type="number" name="subject_scores[]" required class="w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border shadow-sm focus:ring-emerald-500 focus:border-emerald-500" placeholder="Score (0-100)">
+                            </div>
+                            <button type="button" onclick="this.closest('.subject-row').remove()" class="text-red-500 hover:text-red-700 p-2">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        `;
+                        container.appendChild(row);
+                    }
                 </script>
 
                 <div class="pt-5 border-t border-gray-200 flex justify-end gap-3">
-                    <a href="{{ url_for('dashboard') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <a href="{{ url_for('dashboard') }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                         Cancel
                     </a>
-                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                         Save Record
                     </button>
                 </div>

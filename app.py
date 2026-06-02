@@ -5,9 +5,10 @@ import random
 import string
 import csv
 import io
+import sqlite3
 from datetime import datetime, timedelta
 import threading
-from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
@@ -17,6 +18,9 @@ from twilio.rest import Client as TwilioClient
 import sendgrid
 from sendgrid.helpers.mail import Mail as SendGridMail
 from pymongo import MongoClient
+from bson.objectid import ObjectId
+from flask_sqlalchemy import SQLAlchemy
+import gridfs
 
 load_dotenv()
 
@@ -25,12 +29,14 @@ mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(mongo_uri)
 db = client['kalmeshwar']
 users = db['users']
+fs = gridfs.GridFS(db)
 
 # Helper Functions for Notifications
 def send_twilio_sms(phone, message):
-    account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
-    auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
-    from_phone = os.environ.get('TWILIO_PHONE_NUMBER')
+    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    account_sid = config_data.get('TWILIO_ACCOUNT_SID') or os.environ.get('TWILIO_ACCOUNT_SID')
+    auth_token = config_data.get('TWILIO_AUTH_TOKEN') or os.environ.get('TWILIO_AUTH_TOKEN')
+    from_phone = config_data.get('TWILIO_PHONE_NUMBER') or os.environ.get('TWILIO_PHONE_NUMBER')
     
     if not (account_sid and auth_token and from_phone):
         print(f"[MOCK SMS] To: {phone} - Message: {message}")
@@ -48,8 +54,9 @@ def send_twilio_sms(phone, message):
         print(f"Failed to send SMS to {phone}: {e}")
 
 def send_sendgrid_email(email, subject, message_body):
-    api_key = os.environ.get('SENDGRID_API_KEY')
-    from_email = os.environ.get('SENDGRID_FROM_EMAIL')
+    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    api_key = config_data.get('SENDGRID_API_KEY') or os.environ.get('SENDGRID_API_KEY')
+    from_email = config_data.get('SENDGRID_FROM_EMAIL') or os.environ.get('SENDGRID_FROM_EMAIL')
     
     if not (api_key and from_email):
         print(f"[MOCK EMAIL] To: {email} - Subject: {subject} - Body: {message_body}")
@@ -68,20 +75,66 @@ def send_sendgrid_email(email, subject, message_body):
     except Exception as e:
         print(f"Failed to send email to {email}: {e}")
 
-if os.environ.get("GEMINI_API_KEY"):
-    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
+def configure_gemini():
+    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    api_key = config_data.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
+    if api_key:
+        genai.configure(api_key=api_key)
+    return api_key
+
+configure_gemini()
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_change_in_production'
 app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+# SQLAlchemy Configuration for Create Password Feature
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+sql_db = SQLAlchemy(app)
+
+class SQLUser(sql_db.Model):
+    id = sql_db.Column(sql_db.Integer, primary_key=True)
+    email = sql_db.Column(sql_db.String(150), unique=True, nullable=False)
+    password = sql_db.Column(sql_db.String(150), nullable=False)
+
+with app.app_context():
+    sql_db.create_all()
+
 # Flask-Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'kalmeshwargurav1028@gmail.com'
-app.config['MAIL_PASSWORD'] = 'abcdwxyzmnopqrst' # Make sure this is a valid App Password
+def refresh_mail_config():
+    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'kalmeshwargurav1028@gmail.com'
+
+def init_sqlite_db():
+    conn = sqlite3.connect('config.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)''')
+    c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
+    row = c.fetchone()
+    if not row:
+        c.execute("INSERT INTO config (key, value) VALUES ('MAIL_PASSWORD', '12345')")
+        conn.commit()
+    conn.close()
+
+def get_mail_password():
+    try:
+        conn = sqlite3.connect('config.db')
+        c = conn.cursor()
+        c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
+        row = c.fetchone()
+        conn.close()
+        return row[0] if row else '12345'
+    except Exception:
+        return '12345'
+
+init_sqlite_db()
+app.config['MAIL_PASSWORD'] = get_mail_password()
+
+refresh_mail_config()
 
 mail = Mail(app)
 
@@ -118,8 +171,10 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
+    refresh_mail_config()
     subject = "Your OTP Code"
     body = f"Your OTP is: {otp}"
+    print(f"\n--- [DEV] OTP for {email}: {otp} ---\n")
     try:
         msg = Message(subject, sender=app.config.get('MAIL_USERNAME'), recipients=[email])
         msg.body = body
@@ -128,41 +183,90 @@ def send_otp_email(email, otp, is_reset=False):
     except Exception as e:
         print(f"Error sending email via SMTP: {e}")
 
+@app.route('/file/<file_id>')
+def get_file(file_id):
+    try:
+        file = fs.get(ObjectId(file_id))
+        return send_file(
+            io.BytesIO(file.read()),
+            mimetype=file.content_type,
+            download_name=file.filename
+        )
+    except Exception as e:
+        print(f"GridFS error: {e}")
+        return "File not found", 404
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
+        login_type = request.form.get('login_type', 'teacher')
         email = request.form['email']
-        password = request.form['password']
         
-        user = db.users.find_one({'email': email})
-        
-        if user and check_password_hash(user['password'], password):
-            if not user.get('verified'):
-                flash('This account is not verified yet. Please enter the verification code sent to your email.')
-                otp = generate_otp()
-                expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-                session['otp_code'] = otp
-                session['otp_expiry'] = expiry
-                session['otp_email'] = email
-                send_otp_email(email, otp)
-                return redirect(url_for('verify_otp', email=email))
-                
-            session['logged_in'] = True
-            session['user_id'] = str(user['_id'])
-            first = user.get('first_name') or ''
-            last = user.get('last_name') or ''
-            name = f"{first} {last}".strip()
-            session['username'] = name if name else email.split('@')[0]
-            session['email'] = email
-            return redirect(url_for('dashboard'))
+        if login_type == 'student':
+            student_id_or_password = request.form.get('student_id')
+            
+            # Check new student_users auth collection first
+            auth_user = db.student_users.find_one({'email': email})
+            
+            if auth_user and auth_user.get('password') == student_id_or_password:
+                student_id = auth_user.get('student_id')
+                session['logged_in'] = True
+                session['role'] = 'student'
+                session['user_id'] = student_id
+                session['email'] = email
+                # Get name from profile if available
+                profile = db.students.find_one({'id': student_id})
+                session['username'] = profile.get('name') if profile else email.split('@')[0]
+                return redirect(url_for('student_profile', student_id=student_id))
+            
+            # Fallback to checking the students profile collection for older entries
+            student = db.students.find_one({'email': email})
+            
+            if student and (student.get('password') == student_id_or_password or student.get('id') == student_id_or_password):
+                student_id = student.get('id')
+                session['logged_in'] = True
+                session['role'] = 'student'
+                session['user_id'] = student_id
+                session['username'] = student.get('name', email.split('@')[0])
+                session['email'] = email
+                session['photo_url'] = student.get('photo_url', '')
+                return redirect(url_for('student_profile', student_id=student_id))
+            else:
+                flash('Invalid student credentials. Please check your Email and Student ID.')
         else:
-            flash('Invalid credentials. Please try again.')
+            password = request.form.get('password', '')
+            user = db.users.find_one({'email': email})
+            
+            if user and (user['password'] == password or check_password_hash(user['password'], password)):
+                if not user.get('verified'):
+                    flash('This account is not verified yet. Please enter the verification code sent to your email.')
+                    otp = generate_otp()
+                    expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
+                    session['otp_code'] = otp
+                    session['otp_expiry'] = expiry
+                    session['otp_email'] = email
+                    send_otp_email(email, otp)
+                    return redirect(url_for('verify_otp', email=email))
+                    
+                session['logged_in'] = True
+                session['role'] = 'teacher'
+                session['user_id'] = str(user['_id'])
+                first = user.get('first_name') or ''
+                last = user.get('last_name') or ''
+                name = f"{first} {last}".strip()
+                session['username'] = name if name else email.split('@')[0]
+                session['email'] = email
+                session['photo_url'] = user.get('photo_url')
+                return redirect(url_for('dashboard'))
+            else:
+                flash('Invalid credentials. Please try again.')
             
     return render_template('login.html')
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
+        signup_type = request.form.get('signup_type', 'teacher')
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         email = request.form.get('email')
@@ -172,6 +276,46 @@ def signup():
         if password != confirm_password:
             flash('Passwords do not match. Please try again.')
             return render_template('signup.html')
+
+        if signup_type == 'student':
+            existing_student = db.student_users.find_one({'email': email})
+            if existing_student:
+                flash('Student with this email already exists. Please login.')
+                return redirect(url_for('login'))
+                
+            # Create student
+            all_students = list(db.students.find({}, {'id': 1, '_id': 0}))
+            ind_ids = [s.get('id', '') for s in all_students if str(s.get('id', '')).startswith('IND')]
+            max_num = 0
+            for sid in ind_ids:
+                try:
+                    num = int(sid[3:])
+                    if num > max_num:
+                        max_num = num
+                except ValueError:
+                    pass
+            new_id = f"IND{max_num + 1:03d}"
+            
+            
+            # Create auth entry
+            db.student_users.insert_one({
+                'student_id': new_id,
+                'email': email,
+                'password': password
+            })
+            
+            # Create profile entry
+            db.students.insert_one({
+                'id': new_id,
+                'name': f"{first_name} {last_name}".strip(),
+                'email': email,
+                'attendance': '100',
+                'performance': '0',
+            })
+            flash(f'Student account created successfully! Your Student ID is {new_id}. You can now log in.')
+            return redirect(url_for('login'))
+            
+        # Teacher signup flow below
             
         existing_user = db.users.find_one({'email': email})
         
@@ -184,13 +328,11 @@ def signup():
                 
         otp = generate_otp()
         expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        hashed_password = generate_password_hash(password)
-        
         db.users.insert_one({
             'first_name': first_name,
             'last_name': last_name,
             'email': email,
-            'password': hashed_password,
+            'password': password,
             'verified': False
         })
         
@@ -274,23 +416,9 @@ def reset_password():
             flash('Passwords do not match.')
             return render_template('reset_password.html', email=email)
             
-        session_otp = session.get('otp_code')
-        session_email = session.get('otp_email')
-        expiry_str = session.get('otp_expiry')
-        
-        if session_otp and session_otp == otp and session_email == email:
-            if expiry_str and datetime.strptime(expiry_str, '%Y-%m-%d %H:%M:%S.%f') > datetime.now():
-                hashed_password = generate_password_hash(new_password)
-                db.users.update_one({'email': email}, {'$set': {'password': hashed_password}})
-                session.pop('otp_code', None)
-                session.pop('otp_email', None)
-                session.pop('otp_expiry', None)
-                flash('Password changed successfully! You can now log in.')
-                return redirect(url_for('login'))
-            else:
-                flash('OTP has expired.')
-        else:
-            flash('Invalid OTP or session expired.')
+        db.users.update_one({'email': email}, {'$set': {'password': new_password}})
+        flash('Password changed successfully! You can now log in.')
+        return redirect(url_for('login'))
             
     return render_template('reset_password.html', email=email)
 
@@ -300,9 +428,12 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/')
+@app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
     
     students = list(db.students.find({}, {'_id': 0}))
     
@@ -389,7 +520,25 @@ def student_profile(student_id):
             {'month': 'Mar', 'days_present': random.randint(15, 22), 'total_days': 22},
             {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
         ]
+        
     return render_template('student_profile.html', student=student)
+
+@app.route('/student/materials')
+def student_materials():
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    student_id = session.get('user_id')
+    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    if not student:
+        return redirect(url_for('login'))
+        
+    student_class = student.get('student_class')
+    materials = []
+    if student_class:
+        materials = list(db.materials.find({'class': student_class}).sort('uploaded_at', -1))
+        
+    return render_template('student_materials.html', student=student, materials=materials)
 
 @app.route('/student/<student_id>/id_card')
 def student_id_card(student_id):
@@ -404,10 +553,55 @@ def student_id_card(student_id):
         
     return render_template('id_card.html', student=student)
 
+@app.route('/admin_profile', methods=['GET', 'POST'])
+def admin_profile():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
+        
+    user_id = session.get('user_id')
+    from bson.objectid import ObjectId
+    user = db.users.find_one({'_id': ObjectId(user_id)})
+    
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        phone = request.form.get('phone')
+        bio = request.form.get('bio')
+        
+        photo = request.files.get('photo')
+        photo_url = user.get('photo_url', '') if user else ''
+        if photo and photo.filename != '':
+            filename = secure_filename(photo.filename)
+            unique_filename = f"admin_{uuid.uuid4().hex[:8]}_{filename}"
+            # Save directly to GridFS
+            file_id = fs.put(photo, filename=unique_filename, content_type=photo.content_type)
+            photo_url = url_for('get_file', file_id=str(file_id))
+        db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {
+            'first_name': first_name,
+            'last_name': last_name,
+            'phone': phone,
+            'bio': bio,
+            'photo_url': photo_url
+        }})
+        
+        # Update session variables
+        name = f"{first_name} {last_name}".strip()
+        session['username'] = name if name else user.get('email', '').split('@')[0]
+        session['photo_url'] = photo_url
+        
+        flash('Admin profile updated successfully!')
+        return redirect(url_for('admin_profile'))
+        
+    return render_template('admin_profile.html', admin=user)
+
 @app.route('/profile', methods=['GET', 'POST'])
 def profile_form():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
     student_id = request.args.get('id')
     student = db.students.find_one({'id': student_id}, {'_id': 0}) if student_id else None
@@ -419,6 +613,8 @@ def profile_form():
         gender = request.form.get('gender')
         email = request.form.get('email')
         phone = request.form.get('phone')
+        password = request.form.get('password')
+        blood_group = request.form.get('blood_group')
         
         board = request.form.get('board')
         student_class = request.form.get('student_class', '10th')
@@ -437,27 +633,52 @@ def profile_form():
         state = request.form.get('state')
         pincode = request.form.get('pincode')
         
+        subject_names = request.form.getlist('subject_names[]')
+        subject_scores = request.form.getlist('subject_scores[]')
+        subjects = {}
+        for s_name, s_score in zip(subject_names, subject_scores):
+            if s_name.strip():
+                subjects[s_name.strip()] = s_score.strip()
+        
         photo = request.files.get('photo')
         photo_url = student.get('photo_url', '') if student else ''
         if photo and photo.filename != '':
             filename = secure_filename(photo.filename)
             unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
-            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            photo.save(photo_path)
-            photo_url = url_for('static', filename=f'uploads/{unique_filename}')
+            # Save directly to GridFS
+            file_id = fs.put(photo, filename=unique_filename, content_type=photo.content_type)
+            photo_url = url_for('get_file', file_id=str(file_id))
             
         if student:
             # Update existing
             db.students.update_one({'id': student_id}, {'$set': {
-                'name': name, 'dob': dob, 'age': age, 'gender': gender,
+                'name': name, 'dob': dob, 'age': age, 'gender': gender, 'blood_group': blood_group,
                 'email': email, 'phone': phone,
                 'board': board, 'student_class': student_class, 'division': division,
                 'academic_year': academic_year, 'roll_number': roll_number,
                 'parent_name': parent_name, 'relationship': relationship,
                 'parent_phone': parent_phone, 'parent_email': parent_email,
                 'occupation': occupation, 'address': address, 'city': city,
-                'state': state, 'pincode': pincode, 'photo_url': photo_url
+                'state': state, 'pincode': pincode, 'photo_url': photo_url,
+                'subjects': subjects,
+                'password': password if password else student.get('password', '')
             }})
+            
+            # Update or create auth entry
+            if password or email != student.get('email'):
+                auth_user = db.student_users.find_one({'student_id': student_id})
+                if auth_user:
+                    update_data = {}
+                    if email: update_data['email'] = email
+                    if password: update_data['password'] = password
+                    if update_data:
+                        db.student_users.update_one({'student_id': student_id}, {'$set': update_data})
+                elif password:
+                    db.student_users.insert_one({
+                        'student_id': student_id,
+                        'email': email,
+                        'password': password
+                    })
         else:
             # Create new
             all_students = list(db.students.find({}, {'id': 1, '_id': 0}))
@@ -474,7 +695,7 @@ def profile_form():
             
             new_student = {
                 'id': new_id,
-                'name': name, 'dob': dob, 'age': age, 'gender': gender,
+                'name': name, 'dob': dob, 'age': age, 'gender': gender, 'blood_group': blood_group,
                 'email': email, 'phone': phone,
                 'board': board, 'student_class': student_class, 'division': division,
                 'academic_year': academic_year, 'roll_number': roll_number,
@@ -482,9 +703,19 @@ def profile_form():
                 'parent_phone': parent_phone, 'parent_email': parent_email,
                 'occupation': occupation, 'address': address, 'city': city,
                 'state': state, 'pincode': pincode, 'photo_url': photo_url,
-                'attendance': '100', 'performance': '80'
+                'attendance': '100', 'performance': '80',
+                'subjects': subjects,
+                'password': password
             }
             db.students.insert_one(new_student)
+            
+            # Create auth entry if password provided
+            if password:
+                db.student_users.insert_one({
+                    'student_id': new_id,
+                    'email': email,
+                    'password': password
+                })
             
         flash('Student record saved successfully!')
         return redirect(url_for('dashboard'))
@@ -493,12 +724,29 @@ def profile_form():
 
 @app.route('/delete/<student_id>', methods=['POST'])
 def delete_student(student_id):
-    if not session.get('logged_in'):
+    if not session.get('logged_in') or session.get('role') == 'student':
         return redirect(url_for('login'))
         
     db.students.delete_one({'id': student_id})
     flash('Student deleted successfully.')
     return redirect(url_for('dashboard'))
+
+@app.route('/quick_add_mark/<student_id>', methods=['POST'])
+def quick_add_mark(student_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    subject = request.form.get('subject')
+    score = request.form.get('score')
+    
+    if subject and score:
+        db.students.update_one(
+            {'id': student_id},
+            {'$set': {f'subjects.{subject.strip()}': score.strip()}}
+        )
+        flash(f'Mark added successfully for {subject}!')
+        
+    return redirect(url_for('student_profile', student_id=student_id))
 
 @app.route('/api/analyze_student/<student_id>', methods=['POST'])
 def analyze_student(student_id):
@@ -517,8 +765,9 @@ def analyze_student(student_id):
     attendance = float(student.get('attendance', 0))
     name = student.get('name', 'This student')
     
-    if not os.environ.get("GEMINI_API_KEY"):
-        return {'response': f"Hi, I am your AI Mentor! Please set GEMINI_API_KEY to enable real AI capabilities. Profile: {name} (Score: {performance}, Attendance: {attendance}%)."}
+    api_key = configure_gemini()
+    if not api_key:
+        return {'response': f"Hi, I am your AI Mentor! Please set GEMINI_API_KEY in Settings to enable real AI capabilities. Profile: {name} (Score: {performance}, Attendance: {attendance}%)."}
 
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
@@ -556,8 +805,9 @@ def dashboard_ai():
     absent = total - present
     avg_perf = round(sum(float(s.get('performance', 0)) for s in students) / total, 1) if total > 0 else 0
     
-    if not os.environ.get("GEMINI_API_KEY"):
-        return {'response': f"Hello! I am your Dashboard AI Assistant. Please set GEMINI_API_KEY. Roster: {total} students, Avg Perf: {avg_perf}."}
+    api_key = configure_gemini()
+    if not api_key:
+        return {'response': f"Hello! I am your Dashboard AI Assistant. Please set GEMINI_API_KEY in Settings. Roster: {total} students, Avg Perf: {avg_perf}."}
         
     try:
         model = genai.GenerativeModel('gemini-2.5-flash')
@@ -599,8 +849,10 @@ Data: Total Students={total}, Low Attendance (<75%)={low_att_str}, High Performe
 def attendance():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
-    selected_date = request.args.get('date') or request.form.get('date') or datetime.now().strftime('%Y-%m-%d')
+    selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d')) or datetime.now().strftime('%Y-%m-%d')
     students = list(db.students.find({}, {'_id': 0}))
     
     if request.method == 'POST':
@@ -641,6 +893,8 @@ def attendance():
                     send_sendgrid_email(email, "Low Attendance Alert", msg)
         
         flash(f'Attendance for {selected_date} has been saved successfully!')
+        
+        flash('Attendance updated successfully!')
         return redirect(url_for('attendance', date=selected_date))
         
     # GET request
@@ -681,10 +935,70 @@ def attendance():
         stats=stats
     )
 
+@app.route('/materials', methods=['GET', 'POST'])
+def materials():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        title = request.form.get('title')
+        student_class = request.form.get('student_class')
+        subject = request.form.get('subject')
+        file = request.files.get('file')
+        
+        if file and file.filename != '':
+            filename = secure_filename(file.filename)
+            unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+            
+            # Save directly to GridFS
+            file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
+            file_url = url_for('get_file', file_id=str(file_id))
+            
+            # Save to db
+            db.materials.insert_one({
+                'title': title,
+                'class': student_class,
+                'subject': subject,
+                'file_url': file_url,
+                'uploaded_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'teacher_id': session.get('user_id')
+            })
+            
+            # Email Notification
+            students_in_class = list(db.students.find({'student_class': student_class}))
+            if students_in_class:
+                refresh_mail_config()
+                emails_sent = 0
+                for st in students_in_class:
+                    if st.get('email'):
+                        try:
+                            msg = Message(
+                                f"New Study Material: {title}",
+                                sender=app.config.get('MAIL_USERNAME'),
+                                recipients=[st['email']]
+                            )
+                            login_url = url_for('login', _external=True)
+                            msg.body = f"Hello {st.get('name', 'Student')},\n\nNew study material '{title}' for {subject} has been uploaded by your teacher.\n\nPlease log in to your Student Portal to view it: {login_url}\n\nRegards,\nIndus Portal"
+                            mail.send(msg)
+                            emails_sent += 1
+                        except Exception as e:
+                            print(f"Failed to send email to {st['email']}: {e}")
+                
+                flash(f'Material uploaded and {emails_sent} students notified!')
+            else:
+                flash('Material uploaded successfully! No students found in this class to notify.')
+                
+            return redirect(url_for('materials'))
+            
+    all_materials = list(db.materials.find().sort('uploaded_at', -1))
+    return render_template('materials.html', materials=all_materials)
+
 @app.route('/reports')
 def reports():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
     students = list(db.students.find({}, {'_id': 0}))
     
@@ -695,6 +1009,7 @@ def reports():
     class_student_count = {}
     subject_sums = {}
     subject_counts = {}
+    all_subjects = set()
     
     for s in students:
         board = s.get('board', 'Unknown')
@@ -709,8 +1024,16 @@ def reports():
         
         subjects = s.get('subjects', {})
         for subject, score in subjects.items():
-            subject_sums[subject] = subject_sums.get(subject, 0) + float(score)
-            subject_counts[subject] = subject_counts.get(subject, 0) + 1
+            if subject not in all_subjects:
+                all_subjects.add(subject)
+            try:
+                val = float(score)
+                subject_sums[subject] = subject_sums.get(subject, 0) + val
+                subject_counts[subject] = subject_counts.get(subject, 0) + 1
+            except (ValueError, TypeError):
+                pass
+                
+    all_subjects_sorted = sorted(list(all_subjects))
             
     avg_performance_by_class = {}
     for cls, total_perf in class_performance_sum.items():
@@ -739,7 +1062,7 @@ def reports():
         upsert=True
     )
     
-    return render_template('reports.html', students=students, analytics=analytics)
+    return render_template('reports.html', students=students, analytics=analytics, all_subjects=all_subjects_sorted)
 
 @app.route('/ai_box')
 def ai_box():
@@ -835,10 +1158,61 @@ def import_students():
         
     return redirect(url_for('dashboard'))
 
+
+
+@app.route('/create-password', methods=['POST'])
+def create_password():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    if not email or not password:
+        flash('Email and password are required.')
+        return redirect(url_for('signup'))
+        
+    user = SQLUser.query.filter_by(email=email).first()
+    if user:
+        user.password = password
+        flash('User exists. Password updated successfully.')
+    else:
+        new_user = SQLUser(email=email, password=password)
+        sql_db.session.add(new_user)
+        flash('New user created successfully.')
+        
+    sql_db.session.commit()
+    
+    # Dynamically update MAIL_PASSWORD in runtime memory
+    app.config['MAIL_PASSWORD'] = password
+    
+    return redirect(url_for('login'))
+
+@app.route('/update-password', methods=['POST'])
+def update_password():
+    if not session.get('logged_in'):
+        return {'status': 'error', 'message': 'Unauthorized'}, 401
+        
+    data = request.get_json() if request.is_json else request.form
+    new_password = data.get('mail_password')
+    
+    if new_password:
+        try:
+            conn = sqlite3.connect('config.db')
+            c = conn.cursor()
+            c.execute("UPDATE config SET value=? WHERE key='MAIL_PASSWORD'", (new_password,))
+            conn.commit()
+            conn.close()
+            # Dynamically update the app config for current session
+            app.config['MAIL_PASSWORD'] = new_password
+            return {'status': 'success', 'message': 'Password updated successfully'}, 200
+        except Exception as e:
+            return {'status': 'error', 'message': str(e)}, 500
+    return {'status': 'error', 'message': 'No password provided'}, 400
+
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
     
@@ -857,6 +1231,14 @@ def settings():
             
         config_data['school_name'] = school_name
         config_data['academic_year'] = academic_year
+        config_data['MAIL_USERNAME'] = request.form.get('MAIL_USERNAME')
+        config_data['MAIL_PASSWORD'] = request.form.get('MAIL_PASSWORD')
+        config_data['TWILIO_ACCOUNT_SID'] = request.form.get('TWILIO_ACCOUNT_SID')
+        config_data['TWILIO_AUTH_TOKEN'] = request.form.get('TWILIO_AUTH_TOKEN')
+        config_data['TWILIO_PHONE_NUMBER'] = request.form.get('TWILIO_PHONE_NUMBER')
+        config_data['SENDGRID_API_KEY'] = request.form.get('SENDGRID_API_KEY')
+        config_data['SENDGRID_FROM_EMAIL'] = request.form.get('SENDGRID_FROM_EMAIL')
+        config_data['GEMINI_API_KEY'] = request.form.get('GEMINI_API_KEY')
         
         if db.settings.count_documents({}) == 0:
             db.settings.insert_one(config_data)
