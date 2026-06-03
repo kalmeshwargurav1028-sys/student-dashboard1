@@ -12,7 +12,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 from twilio.rest import Client as TwilioClient
 import sendgrid
@@ -79,8 +79,9 @@ def configure_gemini():
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
     api_key = config_data.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
     if api_key:
-        genai.configure(api_key=api_key)
-    return api_key
+        client = genai.Client(api_key=api_key)
+        return client, api_key
+    return None, None
 
 configure_gemini()
 
@@ -768,12 +769,11 @@ def analyze_student(student_id):
     attendance = float(student.get('attendance', 0))
     name = student.get('name', 'This student')
     
-    api_key = configure_gemini()
+    client, api_key = configure_gemini()
     if not api_key:
         return {'response': f"Hi, I am your AI Mentor! Please set GEMINI_API_KEY in Settings to enable real AI capabilities. Profile: {name} (Score: {performance}, Attendance: {attendance}%)."}
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
         system_prompt = f"""You are the "Dashboard AI Mentor," an elite student data analyst integrated directly into the Indus Portal. Your core purpose is to parse student metrics, attendance patterns, and overall academic performance to deliver lightning-fast, high-impact suggestions to educators.
 Follow these absolute operational constraints:
 1. Contextual Relevance: Assume every query relates directly to student health, performance, or portal analytics.
@@ -787,7 +787,10 @@ Student Data: {name} | Performance={performance}/100 | Attendance={attendance}%.
         else:
             prompt = f"{system_prompt}\n\nThe teacher asks: {message}"
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         response_text = response.text.replace('*', '')
         return {'response': response_text}
     except Exception as e:
@@ -808,12 +811,11 @@ def dashboard_ai():
     absent = total - present
     avg_perf = round(sum(float(s.get('performance', 0)) for s in students) / total, 1) if total > 0 else 0
     
-    api_key = configure_gemini()
+    client, api_key = configure_gemini()
     if not api_key:
         return {'response': f"Hello! I am your Dashboard AI Assistant. Please set GEMINI_API_KEY in Settings. Roster: {total} students, Avg Perf: {avg_perf}."}
         
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
         low_att_list = []
         high_perf_list = []
         for s in students:
@@ -841,7 +843,10 @@ Data: Total Students={total}, Low Attendance (<75%)={low_att_str}, High Performe
         else:
             prompt = f"{system_prompt}\nThe teacher asks: {message}"
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+        )
         response_text = response.text.replace('*', '')
         return {'response': response_text}
     except Exception as e:

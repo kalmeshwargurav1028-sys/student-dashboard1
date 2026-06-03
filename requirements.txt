@@ -1,7 +1,7 @@
 Flask==3.0.0
 Flask-Mail==0.10.0
 Werkzeug>=3.0.0
-google-generativeai
+google-genai
 python-dotenv
 twilio
 sendgrid
