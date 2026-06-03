@@ -5,7 +5,6 @@ import random
 import string
 import csv
 import io
-import sqlite3
 from datetime import datetime, timedelta
 import threading
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file
@@ -19,8 +18,8 @@ import sendgrid
 from sendgrid.helpers.mail import Mail as SendGridMail
 from pymongo import MongoClient
 from bson.objectid import ObjectId
-from flask_sqlalchemy import SQLAlchemy
 import gridfs
+
 
 load_dotenv()
 
@@ -87,21 +86,8 @@ configure_gemini()
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key_change_in_production'
-app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), 'static', 'uploads')
-os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
-# SQLAlchemy Configuration for Create Password Feature
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-sql_db = SQLAlchemy(app)
 
-class SQLUser(sql_db.Model):
-    id = sql_db.Column(sql_db.Integer, primary_key=True)
-    email = sql_db.Column(sql_db.String(150), unique=True, nullable=False)
-    password = sql_db.Column(sql_db.String(150), nullable=False)
-
-with app.app_context():
-    sql_db.create_all()
 
 # Flask-Mail configuration
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -110,33 +96,7 @@ def refresh_mail_config():
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
     app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'kalmeshwargurav1028@gmail.com'
 
-def init_sqlite_db():
-    try:
-        conn = sqlite3.connect('config.db')
-        c = conn.cursor()
-        c.execute('''CREATE TABLE IF NOT EXISTS config (key TEXT PRIMARY KEY, value TEXT)''')
-        c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
-        row = c.fetchone()
-        if not row:
-            c.execute("INSERT INTO config (key, value) VALUES ('MAIL_PASSWORD', '12345')")
-            conn.commit()
-        conn.close()
-    except Exception as e:
-        print(f"Warning: Could not initialize SQLite config DB (likely in a serverless environment): {e}")
-
-def get_mail_password():
-    try:
-        conn = sqlite3.connect('config.db')
-        c = conn.cursor()
-        c.execute("SELECT value FROM config WHERE key='MAIL_PASSWORD'")
-        row = c.fetchone()
-        conn.close()
-        return row[0] if row else os.environ.get('MAIL_PASSWORD', '12345')
-    except Exception:
-        return os.environ.get('MAIL_PASSWORD', '12345')
-
-init_sqlite_db()
-app.config['MAIL_PASSWORD'] = get_mail_password()
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '12345')
 
 refresh_mail_config()
 
@@ -1168,52 +1128,7 @@ def import_students():
 
 
 
-@app.route('/create-password', methods=['POST'])
-def create_password():
-    email = request.form.get('email')
-    password = request.form.get('password')
-    
-    if not email or not password:
-        flash('Email and password are required.')
-        return redirect(url_for('signup'))
-        
-    user = SQLUser.query.filter_by(email=email).first()
-    if user:
-        user.password = password
-        flash('User exists. Password updated successfully.')
-    else:
-        new_user = SQLUser(email=email, password=password)
-        sql_db.session.add(new_user)
-        flash('New user created successfully.')
-        
-    sql_db.session.commit()
-    
-    # Dynamically update MAIL_PASSWORD in runtime memory
-    app.config['MAIL_PASSWORD'] = password
-    
-    return redirect(url_for('login'))
 
-@app.route('/update-password', methods=['POST'])
-def update_password():
-    if not session.get('logged_in'):
-        return {'status': 'error', 'message': 'Unauthorized'}, 401
-        
-    data = request.get_json() if request.is_json else request.form
-    new_password = data.get('mail_password')
-    
-    if new_password:
-        try:
-            conn = sqlite3.connect('config.db')
-            c = conn.cursor()
-            c.execute("UPDATE config SET value=? WHERE key='MAIL_PASSWORD'", (new_password,))
-            conn.commit()
-            conn.close()
-            # Dynamically update the app config for current session
-            app.config['MAIL_PASSWORD'] = new_password
-            return {'status': 'success', 'message': 'Password updated successfully'}, 200
-        except Exception as e:
-            return {'status': 'error', 'message': str(e)}, 500
-    return {'status': 'error', 'message': 'No password provided'}, 400
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
@@ -1232,9 +1147,9 @@ def settings():
         if logo and logo.filename != '':
             filename = secure_filename(logo.filename)
             unique_filename = f"logo_{uuid.uuid4().hex[:8]}_{filename}"
-            logo_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-            logo.save(logo_path)
-            config_data['logo_url'] = url_for('static', filename=f'uploads/{unique_filename}')
+            # Save directly to GridFS to support Vercel serverless environment
+            file_id = fs.put(logo, filename=unique_filename, content_type=logo.content_type)
+            config_data['logo_url'] = url_for('get_file', file_id=str(file_id))
             config_data['logo_filename'] = filename
             
         config_data['school_name'] = school_name
