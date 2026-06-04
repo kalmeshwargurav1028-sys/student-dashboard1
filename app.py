@@ -354,8 +354,9 @@ def forgot_password():
     if request.method == 'POST':
         email = request.form.get('email')
         user = db.users.find_one({'email': email})
+        student = db.student_users.find_one({'email': email}) or db.students.find_one({'email': email})
         
-        if user and user.get('verified'):
+        if (user and user.get('verified')) or student:
             otp = generate_otp()
             expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
             session['otp_code'] = otp
@@ -377,13 +378,37 @@ def reset_password():
         new_password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         
+        session_otp = session.get('otp_code')
+        session_email = session.get('otp_email')
+        expiry_str = session.get('otp_expiry')
+        
         if new_password != confirm_password:
             flash('Passwords do not match.')
             return render_template('reset_password.html', email=email)
             
-        db.users.update_one({'email': email}, {'$set': {'password': new_password}})
-        flash('Password changed successfully! You can now log in.')
-        return redirect(url_for('login'))
+        if session_otp and session_otp == otp and session_email == email:
+            if expiry_str and datetime.strptime(expiry_str, '%Y-%m-%d %H:%M:%S.%f') > datetime.now():
+                user = db.users.find_one({'email': email})
+                student = db.student_users.find_one({'email': email})
+                student_profile = db.students.find_one({'email': email})
+                
+                if user:
+                    db.users.update_one({'email': email}, {'$set': {'password': new_password}})
+                if student:
+                    db.student_users.update_one({'email': email}, {'$set': {'password': new_password}})
+                if student_profile:
+                    db.students.update_one({'email': email}, {'$set': {'password': new_password}})
+                    
+                session.pop('otp_code', None)
+                session.pop('otp_email', None)
+                session.pop('otp_expiry', None)
+                
+                flash('Password changed successfully! You can now log in.')
+                return redirect(url_for('login'))
+            else:
+                flash('OTP has expired. Please try again.')
+        else:
+            flash('Incorrect verification code.')
             
     return render_template('reset_password.html', email=email)
 
