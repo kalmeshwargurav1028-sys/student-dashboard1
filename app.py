@@ -90,13 +90,14 @@ app.secret_key = 'super_secret_key_change_in_production'
 
 
 # Flask-Mail configuration
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_SERVER'] = 'smtp.office365.com'
 app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
 def refresh_mail_config():
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'kalmeshwargurav1028@gmail.com'
+    app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'agent4@indusschool.com'
 
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', '12345')
+app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
 
 refresh_mail_config()
 
