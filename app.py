@@ -190,6 +190,14 @@ def update_role_permissions():
             {'$set': data},
             upsert=True
         )
+        
+        log_notification(
+            "System Config Updated", 
+            "Global role permissions have been successfully modified.", 
+            type='success', 
+            role_target='admin'
+        )
+        
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
