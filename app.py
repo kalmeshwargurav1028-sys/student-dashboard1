@@ -798,8 +798,6 @@ def dashboard():
         return redirect(url_for('login'))
     if session.get('role') == 'student':
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
-    if session.get('role') == 'admin':
-        return redirect(url_for('admin_dashboard'))
     
     students = list(db.students.find({}, {'_id': 0}))
     
