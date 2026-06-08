@@ -270,7 +270,7 @@
             // Notification Polling
             if(document.getElementById('notifBadge')) {
                 fetchNotifications();
-                setInterval(fetchNotifications, 30000); // Check every 30s
+                setInterval(fetchNotifications, 300000); // Check every 5 minutes instead of 30s to reduce Vercel lag
             }
 
             if (toggleBtn) {
