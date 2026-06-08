@@ -289,14 +289,41 @@ def get_notifications():
 @app.route('/api/notifications/read/<notif_id>', methods=['POST'])
 def mark_notification_read(notif_id):
     if not session.get('logged_in'):
-        return jsonify({'success': False})
+        return jsonify({'success': False}), 401
     try:
         from bson.objectid import ObjectId
-        user_id = session.get('user_id')
-        db.notifications.update_one({'_id': ObjectId(notif_id)}, {'$addToSet': {'read_by': user_id}})
+        user_id = str(session.get('user_id'))
+        db.notifications.update_one(
+            {'_id': ObjectId(notif_id)},
+            {'$addToSet': {'read_by': user_id}}
+        )
         return jsonify({'success': True})
-    except Exception:
-        return jsonify({'success': False})
+    except:
+        return jsonify({'success': False}), 500
+
+@app.route('/api/notifications/clear_all', methods=['POST'])
+def clear_all_notifications():
+    if not session.get('logged_in'):
+        return jsonify({'success': False}), 401
+    try:
+        user_id = str(session.get('user_id'))
+        role = session.get('role', 'student')
+        
+        # Find all unread notifications for this user
+        query = {
+            'role_target': {'$in': [role, 'all']},
+            'read_by': {'$ne': user_id},
+            'type': {'$ne': 'error'}
+        }
+        
+        # Add the user_id to read_by array for all matching documents
+        db.notifications.update_many(
+            query,
+            {'$addToSet': {'read_by': user_id}}
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/dev/wipe_users')
 def dev_wipe_users():
