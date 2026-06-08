@@ -345,50 +345,50 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-chart-pie w-5 text-gray-400 mr-2"></i> View Dashboard</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_view_dashboard" {% if global_config.get('teacher', {}).get('view_dashboard', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_view_dashboard" {% if global_config.get('student', {}).get('view_dashboard', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-users w-5 text-gray-400 mr-2"></i> Manage Students</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_manage_students" {% if global_config.get('teacher', {}).get('manage_students', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_manage_students" {% if global_config.get('student', {}).get('manage_students', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-book w-5 text-gray-400 mr-2"></i> Edit Study Materials</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_edit_materials" {% if global_config.get('teacher', {}).get('edit_materials', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_edit_materials" {% if global_config.get('student', {}).get('edit_materials', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-calendar-check w-5 text-gray-400 mr-2"></i> Modify Attendance</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_modify_attendance" {% if global_config.get('teacher', {}).get('modify_attendance', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_modify_attendance" {% if global_config.get('student', {}).get('modify_attendance', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-server w-5 text-gray-400 mr-2"></i> View System Health</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_view_system_health" {% if global_config.get('teacher', {}).get('view_system_health', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_view_system_health" {% if global_config.get('student', {}).get('view_system_health', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-bullhorn w-5 text-gray-400 mr-2"></i> Send Announcements</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_send_announcements" {% if global_config.get('teacher', {}).get('send_announcements', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_send_announcements" {% if global_config.get('student', {}).get('send_announcements', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-robot w-5 text-emerald-400 mr-2"></i> AI Insights</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_ai_insights" {% if global_config.get('teacher', {}).get('ai_insights', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_ai_insights" {% if global_config.get('student', {}).get('ai_insights', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
                     </tr>
                 </tbody>
             </table>
             
             <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end">
-                <button class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                <button onclick="saveRolePermissions()" class="px-6 py-2 bg-indigo-600 text-white font-bold rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                     Save Changes
                 </button>
             </div>
@@ -628,6 +628,44 @@
             }
         } catch(err) {
             alert('Failed to delete announcement.');
+        }
+    }
+    async function saveRolePermissions() {
+        const payload = {
+            teacher: {
+                view_dashboard: document.getElementById('teacher_view_dashboard').checked,
+                manage_students: document.getElementById('teacher_manage_students').checked,
+                edit_materials: document.getElementById('teacher_edit_materials').checked,
+                modify_attendance: document.getElementById('teacher_modify_attendance').checked,
+                view_system_health: document.getElementById('teacher_view_system_health').checked,
+                send_announcements: document.getElementById('teacher_send_announcements').checked,
+                ai_insights: document.getElementById('teacher_ai_insights').checked
+            },
+            student: {
+                view_dashboard: document.getElementById('student_view_dashboard').checked,
+                manage_students: document.getElementById('student_manage_students').checked,
+                edit_materials: document.getElementById('student_edit_materials').checked,
+                modify_attendance: document.getElementById('student_modify_attendance').checked,
+                view_system_health: document.getElementById('student_view_system_health').checked,
+                send_announcements: document.getElementById('student_send_announcements').checked,
+                ai_insights: document.getElementById('student_ai_insights').checked
+            }
+        };
+
+        try {
+            const res = await fetch('/api/role_permissions', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if(data.success) {
+                alert('Role permissions saved successfully!');
+            } else {
+                alert('Error saving permissions: ' + data.error);
+            }
+        } catch(err) {
+            alert('Failed to connect to the server.');
         }
     }
 </script>

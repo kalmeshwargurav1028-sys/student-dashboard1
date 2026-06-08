@@ -125,9 +125,10 @@ app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_produc
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 @app.context_processor
-def inject_announcements():
+def inject_global_context():
+    context = {'active_announcements': [], 'role_permissions': {}}
     if not session.get('logged_in'):
-        return dict(active_announcements=[])
+        return context
     
     role = session.get('role', 'student')
     target = ['all']
@@ -142,10 +143,50 @@ def inject_announcements():
             'audience': {'$in': target},
             'expiry_date': {'$gte': today_str}
         }).sort('date_sent', -1))
-        return dict(active_announcements=announcements)
+        context['active_announcements'] = announcements
     except Exception as e:
         print(f"Error fetching announcements: {e}")
-        return dict(active_announcements=[])
+        
+    try:
+        if role == 'admin':
+            context['role_permissions'] = {
+                'view_dashboard': True,
+                'manage_students': True,
+                'edit_materials': True,
+                'modify_attendance': True,
+                'view_system_health': True,
+                'send_announcements': True,
+                'ai_insights': True
+            }
+        else:
+            global_config = db.role_permissions.find_one({'_id': 'global_config'})
+            if global_config and role in global_config:
+                context['role_permissions'] = global_config[role]
+            else:
+                # Defaults
+                if role == 'teacher':
+                    context['role_permissions'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
+                else:
+                    context['role_permissions'] = {'view_dashboard': True}
+    except Exception as e:
+        print(f"Error fetching role permissions: {e}")
+
+    return context
+
+@app.route('/api/role_permissions', methods=['POST'])
+def update_role_permissions():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        data = request.json
+        db.role_permissions.update_one(
+            {'_id': 'global_config'},
+            {'$set': data},
+            upsert=True
+        )
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/api/announcements', methods=['POST'])
 def create_announcement():
@@ -826,7 +867,13 @@ def admin_dashboard():
     announcements = list(db.announcements.find().sort('date_sent', -1))
     now_time = datetime.now().strftime('%Y-%m-%d')
     
-    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time)
+    # Fetch role permissions
+    global_config = db.role_permissions.find_one({'_id': 'global_config'}) or {
+        'teacher': {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True},
+        'student': {'view_dashboard': True}
+    }
+    
+    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
