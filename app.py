@@ -94,10 +94,19 @@ app.config['MAIL_SERVER'] = 'smtp.office365.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 def refresh_mail_config():
-    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    try:
+        config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    except Exception:
+        config_data = {}
+    
     app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'agent4@indusschool.com'
-
-app.config['MAIL_PASSWORD'] = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
+    
+    # Prioritize config_data, then env var, but override if env var looks like the old gmail app password (16 chars, lowercase)
+    env_pw = os.environ.get('MAIL_PASSWORD')
+    if env_pw and len(env_pw) == 16 and env_pw.islower():
+        env_pw = None # Ignore likely old gmail app password
+        
+    app.config['MAIL_PASSWORD'] = config_data.get('MAIL_PASSWORD') or env_pw or 'Agent@2026'
 
 refresh_mail_config()
 
@@ -145,8 +154,10 @@ def send_otp_email(email, otp, is_reset=False):
         msg.body = body
         mail.send(msg)
         print(f"Sent OTP email to {email}")
+        return True
     except Exception as e:
         print(f"Error sending email via SMTP: {e}")
+        return False
 
 @app.route('/file/<file_id>')
 def get_file(file_id):
@@ -210,7 +221,9 @@ def login():
                     session['otp_code'] = otp
                     session['otp_expiry'] = expiry
                     session['otp_email'] = email
-                    send_otp_email(email, otp)
+                    success = send_otp_email(email, otp)
+                    if not success:
+                        flash('Failed to send OTP email due to server error. Please try again later.')
                     return redirect(url_for('verify_otp', email=email))
                     
                 session['logged_in'] = True
@@ -304,9 +317,12 @@ def signup():
         session['otp_code'] = otp
         session['otp_expiry'] = expiry
         session['otp_email'] = email
-        send_otp_email(email, otp)
+        success = send_otp_email(email, otp)
         
-        flash('Verification code sent to your email! Please verify below.')
+        if success:
+            flash('Verification code sent to your email! Please verify below.')
+        else:
+            flash('Failed to send verification code email due to server configuration error. Please contact support.')
         return redirect(url_for('verify_otp', email=email))
         
     return render_template('signup.html')
@@ -362,8 +378,11 @@ def forgot_password():
             session['otp_code'] = otp
             session['otp_expiry'] = expiry
             session['otp_email'] = email
-            send_otp_email(email, otp, is_reset=True)
-            flash('Reset code sent to your email.')
+            success = send_otp_email(email, otp, is_reset=True)
+            if success:
+                flash('Reset code sent to your email.')
+            else:
+                flash('Failed to send reset code email. Please contact support.')
             return redirect(url_for('reset_password', email=email))
         else:
             flash('Email not found or not verified.')
