@@ -232,9 +232,9 @@ def login():
         if login_type == 'admin':
             if db.admins.count_documents({}) == 0:
                 db.admins.insert_one({
-                    'email': 'admin@indusschool.com',
+                    'email': 'jayakumar.r@indusschool.com',
                     'password': 'Admin@2026',
-                    'name': 'System Admin'
+                    'name': 'Jayakumar R'
                 })
                 
             admin = db.admins.find_one({'email': email})
