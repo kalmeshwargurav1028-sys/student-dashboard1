@@ -219,10 +219,7 @@ def create_announcement():
         })
         
         # Log notifications for the bell dropdown
-        if audience in ('all', 'teachers'):
-            log_notification(f"📢 {title}", body, type='info', role_target='teacher')
-        if audience in ('all', 'students'):
-            log_notification(f"📢 {title}", body, type='info', role_target='student')
+        log_notification(f"📢 {title}", body, type='info', role_target=audience)
             
         return jsonify({'success': True})
     except Exception as e:
@@ -245,7 +242,7 @@ def log_notification(title, message, type='info', role_target='admin'):
             'message': message,
             'type': type,
             'role_target': role_target,
-            'read': False,
+            'read_by': [],
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
     except Exception as e:
@@ -256,8 +253,20 @@ def get_notifications():
     if not session.get('logged_in'):
         return jsonify([])
     role = session.get('role', 'student')
-    # For now, we mainly target admin, but keep it flexible
-    notifs = list(db.notifications.find({'role_target': role, 'read': False}).sort('timestamp', -1).limit(10))
+    user_id = session.get('user_id')
+    
+    target_roles = [role, 'all']
+    if role == 'admin':
+        target_roles.append('teacher')
+        
+    notifs = list(db.notifications.find({
+        'role_target': {'$in': target_roles},
+        'read_by': {'$ne': user_id}
+    }).sort('timestamp', -1).limit(10))
+    
+    # Fallback to hide old notifications that were globally marked 'read': True
+    notifs = [n for n in notifs if not n.get('read', False)]
+    
     for n in notifs:
         n['_id'] = str(n['_id'])
     return jsonify(notifs)
@@ -268,7 +277,8 @@ def mark_notification_read(notif_id):
         return jsonify({'success': False})
     try:
         from bson.objectid import ObjectId
-        db.notifications.update_one({'_id': ObjectId(notif_id)}, {'$set': {'read': True}})
+        user_id = session.get('user_id')
+        db.notifications.update_one({'_id': ObjectId(notif_id)}, {'$addToSet': {'read_by': user_id}})
         return jsonify({'success': True})
     except Exception:
         return jsonify({'success': False})
