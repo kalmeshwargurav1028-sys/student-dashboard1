@@ -124,49 +124,7 @@
                     </div>
                 </div>
 
-                <!-- Account Settings Panel -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
-                        <i class="fa-solid fa-gear text-gray-400 mr-2"></i> Account Settings
-                    </h3>
-                    
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div>
-                            <h4 class="text-sm font-bold text-gray-900">Subscribe Library</h4>
-                            <p class="text-xs text-gray-500 mt-0.5">Enable access to E-Library features</p>
-                            <p class="text-xs font-semibold text-emerald-600 mt-2 flex items-center" id="libStatus">
-                                <i class="fa-solid fa-circle-check mr-1"></i> Subscribed
-                            </p>
-                        </div>
-                        
-                        <!-- Toggle Switch -->
-                        <button type="button" onclick="toggleSetting('library')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ring-2 ring-emerald-500 ring-offset-2 {{ 'bg-emerald-500' if admin.get('subscribe_library', True) else 'bg-gray-200' }}" id="libraryToggle">
-                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ 'translate-x-5' if admin.get('subscribe_library', True) else 'translate-x-0' }}" id="libraryKnob"></span>
-                        </button>
-                    </div>
-                </div>
 
-                <!-- General Settings Panel -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
-                        <i class="fa-solid fa-sliders text-gray-400 mr-2"></i> General Settings
-                    </h3>
-                    
-                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
-                        <div>
-                            <h4 class="text-sm font-bold text-gray-900">Mute Notifications</h4>
-                            <p class="text-xs text-gray-500 mt-0.5">Turn off notification sounds</p>
-                            <p class="text-xs font-semibold text-emerald-600 mt-2 flex items-center" id="notifStatus">
-                                <i class="fa-solid fa-volume-high mr-1"></i> Sound Enabled
-                            </p>
-                        </div>
-                        
-                        <!-- Toggle Switch -->
-                        <button type="button" onclick="toggleSetting('notifications')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ring-2 ring-gray-400 ring-offset-2 {{ 'bg-emerald-500' if admin.get('mute_notifications', False) else 'bg-gray-200' }}" id="notifToggle">
-                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ 'translate-x-5' if admin.get('mute_notifications', False) else 'translate-x-0' }}" id="notifKnob"></span>
-                        </button>
-                    </div>
-                </div>
 
             </div>
         </div>
