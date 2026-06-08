@@ -108,9 +108,9 @@
                 <a href="{{ url_for('forgot_password') }}" class="flex items-center justify-center text-sm text-[#10b981] hover:text-emerald-700 font-medium transition-colors">
                     <i class="fa-solid fa-key mr-2"></i> Forgot Password
                 </a>
-                <a href="#" class="flex items-center justify-center text-sm text-red-500 hover:text-red-600 font-medium transition-colors">
+                <button type="button" onclick="toggleHelpModal()" class="flex items-center justify-center w-full text-sm text-red-500 hover:text-red-600 font-medium transition-colors">
                     <i class="fa-regular fa-circle-question mr-2"></i> Need help?
-                </a>
+                </button>
             </div>
 
             <!-- Optional signup link -->
@@ -118,6 +118,69 @@
                 <a href="{{ url_for('signup') }}" class="text-xs text-gray-500 hover:text-gray-700 underline">Create New Account</a>
             </div>
             
+        </div>
+    </div>
+
+    <!-- Need Help Modal -->
+    <div id="helpModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <!-- Background overlay -->
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-gray-900 bg-opacity-40 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="toggleHelpModal()"></div>
+            
+            <!-- Modal panel -->
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-center mb-5">
+                        <h3 class="text-xl leading-6 font-bold text-gray-900 flex items-center" id="modal-title">
+                            <i class="fa-regular fa-circle-question text-[#3b82f6] mr-2"></i> Need Help?
+                        </h3>
+                        <button onclick="toggleHelpModal()" class="text-gray-400 hover:text-gray-500 focus:outline-none">
+                            <i class="fa-solid fa-xmark text-lg"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Technical Support -->
+                        <div class="border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
+                            <h4 class="text-sm font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-headset text-[#3b82f6] mr-2"></i> Technical Support
+                            </h4>
+                            <p class="text-xs text-gray-500 mt-1 mb-2">For technical support and login issues, please contact:</p>
+                            <a href="mailto:support@eaglerobotlab.com" class="text-sm text-gray-700 hover:text-[#3b82f6] flex items-center transition-colors">
+                                <i class="fa-regular fa-envelope mr-2"></i> support@eaglerobotlab.com
+                            </a>
+                        </div>
+                        
+                        <!-- Account Creation -->
+                        <div class="border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
+                            <h4 class="text-sm font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-user-plus text-[#3b82f6] mr-2"></i> Account Creation
+                            </h4>
+                            <p class="text-xs text-gray-500 mt-1 mb-2">To request a new account or access permissions:</p>
+                            <div class="text-sm text-gray-700">
+                                <span class="font-bold text-gray-900">System Administrator:</span> <a href="mailto:jayakumar.r@indusschool.com" class="hover:text-[#3b82f6] transition-colors">jayakumar.r@indusschool.com</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Academic -->
+                        <div class="border border-gray-200 rounded-xl p-4 hover:border-blue-200 hover:bg-blue-50/30 transition-colors">
+                            <h4 class="text-sm font-bold text-gray-900 flex items-center">
+                                <i class="fa-solid fa-graduation-cap text-[#3b82f6] mr-2"></i> Academic
+                            </h4>
+                            <p class="text-xs text-gray-500 mt-1 mb-2">For academic concerns or password resets:</p>
+                            <div class="text-sm text-gray-700">
+                                <span class="font-bold text-gray-900">Academic Team:</span> <a href="mailto:coordinator.erl@indusschool.com" class="hover:text-[#3b82f6] transition-colors">coordinator.erl@indusschool.com</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 flex justify-end">
+                    <button type="button" onclick="toggleHelpModal()" class="inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-6 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -159,6 +222,15 @@
                 studentIdField.classList.add('hidden');
                 studentIdInput.required = false;
                 if(signupLink) signupLink.classList.add('hidden');
+            }
+        }
+        
+        function toggleHelpModal() {
+            const modal = document.getElementById('helpModal');
+            if (modal.classList.contains('hidden')) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
             }
         }
         
