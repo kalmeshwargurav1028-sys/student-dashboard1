@@ -719,19 +719,17 @@ def super_admin_profile():
     admin = db.admins.find_one({'_id': ObjectId(session.get('user_id'))})
     return render_template('admin_profile.html', admin=admin)
 
-@app.route('/admin/update_setting', methods=['POST'])
-def admin_update_setting():
+@app.route('/super_admin_update_profile', methods=['POST'])
+def super_admin_update_profile():
     if not session.get('logged_in') or session.get('role') != 'admin':
         return jsonify({'success': False}), 403
         
-    setting = request.form.get('setting')
-    value = request.form.get('value') == 'true'
-    
-    field = 'subscribe_library' if setting == 'library' else 'mute_notifications'
+    phone = request.form.get('phone')
+    department = request.form.get('department')
     
     db.admins.update_one(
         {'_id': ObjectId(session.get('user_id'))},
-        {'$set': {field: value}}
+        {'$set': {'phone': phone, 'department': department}}
     )
     return jsonify({'success': True})
 

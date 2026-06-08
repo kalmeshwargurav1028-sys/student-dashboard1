@@ -37,7 +37,7 @@
                             <i class="fa-regular fa-id-card text-gray-400 mr-2"></i> Personal Information
                         </h3>
                         
-                        <div class="space-y-4">
+                        <form id="personalInfoForm" onsubmit="savePersonalInfo(event)" class="space-y-4">
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
                                 <div class="w-full bg-gray-100 rounded-md py-2 px-3 text-sm text-gray-700">
@@ -47,7 +47,7 @@
                             
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Phone Number</label>
-                                <input type="text" value="+91 9876543210" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <input type="text" id="phoneInput" name="phone" value="{{ admin.phone if admin.get('phone') else '+91 9876543210' }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
 
                             <div>
@@ -80,9 +80,15 @@
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Department</label>
-                                <input type="text" value="ERL" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <input type="text" id="deptInput" name="department" value="{{ admin.department if admin.get('department') else 'ERL' }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
-                        </div>
+
+                            <div class="pt-2">
+                                <button type="submit" id="saveProfileBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save Information
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -132,67 +138,53 @@
 </div>
 
 <script>
-    async function toggleSetting(setting) {
-        let isEnabled = false;
+    async function savePersonalInfo(event) {
+        event.preventDefault();
         
-        if (setting === 'library') {
-            const toggle = document.getElementById('libraryToggle');
-            const knob = document.getElementById('libraryKnob');
-            const status = document.getElementById('libStatus');
-            
-            isEnabled = !toggle.classList.contains('bg-emerald-500');
-            
-            if (isEnabled) {
-                toggle.classList.remove('bg-gray-200');
-                toggle.classList.add('bg-emerald-500');
-                knob.classList.add('translate-x-5');
-                knob.classList.remove('translate-x-0');
-                status.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> Subscribed';
-                status.classList.replace('text-gray-500', 'text-emerald-600');
-            } else {
-                toggle.classList.add('bg-gray-200');
-                toggle.classList.remove('bg-emerald-500');
-                knob.classList.remove('translate-x-5');
-                knob.classList.add('translate-x-0');
-                status.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i> Unsubscribed';
-                status.classList.replace('text-emerald-600', 'text-gray-500');
-            }
-        } else if (setting === 'notifications') {
-            const toggle = document.getElementById('notifToggle');
-            const knob = document.getElementById('notifKnob');
-            const status = document.getElementById('notifStatus');
-            
-            isEnabled = !toggle.classList.contains('bg-emerald-500');
-            
-            if (isEnabled) {
-                toggle.classList.remove('bg-gray-200');
-                toggle.classList.add('bg-emerald-500');
-                knob.classList.add('translate-x-5');
-                knob.classList.remove('translate-x-0');
-                status.innerHTML = '<i class="fa-solid fa-volume-xmark mr-1"></i> Muted';
-                status.classList.replace('text-emerald-600', 'text-gray-500');
-            } else {
-                toggle.classList.add('bg-gray-200');
-                toggle.classList.remove('bg-emerald-500');
-                knob.classList.remove('translate-x-5');
-                knob.classList.add('translate-x-0');
-                status.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> Sound Enabled';
-                status.classList.replace('text-gray-500', 'text-emerald-600');
-            }
-        }
+        const btn = document.getElementById('saveProfileBtn');
+        const phone = document.getElementById('phoneInput').value;
+        const department = document.getElementById('deptInput').value;
         
-        // Save to DB
+        // Visual feedback
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Saving...';
+        btn.classList.add('opacity-75', 'cursor-not-allowed');
+        btn.disabled = true;
+        
         try {
             const formData = new FormData();
-            formData.append('setting', setting);
-            formData.append('value', isEnabled);
+            formData.append('phone', phone);
+            formData.append('department', department);
             
-            await fetch('{{ url_for("admin_update_setting") }}', {
+            const response = await fetch('{{ url_for("super_admin_update_profile") }}', {
                 method: 'POST',
                 body: formData
             });
+            
+            if (response.ok) {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved Successfully!';
+                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-emerald-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-emerald-600', 'hover:bg-blue-700');
+                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    btn.disabled = false;
+                }, 2000);
+            }
         } catch(e) {
-            console.error('Failed to save setting', e);
+            console.error('Failed to save profile', e);
+            btn.innerHTML = '<i class="fa-solid fa-xmark mr-2"></i> Error Saving';
+            btn.classList.replace('bg-blue-600', 'bg-red-500');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-red-500', 'bg-blue-600');
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btn.disabled = false;
+            }, 2000);
         }
     }
 </script>
