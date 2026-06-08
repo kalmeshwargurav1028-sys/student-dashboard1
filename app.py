@@ -209,6 +209,49 @@ def update_role_permissions():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/roles/add', methods=['POST'])
+def add_custom_role():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        data = request.json
+        role_name = data.get('role')
+        if not role_name or not isinstance(role_name, str):
+            return jsonify({'success': False, 'error': 'Invalid role name'}), 400
+            
+        role_name = role_name.strip().lower()
+        if role_name == 'admin' or role_name == '_id':
+            return jsonify({'success': False, 'error': 'Reserved role name'}), 400
+            
+        # Default permissions for a new role
+        default_permissions = {
+            'view_dashboard': False,
+            'manage_students': False,
+            'edit_materials': False,
+            'modify_attendance': False,
+            'view_system_health': False,
+            'send_announcements': False,
+            'ai_insights': False
+        }
+        
+        # Upsert the new role into global_config
+        db.role_permissions.update_one(
+            {'_id': 'global_config'},
+            {'$set': {role_name: default_permissions}},
+            upsert=True
+        )
+        
+        log_notification(
+            "Custom Role Added", 
+            f"A new role '{role_name}' has been created.", 
+            type='success', 
+            role_target='admin'
+        )
+        
+        return jsonify({'success': True, 'role': role_name})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/announcements', methods=['POST'])
 def create_announcement():
     if not session.get('logged_in') or session.get('role') != 'admin':

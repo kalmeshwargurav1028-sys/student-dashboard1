@@ -326,63 +326,77 @@
                 <h2 class="text-xl font-bold text-gray-900">Role Permissions</h2>
                 <p class="text-sm text-gray-500 mt-1">Define and control system access levels for different user groups.</p>
             </div>
-            <button class="px-4 py-2 bg-indigo-50 text-indigo-600 font-medium rounded-lg hover:bg-indigo-100 transition-colors flex items-center">
+            <button onclick="addCustomRole()" class="px-4 py-2 bg-indigo-50 text-indigo-600 font-medium rounded-lg hover:bg-indigo-100 transition-colors flex items-center">
                 <i class="fa-solid fa-plus mr-2"></i> Add Custom Role
             </button>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden relative">
             <table class="min-w-full divide-y divide-gray-200">
+                {% set custom_roles = [] %}
+                {% for role in global_config.keys() %}
+                    {% if role != '_id' and role != 'admin' %}
+                        {% set _ = custom_roles.append(role) %}
+                    {% endif %}
+                {% endfor %}
                 <thead class="bg-gray-50">
                     <tr>
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Feature Module</th>
                         <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Admin</th>
-                        <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Teacher</th>
-                        <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Student</th>
+                        {% for role in custom_roles %}
+                        <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">{{ role }}</th>
+                        {% endfor %}
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-chart-pie w-5 text-gray-400 mr-2"></i> View Dashboard</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_view_dashboard" {% if global_config.get('teacher', {}).get('view_dashboard', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_view_dashboard" {% if global_config.get('student', {}).get('view_dashboard', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="view_dashboard" {% if global_config.get(role, {}).get('view_dashboard') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-users w-5 text-gray-400 mr-2"></i> Manage Students</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_manage_students" {% if global_config.get('teacher', {}).get('manage_students', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_manage_students" {% if global_config.get('student', {}).get('manage_students', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="manage_students" {% if global_config.get(role, {}).get('manage_students') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-book w-5 text-gray-400 mr-2"></i> Edit Study Materials</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_edit_materials" {% if global_config.get('teacher', {}).get('edit_materials', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_edit_materials" {% if global_config.get('student', {}).get('edit_materials', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="edit_materials" {% if global_config.get(role, {}).get('edit_materials') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-calendar-check w-5 text-gray-400 mr-2"></i> Modify Attendance</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_modify_attendance" {% if global_config.get('teacher', {}).get('modify_attendance', True) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_modify_attendance" {% if global_config.get('student', {}).get('modify_attendance', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="modify_attendance" {% if global_config.get(role, {}).get('modify_attendance') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-server w-5 text-gray-400 mr-2"></i> View System Health</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_view_system_health" {% if global_config.get('teacher', {}).get('view_system_health', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_view_system_health" {% if global_config.get('student', {}).get('view_system_health', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="view_system_health" {% if global_config.get(role, {}).get('view_system_health') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-bullhorn w-5 text-gray-400 mr-2"></i> Send Announcements</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_send_announcements" {% if global_config.get('teacher', {}).get('send_announcements', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_send_announcements" {% if global_config.get('student', {}).get('send_announcements', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="send_announcements" {% if global_config.get(role, {}).get('send_announcements') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex items-center"><i class="fa-solid fa-robot w-5 text-emerald-400 mr-2"></i> AI Insights</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" checked disabled class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-not-allowed"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="teacher_ai_insights" {% if global_config.get('teacher', {}).get('ai_insights', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" id="student_ai_insights" {% if global_config.get('student', {}).get('ai_insights', False) %}checked{% endif %} class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% for role in custom_roles %}
+                        <td class="px-6 py-4 whitespace-nowrap text-center"><input type="checkbox" data-role="{{ role }}" data-perm="ai_insights" {% if global_config.get(role, {}).get('ai_insights') %}checked{% endif %} class="perm-checkbox h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded cursor-pointer"></td>
+                        {% endfor %}
                     </tr>
                 </tbody>
             </table>
@@ -630,27 +644,40 @@
             alert('Failed to delete announcement.');
         }
     }
-    async function saveRolePermissions() {
-        const payload = {
-            teacher: {
-                view_dashboard: document.getElementById('teacher_view_dashboard').checked,
-                manage_students: document.getElementById('teacher_manage_students').checked,
-                edit_materials: document.getElementById('teacher_edit_materials').checked,
-                modify_attendance: document.getElementById('teacher_modify_attendance').checked,
-                view_system_health: document.getElementById('teacher_view_system_health').checked,
-                send_announcements: document.getElementById('teacher_send_announcements').checked,
-                ai_insights: document.getElementById('teacher_ai_insights').checked
-            },
-            student: {
-                view_dashboard: document.getElementById('student_view_dashboard').checked,
-                manage_students: document.getElementById('student_manage_students').checked,
-                edit_materials: document.getElementById('student_edit_materials').checked,
-                modify_attendance: document.getElementById('student_modify_attendance').checked,
-                view_system_health: document.getElementById('student_view_system_health').checked,
-                send_announcements: document.getElementById('student_send_announcements').checked,
-                ai_insights: document.getElementById('student_ai_insights').checked
+    async function addCustomRole() {
+        const roleName = prompt("Enter the name for the new custom role (e.g., 'Parent' or 'Librarian'):");
+        if(!roleName || !roleName.trim()) return;
+        
+        try {
+            const res = await fetch('/api/roles/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ role: roleName.trim() })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                alert(`Role '${data.role}' created successfully! Reloading page to apply changes.`);
+                window.location.reload();
+            } else {
+                alert('Error creating role: ' + data.error);
             }
-        };
+        } catch(e) {
+            alert('Failed to create custom role.');
+        }
+    }
+
+    async function saveRolePermissions() {
+        const payload = {};
+        
+        // Dynamically scrape all checkboxes
+        document.querySelectorAll('.perm-checkbox').forEach(cb => {
+            const role = cb.getAttribute('data-role');
+            const perm = cb.getAttribute('data-perm');
+            
+            if(!payload[role]) payload[role] = {};
+            payload[role][perm] = cb.checked;
+        });
 
         try {
             const btn = document.querySelector('button[onclick="saveRolePermissions()"]');
