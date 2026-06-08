@@ -26,8 +26,15 @@ from email.mime.text import MIMEText
 load_dotenv()
 
 # Setup MongoDB
+# Vercel Serverless Optimization: Restrict maxPoolSize so 940 simultaneous users don't crash MongoDB Atlas free tier (500 conn limit)
 mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(mongo_uri)
+client = MongoClient(
+    mongo_uri, 
+    maxPoolSize=1, 
+    minPoolSize=0, 
+    maxIdleTimeMS=10000, 
+    serverSelectionTimeoutMS=5000
+)
 db = client['kalmeshwar']
 users = db['users']
 fs = gridfs.GridFS(db)
