@@ -7,7 +7,7 @@ import csv
 import io
 from datetime import datetime, timedelta
 import threading
-from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
