@@ -770,7 +770,10 @@ def super_admin_profile():
         return redirect(url_for('login'))
         
     admin = db.admins.find_one({'_id': ObjectId(session.get('user_id'))})
-    return render_template('admin_profile.html', admin=admin)
+    if not admin:
+        admin = db.users.find_one({'_id': ObjectId(session.get('user_id'))})
+        
+    return render_template('admin_profile.html', admin=admin or {})
 
 @app.route('/super_admin_update_profile', methods=['POST'])
 def super_admin_update_profile():
@@ -780,10 +783,15 @@ def super_admin_update_profile():
     phone = request.form.get('phone')
     department = request.form.get('department')
     
-    db.admins.update_one(
+    result = db.admins.update_one(
         {'_id': ObjectId(session.get('user_id'))},
         {'$set': {'phone': phone, 'department': department}}
     )
+    if result.matched_count == 0:
+        db.users.update_one(
+            {'_id': ObjectId(session.get('user_id'))},
+            {'$set': {'phone': phone, 'department': department}}
+        )
     return jsonify({'success': True})
 
 @app.route('/admin/reset_password', methods=['POST'])
