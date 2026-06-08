@@ -244,7 +244,7 @@
                         <p class="text-xs text-gray-400 mt-1">Class: {{ m.class }}</p>
                     </div>
                     <div>
-                        <a href="{{ url_for('get_file', file_id=m.file_id) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
+                        <a href="{{ m.file_url or url_for('get_file', file_id=m.file_id|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
                     </div>
                 </div>
                 {% endfor %}
