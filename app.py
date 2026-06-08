@@ -232,8 +232,8 @@ def login():
         if login_type == 'admin':
             if db.admins.count_documents({}) == 0:
                 db.admins.insert_one({
-                    'email': 'admin@indusschool.com',
-                    'password': 'Admin@2026',
+                    'email': 'kalmeshwargurav1028@gmail.com',
+                    'password': 'Kalmeshwar@123',
                     'name': 'System Admin'
                 })
                 
