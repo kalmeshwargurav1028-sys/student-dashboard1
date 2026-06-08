@@ -19,7 +19,8 @@ from sendgrid.helpers.mail import Mail as SendGridMail
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import gridfs
-
+import smtplib
+from email.mime.text import MIMEText
 
 load_dotenv()
 
@@ -145,14 +146,33 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    refresh_mail_config()
+    try:
+        config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    except Exception:
+        config_data = {}
+
+    smtp_server = config_data.get('MAIL_SERVER', 'smtp.office365.com')
+    smtp_port = int(config_data.get('MAIL_PORT', 587))
+    smtp_user = config_data.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = config_data.get('MAIL_PASSWORD', 'Agent@2026')
+
     subject = "Your OTP Code"
     body = f"Your OTP is: {otp}"
     print(f"\n--- [DEV] OTP for {email}: {otp} ---\n")
+    
     try:
-        msg = Message(subject, sender=app.config.get('MAIL_USERNAME'), recipients=[email])
-        msg.body = body
-        mail.send(msg)
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = smtp_user
+        msg['To'] = email
+
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=15)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_user, email, msg.as_string())
+        server.quit()
         print(f"Sent OTP email to {email}")
         return True
     except Exception as e:
