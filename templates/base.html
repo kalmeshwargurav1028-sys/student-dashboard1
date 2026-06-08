@@ -230,26 +230,12 @@
     <!-- Sidebar and Dark Mode Script -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Hide dismissed banners
-            const dismissedBanners = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
-            dismissedBanners.forEach(id => {
-                const el = document.getElementById('ann-banner-' + id);
-                if(el) el.remove();
-            });
+            // Apply dark mode immediately
+            if(localStorage.getItem('theme') === 'dark' || 
+               (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
         });
-        
-        function dismissAnnouncement(id) {
-            const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
-            if(!dismissed.includes(id)) {
-                dismissed.push(id);
-                localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissed));
-            }
-            const el = document.getElementById('ann-banner-' + id);
-            if(el) {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 300);
-            }
-        }
 
         // Dark Mode Logic
         const darkModeToggle = document.getElementById('dark-mode-toggle');
