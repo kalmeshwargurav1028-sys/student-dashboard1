@@ -606,6 +606,7 @@ def admin_dashboard():
     for t in teachers:
         last_active_str = t.get('last_active')
         t_data = {
+            'id': str(t.get('_id')),
             'email': t.get('email'),
             'name': f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email').split('@')[0],
             'last_active': last_active_str or 'Never'
@@ -632,6 +633,7 @@ def admin_dashboard():
         last_active_str = s.get('last_active')
         profile = student_profiles.get(s.get('student_id'), {})
         s_data = {
+            'id': str(s.get('_id')),
             'email': s.get('email'),
             'student_id': s.get('student_id'),
             'name': profile.get('name', s.get('email')),
@@ -657,7 +659,46 @@ def admin_dashboard():
         'active_students': len(active_students)
     }
     
-    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students)
+    # Fetch all materials
+    materials = list(db.materials.find().sort('uploaded_at', -1))
+    
+    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials)
+
+@app.route('/admin/reset_password', methods=['POST'])
+def admin_reset_password():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    user_type = request.form.get('user_type') # 'teacher' or 'student'
+    user_id = request.form.get('user_id')
+    new_password = request.form.get('new_password')
+    
+    if not all([user_type, user_id, new_password]):
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+    hashed_password = generate_password_hash(new_password)
+    
+    try:
+        if user_type == 'teacher':
+            result = db.users.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {'password': hashed_password}}
+            )
+        elif user_type == 'student':
+            result = db.student_users.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {'password': hashed_password}}
+            )
+        else:
+            return jsonify({'success': False, 'error': 'Invalid user type'}), 400
+            
+        if result.modified_count == 1:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'User not found or password already identical'}), 200
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/student/materials')
 def student_materials():
