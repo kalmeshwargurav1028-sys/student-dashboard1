@@ -52,29 +52,22 @@
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-2">Schools</label>
-                                <div class="flex flex-wrap gap-2">
-                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">IX</span>
-                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">X</span>
-                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">XI</span>
-                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">XII</span>
+                                <div class="flex flex-wrap gap-2" id="schoolsContainer">
+                                    {% set admin_schools = admin.get('schools', ['IX', 'X', 'XI', 'XII']) %}
+                                    {% for s in ['IX', 'X', 'XI', 'XII'] %}
+                                    <span onclick="toggleSelection(this)" data-value="{{ s }}" class="cursor-pointer px-3 py-1 {{ 'bg-blue-600 text-white' if s in admin_schools else 'bg-gray-200 text-gray-600 hover:bg-gray-300' }} text-xs font-bold rounded-full shadow-sm transition-colors">{{ s }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
 
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-2">Grades</label>
-                                <div class="grid grid-cols-3 gap-2">
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 1</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 2</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 3</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 4</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 5</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 6</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 7</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 8</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 9</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 10</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 11</span>
-                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center cursor-pointer hover:bg-emerald-600 transition-colors">Grade 12</span>
+                                <div class="grid grid-cols-3 gap-2" id="gradesContainer">
+                                    {% set admin_grades = admin.get('grades', ['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5', 'Grade 6', 'Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12']) %}
+                                    {% for i in range(1, 13) %}
+                                    {% set g = 'Grade ' ~ i %}
+                                    <span onclick="toggleSelection(this)" data-value="{{ g }}" class="px-2 py-1 {{ 'bg-emerald-500 text-white' if g in admin_grades else 'bg-gray-200 text-gray-600 hover:bg-gray-300' }} text-[10px] font-bold rounded text-center cursor-pointer transition-colors">{{ g }}</span>
+                                    {% endfor %}
                                 </div>
                             </div>
 
@@ -138,12 +131,51 @@
 </div>
 
 <script>
+    function toggleSelection(element) {
+        // Toggle the styling classes depending on if it's a school (blue) or grade (emerald)
+        const isSchool = element.parentElement.id === 'schoolsContainer';
+        
+        if (isSchool) {
+            if (element.classList.contains('bg-blue-600')) {
+                element.classList.replace('bg-blue-600', 'bg-gray-200');
+                element.classList.replace('text-white', 'text-gray-600');
+                element.classList.add('hover:bg-gray-300');
+            } else {
+                element.classList.replace('bg-gray-200', 'bg-blue-600');
+                element.classList.replace('text-gray-600', 'text-white');
+                element.classList.remove('hover:bg-gray-300');
+            }
+        } else {
+            if (element.classList.contains('bg-emerald-500')) {
+                element.classList.replace('bg-emerald-500', 'bg-gray-200');
+                element.classList.replace('text-white', 'text-gray-600');
+                element.classList.add('hover:bg-gray-300');
+            } else {
+                element.classList.replace('bg-gray-200', 'bg-emerald-500');
+                element.classList.replace('text-gray-600', 'text-white');
+                element.classList.remove('hover:bg-gray-300');
+            }
+        }
+    }
+
     async function savePersonalInfo(event) {
         event.preventDefault();
         
         const btn = document.getElementById('saveProfileBtn');
         const phone = document.getElementById('phoneInput').value;
         const department = document.getElementById('deptInput').value;
+        
+        // Gather selected schools
+        const selectedSchools = [];
+        document.querySelectorAll('#schoolsContainer span.bg-blue-600').forEach(el => {
+            selectedSchools.push(el.getAttribute('data-value'));
+        });
+        
+        // Gather selected grades
+        const selectedGrades = [];
+        document.querySelectorAll('#gradesContainer span.bg-emerald-500').forEach(el => {
+            selectedGrades.push(el.getAttribute('data-value'));
+        });
         
         // Visual feedback
         const originalText = btn.innerHTML;
@@ -155,6 +187,8 @@
             const formData = new FormData();
             formData.append('phone', phone);
             formData.append('department', department);
+            formData.append('schools', JSON.stringify(selectedSchools));
+            formData.append('grades', JSON.stringify(selectedGrades));
             
             const response = await fetch('{{ url_for("super_admin_update_profile") }}', {
                 method: 'POST',

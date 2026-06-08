@@ -976,14 +976,31 @@ def super_admin_update_profile():
     phone = request.form.get('phone')
     department = request.form.get('department')
     
+    schools = request.form.get('schools')
+    grades = request.form.get('grades')
+    
+    update_fields = {'phone': phone, 'department': department}
+    if schools:
+        import json
+        try:
+            update_fields['schools'] = json.loads(schools)
+        except:
+            pass
+    if grades:
+        import json
+        try:
+            update_fields['grades'] = json.loads(grades)
+        except:
+            pass
+    
     result = db.admins.update_one(
         {'_id': ObjectId(session.get('user_id'))},
-        {'$set': {'phone': phone, 'department': department}}
+        {'$set': update_fields}
     )
     if result.matched_count == 0:
         db.users.update_one(
             {'_id': ObjectId(session.get('user_id'))},
-            {'$set': {'phone': phone, 'department': department}}
+            {'$set': update_fields}
         )
     return jsonify({'success': True})
 
