@@ -7,6 +7,7 @@ import csv
 import io
 from datetime import datetime, timedelta
 import threading
+import traceback
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file, jsonify
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -75,7 +76,39 @@ def send_sendgrid_email(email, subject, message_body):
         response = sg.send(message)
         print(f"Email sent successfully: {response.status_code}")
     except Exception as e:
-        print(f"Failed to send email to {email}: {e}")
+        print(f"Failed to send email via SMTP: {str(e)}")
+        return False
+
+def send_error_email(error_details):
+    try:
+        config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    except Exception:
+        config_data = {}
+
+    smtp_server = config_data.get('MAIL_SERVER', 'smtp.office365.com')
+    smtp_port = int(config_data.get('MAIL_PORT', 587))
+    smtp_user = config_data.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = config_data.get('MAIL_PASSWORD', 'Agent@2026')
+    admin_email = 'kalmeshwargurav1028@gmail.com'
+
+    subject = "CRITICAL: System Error Alert"
+    body = f"An unhandled exception occurred in the Student Dashboard:\n\n{error_details}"
+    
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = smtp_user
+        msg['To'] = admin_email
+
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Failed to send error alert email: {str(e)}")
+        return False
 
 def configure_gemini():
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
@@ -1423,6 +1456,33 @@ def settings():
         return redirect(url_for('settings'))
         
     return render_template('settings.html', config_data=config_data)
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Pass through HTTP errors
+    if isinstance(e, Exception):
+        error_type = type(e).__name__
+        error_msg = str(e)
+        tb = traceback.format_exc()
+        
+        url = request.url if request else "Unknown URL"
+        method = request.method if request else "Unknown Method"
+        user = session.get('email', 'Guest') if session else "Unknown"
+        
+        full_details = f"User: {user}\nMethod: {method}\nURL: {url}\n\nError: {error_type} - {error_msg}\n\nTraceback:\n{tb}"
+        print(f"\n--- [CRITICAL ERROR] ---\n{full_details}\n-----------------------\n")
+        
+        # Send async so it doesn't block the response
+        threading.Thread(target=send_error_email, args=(full_details,)).start()
+        
+        return "<h1>500 Internal Server Error</h1><p>Oops, something went wrong. The system administrator has been notified.</p>", 500
+    return e
+
+@app.route('/dev/test_error')
+def dev_test_error():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return "Unauthorized", 403
+    # Artificially trigger an exception
+    raise ValueError("This is a simulated system crash to test automated email notifications!")
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=5000)
