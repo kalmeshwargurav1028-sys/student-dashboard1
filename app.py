@@ -218,8 +218,13 @@ def create_announcement():
             'author_id': session.get('user_id')
         })
         
-        # Log notifications for the bell dropdown
-        log_notification(f"📢 {title}", body, type='info', role_target=audience)
+        # Map plural audience to singular role target
+        role_map = {
+            'all': 'all',
+            'teachers': 'teacher',
+            'students': 'student'
+        }
+        log_notification(f"📢 {title}", body, type='info', role_target=role_map.get(audience, 'all'))
             
         return jsonify({'success': True})
     except Exception as e:
@@ -235,6 +240,7 @@ def delete_announcement(ann_id):
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
 def log_notification(title, message, type='info', role_target='admin'):
     try:
         db.notifications.insert_one({
@@ -257,11 +263,12 @@ def get_notifications():
     
     target_roles = [role, 'all']
     if role == 'admin':
-        target_roles.append('teacher')
+        target_roles.extend(['teacher', 'student'])
         
     notifs = list(db.notifications.find({
         'role_target': {'$in': target_roles},
-        'read_by': {'$ne': user_id}
+        'read_by': {'$ne': user_id},
+        'type': {'$ne': 'error'}
     }).sort('timestamp', -1).limit(10))
     
     # Fallback to hide old notifications that were globally marked 'read': True
