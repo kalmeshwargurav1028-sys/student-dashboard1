@@ -156,8 +156,9 @@ def send_otp_email(email, otp, is_reset=False):
         print(f"Sent OTP email to {email}")
         return True
     except Exception as e:
-        print(f"Error sending email via SMTP: {e}")
-        return False
+        error_msg = str(e)
+        print(f"Error sending email via SMTP: {error_msg}")
+        return error_msg
 
 @app.route('/file/<file_id>')
 def get_file(file_id):
@@ -221,9 +222,9 @@ def login():
                     session['otp_code'] = otp
                     session['otp_expiry'] = expiry
                     session['otp_email'] = email
-                    success = send_otp_email(email, otp)
-                    if not success:
-                        flash('Failed to send OTP email due to server error. Please try again later.')
+                    result = send_otp_email(email, otp)
+                    if result is not True:
+                        flash(f'Failed to send OTP email: {result}')
                     return redirect(url_for('verify_otp', email=email))
                     
                 session['logged_in'] = True
@@ -317,12 +318,12 @@ def signup():
         session['otp_code'] = otp
         session['otp_expiry'] = expiry
         session['otp_email'] = email
-        success = send_otp_email(email, otp)
+        result = send_otp_email(email, otp)
         
-        if success:
+        if result is True:
             flash('Verification code sent to your email! Please verify below.')
         else:
-            flash('Failed to send verification code email due to server configuration error. Please contact support.')
+            flash(f'Failed to send verification code email: {result}')
         return redirect(url_for('verify_otp', email=email))
         
     return render_template('signup.html')
@@ -378,11 +379,11 @@ def forgot_password():
             session['otp_code'] = otp
             session['otp_expiry'] = expiry
             session['otp_email'] = email
-            success = send_otp_email(email, otp, is_reset=True)
-            if success:
+            result = send_otp_email(email, otp, is_reset=True)
+            if result is True:
                 flash('Reset code sent to your email.')
             else:
-                flash('Failed to send reset code email. Please contact support.')
+                flash(f'Failed to send reset code email: {result}')
             return redirect(url_for('reset_password', email=email))
         else:
             flash('Email not found or not verified.')
