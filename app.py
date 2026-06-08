@@ -124,6 +124,41 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
+def log_notification(title, message, type='info', role_target='admin'):
+    try:
+        db.notifications.insert_one({
+            'title': title,
+            'message': message,
+            'type': type,
+            'role_target': role_target,
+            'read': False,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+    except Exception as e:
+        print(f"Failed to log notification: {e}")
+
+@app.route('/api/notifications')
+def get_notifications():
+    if not session.get('logged_in'):
+        return jsonify([])
+    role = session.get('role', 'student')
+    # For now, we mainly target admin, but keep it flexible
+    notifs = list(db.notifications.find({'role_target': role, 'read': False}).sort('timestamp', -1).limit(10))
+    for n in notifs:
+        n['_id'] = str(n['_id'])
+    return jsonify(notifs)
+
+@app.route('/api/notifications/read/<notif_id>', methods=['POST'])
+def mark_notification_read(notif_id):
+    if not session.get('logged_in'):
+        return jsonify({'success': False})
+    try:
+        from bson.objectid import ObjectId
+        db.notifications.update_one({'_id': ObjectId(notif_id)}, {'$set': {'read': True}})
+        return jsonify({'success': True})
+    except Exception:
+        return jsonify({'success': False})
+
 @app.route('/dev/wipe_users')
 def dev_wipe_users():
     try:
@@ -699,11 +734,29 @@ def admin_dashboard():
         else:
             inactive_students.append(s_data)
             
+    try:
+        pipeline = [{'$group': {'_id': None, 'total_size': {'$sum': '$length'}}}]
+        result = list(db.fs.files.aggregate(pipeline))
+        total_bytes = result[0]['total_size'] if result else 0
+        storage_mb = total_bytes / (1024 * 1024)
+        storage_gb = storage_mb / 1024
+        storage_used_str = f"{storage_gb:.2f} GB" if storage_gb >= 1 else f"{storage_mb:.2f} MB"
+        storage_percentage = min(100, (storage_gb / 100) * 100)
+    except Exception:
+        storage_used_str = "0 MB"
+        storage_percentage = 0
+
+    system_errors = db.notifications.count_documents({'type': 'error', 'read': False})
+
     stats = {
         'total_teachers': len(teachers),
         'active_teachers': len(active_teachers),
         'total_students': len(student_users),
-        'active_students': len(active_students)
+        'active_students': len(active_students),
+        'system_errors': system_errors,
+        'storage_used_str': storage_used_str,
+        'storage_percentage': storage_percentage,
+        'pending_approvals': 0
     }
     
     # Fetch all materials
@@ -1471,6 +1524,9 @@ def handle_exception(e):
         
         # Send async so it doesn't block the response
         threading.Thread(target=send_error_email, args=(full_details,)).start()
+        
+        # Also log to DB notification system
+        log_notification("System Error", f"{error_type}: {error_msg}", type="error")
         
         return "<h1>500 Internal Server Error</h1><p>Oops, something went wrong. The system administrator has been notified.</p>", 500
     return e

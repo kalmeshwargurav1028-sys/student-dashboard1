@@ -18,7 +18,7 @@
     <div class="mb-8">
         <h2 class="text-xl font-bold text-gray-900 mb-4">User Activity Stats</h2>
         
-        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
             <!-- Teachers Stats -->
             <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
                 <div class="flex items-center">
@@ -78,10 +78,67 @@
                                 <div class="text-2xl font-semibold text-emerald-600">{{ stats.active_students }}</div>
                                 <span class="ml-2 text-xs text-gray-400">Past 15 mins</span>
                             </dd>
+            </div>
+            
+            <!-- System Errors -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-red-50 rounded-md p-3">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">System Alerts</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold {% if stats.system_errors > 0 %}text-red-600{% else %}text-gray-900{% endif %}">{{ stats.system_errors }}</div>
+                                {% if stats.system_errors > 0 %}<span class="ml-2 text-xs text-red-500 font-bold">Unread</span>{% endif %}
+                            </dd>
                         </dl>
                     </div>
                 </div>
             </div>
+
+            <!-- Storage Used -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-purple-50 rounded-md p-3">
+                        <i class="fa-solid fa-hard-drive text-purple-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Storage Used</dt>
+                            <dd class="mt-1">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-sm font-semibold text-gray-900">{{ stats.storage_used_str }}</span>
+                                    <span class="text-xs text-gray-400">/ 100 GB</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-purple-500 h-1.5 rounded-full" style="width: {{ stats.storage_percentage }}%"></div>
+                                </div>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-orange-50 rounded-md p-3">
+                        <i class="fa-solid fa-user-clock text-orange-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Pending Approvals</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-gray-900">{{ stats.pending_approvals }}</div>
+                                <span class="ml-2 text-xs text-gray-400">Awaiting Verify</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 
