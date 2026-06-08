@@ -27,9 +27,19 @@ load_dotenv()
 # Setup MongoDB
 mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(mongo_uri)
-db = client['kalmeshwar']
-users = db['users']
+db = client.get_database('student_dashboard1')
 fs = gridfs.GridFS(db)
+
+@app.route('/dev/wipe_users')
+def dev_wipe_users():
+    try:
+        db.users.delete_many({})
+        db.student_users.delete_many({})
+        db.students.delete_many({})
+        db.admins.delete_many({})
+        return "SUCCESS: All user credentials, students, teachers, and admins have been completely removed. You can now start fresh!"
+    except Exception as e:
+        return f"Error wiping database: {str(e)}"
 
 # Helper Functions for Notifications
 def send_twilio_sms(phone, message):
