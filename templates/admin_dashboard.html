@@ -396,97 +396,92 @@
     </div>
 
     <!-- Announcements View -->
-    <div id="view-announcements" class="view-section hidden">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Create Form -->
-            <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4 border-b border-gray-100 pb-2"><i class="fa-solid fa-pen-nib text-indigo-500 mr-2"></i> Create Announcement</h2>
-                    
-                    <form class="space-y-4" onsubmit="event.preventDefault(); alert('Announcement feature coming soon!');">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
-                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 bg-white">
-                                <option value="all">All Users</option>
-                                <option value="teachers">Teachers Only</option>
-                                <option value="students">Students Only</option>
-                            </select>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                            <input type="text" placeholder="e.g. Scheduled Maintenance" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Message Body</label>
-                            <textarea rows="4" placeholder="Write your announcement here..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
-                            <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-700">
-                        </div>
-                        
-                        <div class="pt-2">
-                            <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2.5 px-4 rounded-lg shadow hover:bg-blue-700 transition-colors flex justify-center items-center">
-                                <i class="fa-solid fa-paper-plane mr-2"></i> Publish Announcement
-                            </button>
-                        </div>
-                    </form>
+    <div id="view-announcements" class="view-section hidden max-w-4xl mx-auto space-y-8">
+        <!-- Create Form -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <h2 class="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-3"><i class="fa-solid fa-bullhorn text-indigo-500 mr-2"></i> Broadcast New Announcement</h2>
+            
+            <form class="space-y-5" onsubmit="event.preventDefault(); alert('Announcement feature coming soon!');">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
+                        <select class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-700 bg-white">
+                            <option value="all">All Users</option>
+                            <option value="teachers">Teachers Only</option>
+                            <option value="students">Students Only</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Expiry Date</label>
+                        <input type="date" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 text-gray-700">
+                    </div>
                 </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Announcement Title</label>
+                    <input type="text" placeholder="Enter a clear, concise title..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Message Body</label>
+                    <textarea rows="4" placeholder="Type your main notification text here..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
+                </div>
+                
+                <div class="pt-2 flex justify-end">
+                    <button type="submit" class="bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg shadow hover:bg-blue-700 transition-colors flex items-center">
+                        Send Broadcast <i class="fa-solid fa-paper-plane ml-2"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- History Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-scroll text-gray-500 mr-2"></i> Announcement History</h3>
             </div>
             
-            <!-- History Table -->
-            <div class="lg:col-span-2">
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full">
-                    <div class="px-6 py-5 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
-                        <h3 class="text-lg font-bold text-gray-900"><i class="fa-solid fa-clock-rotate-left text-gray-500 mr-2"></i> Past Announcements</h3>
-                    </div>
-                    
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-white">
-                                <tr>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date Sent</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Target</th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
-                                    <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-100">
-                                <tr class="hover:bg-gray-50 transition-colors">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 08, 2026</td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Term Exams Schedule Posted</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">All Users</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                            <span class="w-2 h-2 mr-1.5 bg-green-500 rounded-full"></span> Active
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                                        <button class="text-red-600 hover:text-red-900">Delete</button>
-                                    </td>
-                                </tr>
-                                <tr class="hover:bg-gray-50 transition-colors opacity-60">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 02, 2026</td>
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Server Upgrade Notice</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Teachers Only</td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                            <span class="w-2 h-2 mr-1.5 bg-gray-400 rounded-full"></span> Expired
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                        <button class="text-red-600 hover:text-red-900">Delete</button>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Date Sent</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Title</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Target</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 08, 2026</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Scheduled Maintenance</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">All Users</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="w-2 h-2 mr-1.5 bg-green-500 rounded-full"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                                <button class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                        <tr class="hover:bg-gray-50 transition-colors opacity-60">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">June 02, 2026</td>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">New Study Material Update</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Students Only</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <span class="w-2 h-2 mr-1.5 bg-gray-400 rounded-full"></span> Expired
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
