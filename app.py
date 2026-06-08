@@ -810,6 +810,23 @@ def student_profile(student_id):
             {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
         ]
         
+    if 'timetable' not in student:
+        student['timetable'] = [
+            {'time': '08:30 AM - 09:15 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith', 'color': 'indigo'},
+            {'time': '09:20 AM - 10:05 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Banner', 'color': 'emerald'},
+            {'time': '10:05 AM - 10:20 AM', 'subject': 'Break', 'room': 'Cafeteria', 'teacher': '-', 'color': 'gray'},
+            {'time': '10:20 AM - 11:05 AM', 'subject': 'English Literature', 'room': 'Room 204', 'teacher': 'Ms. Jones', 'color': 'amber'},
+            {'time': '11:10 AM - 11:55 AM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mr. Turing', 'color': 'purple'}
+        ]
+        
+    if 'assignments' not in student:
+        student['assignments'] = [
+            {'title': 'Algebra Worksheet 5', 'subject': 'Mathematics', 'due_date': 'Tomorrow', 'status': 'Pending', 'urgent': True},
+            {'title': 'Physics Lab Report', 'subject': 'Physics', 'due_date': 'In 3 days', 'status': 'In Progress', 'urgent': False},
+            {'title': 'Essay on Shakespeare', 'subject': 'English', 'due_date': 'Next Week', 'status': 'Pending', 'urgent': False},
+            {'title': 'Programming Project', 'subject': 'Computer Science', 'due_date': 'Next Friday', 'status': 'Pending', 'urgent': False}
+        ]
+        
     # Fetch teachers for the Contact Directory
     teachers = list(db.users.find({'role': 'teacher'}, {'password': 0}))
     for t in teachers:
