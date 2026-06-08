@@ -124,6 +124,66 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
+@app.context_processor
+def inject_announcements():
+    if not session.get('logged_in'):
+        return dict(active_announcements=[])
+    
+    role = session.get('role', 'student')
+    target = ['all']
+    if role in ('admin', 'teacher'):
+        target.append('teachers')
+    if role == 'student':
+        target.append('students')
+        
+    try:
+        today_str = datetime.now().strftime('%Y-%m-%d')
+        announcements = list(db.announcements.find({
+            'audience': {'$in': target},
+            'expiry_date': {'$gte': today_str}
+        }).sort('date_sent', -1))
+        return dict(active_announcements=announcements)
+    except Exception as e:
+        print(f"Error fetching announcements: {e}")
+        return dict(active_announcements=[])
+
+@app.route('/api/announcements', methods=['POST'])
+def create_announcement():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    try:
+        data = request.json
+        audience = data.get('audience', 'all')
+        title = data.get('title', '')
+        body = data.get('body', '')
+        expiry_date = data.get('expiry_date', '')
+        
+        if not title or not body or not expiry_date:
+            return jsonify({'success': False, 'error': 'Missing fields'}), 400
+            
+        db.announcements.insert_one({
+            'title': title,
+            'body': body,
+            'audience': audience,
+            'expiry_date': expiry_date,
+            'date_sent': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'author_id': session.get('user_id')
+        })
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/announcements/<ann_id>', methods=['DELETE'])
+def delete_announcement(ann_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        from bson.objectid import ObjectId
+        db.announcements.delete_one({'_id': ObjectId(ann_id)})
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 def log_notification(title, message, type='info', role_target='admin'):
     try:
         db.notifications.insert_one({
@@ -762,7 +822,11 @@ def admin_dashboard():
     # Fetch all materials
     materials = list(db.materials.find().sort('uploaded_at', -1))
     
-    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials)
+    # Fetch all announcements
+    announcements = list(db.announcements.find().sort('date_sent', -1))
+    now_time = datetime.now().strftime('%Y-%m-%d')
+    
+    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
