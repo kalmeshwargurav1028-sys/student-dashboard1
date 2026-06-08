@@ -239,12 +239,12 @@
                         <i class="fa-solid fa-file-pdf text-2xl"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ m.title }}">{{ m.title }}</p>
-                        <p class="text-xs text-gray-500 truncate">{{ m.filename }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Class: {{ m.class }}</p>
+                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ m.get('title') }}">{{ m.get('title') }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ m.get('filename') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Class: {{ m.get('class') }}</p>
                     </div>
                     <div>
-                        <a href="{{ m.file_url or url_for('get_file', file_id=m.file_id|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
+                        <a href="{{ m.get('file_url') or url_for('get_file', file_id=m.get('file_id')|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
                     </div>
                 </div>
                 {% endfor %}
