@@ -160,7 +160,7 @@ def inject_global_context():
             }
         else:
             global_config = db.role_permissions.find_one({'_id': 'global_config'})
-            if global_config and role in global_config:
+            if global_config and global_config.get(role):
                 context['role_permissions'] = global_config[role]
             else:
                 # Defaults
@@ -168,8 +168,14 @@ def inject_global_context():
                     context['role_permissions'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
                 else:
                     context['role_permissions'] = {'view_dashboard': True}
+                    
+        # Failsafe
+        if not context.get('role_permissions'):
+            context['role_permissions'] = {}
+            
     except Exception as e:
         print(f"Error fetching role permissions: {e}")
+        context['role_permissions'] = {}
 
     return context
 
@@ -875,10 +881,11 @@ def admin_dashboard():
     now_time = datetime.now().strftime('%Y-%m-%d')
     
     # Fetch role permissions
-    global_config = db.role_permissions.find_one({'_id': 'global_config'}) or {
-        'teacher': {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True},
-        'student': {'view_dashboard': True}
-    }
+    global_config = db.role_permissions.find_one({'_id': 'global_config'}) or {}
+    if not global_config.get('teacher'):
+        global_config['teacher'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
+    if not global_config.get('student'):
+        global_config['student'] = {'view_dashboard': True}
     
     return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config)
 
