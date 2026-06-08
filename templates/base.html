@@ -130,12 +130,6 @@
                 </li>
                 {% endif %}
 
-                <li>
-                    <button id="dark-mode-toggle" class="w-full flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
-                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap">Dark Mode</span>
-                    </button>
-                </li>
             </ul>
         </nav>
         
@@ -227,37 +221,10 @@
         </main>
     </div>
 
-    <!-- Sidebar and Dark Mode Script -->
+    <!-- Sidebar Script -->
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            // Apply dark mode immediately
-            if(localStorage.getItem('theme') === 'dark' || 
-               (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            }
-        });
 
-        // Dark Mode Logic
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const htmlEl = document.documentElement;
-
-        // Initialize dark mode based on localStorage
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            htmlEl.classList.add('dark');
-        } else {
-            htmlEl.classList.remove('dark');
-        }
-
-        if (darkModeToggle) {
-            darkModeToggle.addEventListener('click', () => {
-                htmlEl.classList.toggle('dark');
-                if (htmlEl.classList.contains('dark')) {
-                    localStorage.theme = 'dark';
-                } else {
-                    localStorage.theme = 'light';
-                }
-            });
-        }
+        // Sidebar functionality
 
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar');
