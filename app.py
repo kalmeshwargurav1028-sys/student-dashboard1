@@ -211,6 +211,13 @@ def create_announcement():
             'date_sent': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'author_id': session.get('user_id')
         })
+        
+        # Log notifications for the bell dropdown
+        if audience in ('all', 'teachers'):
+            log_notification(f"📢 {title}", body, type='info', role_target='teacher')
+        if audience in ('all', 'students'):
+            log_notification(f"📢 {title}", body, type='info', role_target='student')
+            
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
