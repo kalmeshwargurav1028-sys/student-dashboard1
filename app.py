@@ -810,7 +810,16 @@ def student_profile(student_id):
             {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
         ]
         
-    return render_template('student_profile.html', student=student)
+    # Fetch teachers for the Contact Directory
+    teachers = list(db.users.find({'role': 'teacher'}, {'password': 0}))
+    for t in teachers:
+        t['_id'] = str(t['_id'])
+        if 'first_name' in t and 'last_name' in t:
+            t['display_name'] = f"{t['first_name']} {t['last_name']}"
+        else:
+            t['display_name'] = t.get('email', 'Teacher').split('@')[0].capitalize()
+        
+    return render_template('student_profile.html', student=student, teachers=teachers)
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
