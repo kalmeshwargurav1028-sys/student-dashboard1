@@ -27,7 +27,8 @@ load_dotenv()
 # Setup MongoDB
 mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
 client = MongoClient(mongo_uri)
-db = client.get_database('student_dashboard1')
+db = client['kalmeshwar']
+users = db['users']
 fs = gridfs.GridFS(db)
 
 @app.route('/dev/wipe_users')
