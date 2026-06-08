@@ -213,7 +213,7 @@
             {% if active_announcements %}
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-3">
                 {% for ann in active_announcements %}
-                    <div class="bg-indigo-600 text-white rounded-lg shadow-sm p-4 flex justify-between items-start relative overflow-hidden group">
+                    <div id="ann-banner-{{ ann._id }}" class="bg-indigo-600 text-white rounded-lg shadow-sm p-4 flex justify-between items-start relative overflow-hidden group transition-all duration-300">
                         <div class="absolute inset-0 bg-indigo-700 opacity-0 group-hover:opacity-10 transition-opacity"></div>
                         <div class="flex items-start">
                             <div class="bg-indigo-500 rounded-full p-2 mr-4 flex-shrink-0">
@@ -224,7 +224,7 @@
                                 <p class="text-sm text-indigo-100 mt-1 leading-relaxed">{{ ann.body }}</p>
                             </div>
                         </div>
-                        <button onclick="this.closest('.bg-indigo-600').remove()" class="text-indigo-200 hover:text-white transition-colors p-1" title="Dismiss">
+                        <button onclick="dismissAnnouncement('{{ ann._id }}')" class="text-indigo-200 hover:text-white transition-colors p-1" title="Dismiss">
                             <i class="fa-solid fa-times"></i>
                         </button>
                     </div>
@@ -250,6 +250,28 @@
 
     <!-- Sidebar and Dark Mode Script -->
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hide dismissed banners
+            const dismissedBanners = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
+            dismissedBanners.forEach(id => {
+                const el = document.getElementById('ann-banner-' + id);
+                if(el) el.remove();
+            });
+        });
+        
+        function dismissAnnouncement(id) {
+            const dismissed = JSON.parse(localStorage.getItem('dismissedAnnouncements') || '[]');
+            if(!dismissed.includes(id)) {
+                dismissed.push(id);
+                localStorage.setItem('dismissedAnnouncements', JSON.stringify(dismissed));
+            }
+            const el = document.getElementById('ann-banner-' + id);
+            if(el) {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }
+        }
+
         // Dark Mode Logic
         const darkModeToggle = document.getElementById('dark-mode-toggle');
         const htmlEl = document.documentElement;

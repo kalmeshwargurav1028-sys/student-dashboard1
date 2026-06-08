@@ -1661,7 +1661,7 @@ def handle_exception(e):
         # Also log to DB notification system
         log_notification("System Error", f"{error_type}: {error_msg}", type="error")
         
-        return f"<h1>500 Internal Server Error</h1><p>Oops, something went wrong.</p><pre style='white-space: pre-wrap; word-wrap: break-word;'>{tb}</pre>", 500
+        return "<h1>500 Internal Server Error</h1><p>Oops, something went wrong. The system administrator has been notified.</p>", 500
     return e
 
 @app.route('/dev/test_error')
