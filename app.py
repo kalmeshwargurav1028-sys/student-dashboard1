@@ -31,16 +31,7 @@ db = client['kalmeshwar']
 users = db['users']
 fs = gridfs.GridFS(db)
 
-@app.route('/dev/wipe_users')
-def dev_wipe_users():
-    try:
-        db.users.delete_many({})
-        db.student_users.delete_many({})
-        db.students.delete_many({})
-        db.admins.delete_many({})
-        return "SUCCESS: All user credentials, students, teachers, and admins have been completely removed. You can now start fresh!"
-    except Exception as e:
-        return f"Error wiping database: {str(e)}"
+
 
 # Helper Functions for Notifications
 def send_twilio_sms(phone, message):
@@ -97,7 +88,19 @@ def configure_gemini():
 configure_gemini()
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_key_change_in_production'
+app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_production')
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+
+@app.route('/dev/wipe_users')
+def dev_wipe_users():
+    try:
+        db.users.delete_many({})
+        db.student_users.delete_many({})
+        db.students.delete_many({})
+        db.admins.delete_many({})
+        return "SUCCESS: All user credentials, students, teachers, and admins have been completely removed. You can now start fresh!"
+    except Exception as e:
+        return f"Error wiping database: {str(e)}"
 
 
 
