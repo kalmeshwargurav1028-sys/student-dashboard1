@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Assignments & Deadlines</h1>
+            <p class="mt-2 text-sm text-gray-500">Track your upcoming homework, projects, and exams.</p>
+        </div>
+        <div class="bg-indigo-50 text-indigo-700 px-4 py-2 rounded-lg font-bold shadow-sm border border-indigo-100 flex items-center gap-2">
+            <i class="fa-solid fa-clipboard-check"></i>
+            {{ assignments|selectattr('status', 'equalto', 'pending')|list|length + assignments|selectattr('status', 'equalto', 'urgent')|list|length }} Pending
+        </div>
+    </div>
+
+    <!-- Assignments Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {% for assignment in assignments %}
+        
+        {% set border_color = 'border-gray-200' %}
+        {% set bg_color = 'bg-white' %}
+        {% set text_color = 'text-gray-900' %}
+        {% set badge_class = 'bg-gray-100 text-gray-800' %}
+        
+        {% if assignment.status == 'urgent' %}
+            {% set border_color = 'border-red-400' %}
+            {% set bg_color = 'bg-red-50' %}
+            {% set text_color = 'text-red-900' %}
+            {% set badge_class = 'bg-red-100 text-red-800 animate-pulse' %}
+        {% elif assignment.status == 'pending' %}
+            {% set border_color = 'border-yellow-400' %}
+            {% set bg_color = 'bg-white' %}
+            {% set text_color = 'text-gray-900' %}
+            {% set badge_class = 'bg-yellow-100 text-yellow-800' %}
+        {% elif assignment.status == 'submitted' %}
+            {% set border_color = 'border-emerald-200' %}
+            {% set bg_color = 'bg-gray-50 opacity-75' %}
+            {% set text_color = 'text-gray-500' %}
+            {% set badge_class = 'bg-emerald-100 text-emerald-800' %}
+        {% endif %}
+
+        <div class="rounded-xl shadow-sm border-2 {{ border_color }} {{ bg_color }} overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+            <div class="p-5 flex-1">
+                <div class="flex justify-between items-start mb-4">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 uppercase tracking-wider">
+                        {{ assignment.type }}
+                    </span>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold {{ badge_class }}">
+                        {% if assignment.status == 'urgent' %}
+                            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Due in {{ assignment.days_left }} day{% if assignment.days_left != 1 %}s{% endif %}
+                        {% elif assignment.status == 'pending' %}
+                            <i class="fa-regular fa-clock mr-1"></i> Due in {{ assignment.days_left }} days
+                        {% elif assignment.status == 'submitted' %}
+                            <i class="fa-solid fa-check mr-1"></i> Submitted
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <h3 class="text-xl font-bold {{ text_color }} mb-1">{{ assignment.title }}</h3>
+                <p class="text-sm font-medium text-gray-500 mb-4">{{ assignment.subject }}</p>
+                
+                <div class="flex items-center text-sm text-gray-600 gap-2 mt-auto pt-4 border-t border-gray-200">
+                    <i class="fa-regular fa-calendar-xmark text-gray-400"></i>
+                    <span class="font-medium">Deadline:</span>
+                    <span>{{ assignment.due_date }}</span>
+                </div>
+            </div>
+            
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-200 flex justify-end">
+                {% if assignment.status != 'submitted' %}
+                <button class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Submit Work
+                </button>
+                {% else %}
+                <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-600">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                    Completed
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not assignments %}
+        <div class="col-span-full py-12 text-center bg-white rounded-xl border border-gray-200 border-dashed">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No Assignments</h3>
+            <p class="mt-1 text-sm text-gray-500">You are all caught up!</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
