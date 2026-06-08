@@ -85,6 +85,19 @@
                         <span class="sidebar-text whitespace-nowrap">Reports</span>
                     </a>
                 </li>
+                <li class="my-2 border-t border-emerald-400 dark:border-gray-700 mx-4 opacity-50"></li>
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Role Management</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Announcements</span>
+                    </a>
+                </li>
                 {% else %}
                 <li>
                     <a href="{{ url_for('student_profile', student_id=session.get('user_id')) }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
@@ -126,11 +139,24 @@
         {% if session.get('logged_in') %}
         <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 shrink-0 border-b border-transparent dark:border-gray-700 transition-colors">
             <div class="flex items-center">
-                <button type="button" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none hidden sm:block">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                    </svg>
-                </button>
+                <!-- Notification Bell -->
+                <div class="relative">
+                    <button type="button" id="bellBtn" onclick="toggleNotifs()" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none relative">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="notifBadge" class="hidden absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 text-[9px] font-bold text-white flex items-center justify-center animate-pulse">0</span>
+                    </button>
+                    <!-- Dropdown Pane -->
+                    <div id="notifDropdown" class="hidden absolute top-10 left-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                        <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200">System Notifications</h3>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto">
+                            <div class="p-4 text-sm text-gray-500 text-center">Loading...</div>
+                        </div>
+                    </div>
+                </div>
                 {% if session.get('role') != 'student' %}
                 <a href="{{ url_for('settings') }}" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none">
                     <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -229,6 +255,90 @@
                 });
             }
         });
+        
+        // Notifications Logic
+        let notifDropdownOpen = false;
+        
+        function toggleNotifs() {
+            const dropdown = document.getElementById('notifDropdown');
+            notifDropdownOpen = !notifDropdownOpen;
+            if(notifDropdownOpen) {
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+            const bell = document.getElementById('bellBtn');
+            const dropdown = document.getElementById('notifDropdown');
+            if(bell && dropdown && notifDropdownOpen && !bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+                notifDropdownOpen = false;
+            }
+        });
+        
+        async function fetchNotifications() {
+            try {
+                const res = await fetch('/api/notifications');
+                const data = await res.json();
+                
+                const badge = document.getElementById('notifBadge');
+                const list = document.getElementById('notifList');
+                
+                if(!badge || !list) return;
+                
+                if(data.length > 0) {
+                    badge.classList.remove('hidden');
+                    badge.innerText = data.length > 9 ? '9+' : data.length;
+                    
+                    list.innerHTML = '';
+                    data.forEach(n => {
+                        let colorClass = 'bg-blue-100 text-blue-600';
+                        let icon = 'fa-circle-info';
+                        if(n.type === 'error') { colorClass = 'bg-red-100 text-red-600'; icon = 'fa-triangle-exclamation'; }
+                        if(n.type === 'success') { colorClass = 'bg-emerald-100 text-emerald-600'; icon = 'fa-circle-check'; }
+                        
+                        list.innerHTML += `
+                            <div class="px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors flex items-start gap-3 relative group">
+                                <div class="mt-1 w-8 h-8 rounded-full ${colorClass} flex items-center justify-center shrink-0">
+                                    <i class="fa-solid ${icon} text-xs"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold text-gray-800 dark:text-gray-200">${n.title}</h4>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">${n.message}</p>
+                                    <span class="text-[9px] text-gray-400 mt-1 block">${n.timestamp}</span>
+                                </div>
+                                <button onclick="markRead('${n._id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-emerald-500 transition-opacity" title="Mark as read">
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+                            </div>
+                        `;
+                    });
+                } else {
+                    badge.classList.add('hidden');
+                    list.innerHTML = '<div class="p-6 text-xs text-gray-500 text-center flex flex-col items-center"><i class="fa-regular fa-bell-slash text-2xl mb-2 text-gray-300"></i> No new notifications</div>';
+                }
+            } catch(e) {
+                console.error("Error fetching notifications", e);
+            }
+        }
+        
+        async function markRead(id) {
+            try {
+                await fetch(`/api/notifications/read/${id}`, { method: 'POST' });
+                fetchNotifications(); // Refresh list immediately
+            } catch(e) {
+                console.error("Error marking read", e);
+            }
+        }
+        
+        // Start polling every 30 seconds
+        if(document.getElementById('bellBtn')) {
+            fetchNotifications();
+            setInterval(fetchNotifications, 30000);
+        }
     </script>
 </body>
 </html>
