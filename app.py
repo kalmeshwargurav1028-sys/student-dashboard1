@@ -810,23 +810,6 @@ def student_profile(student_id):
             {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
         ]
         
-    if 'timetable' not in student:
-        student['timetable'] = [
-            {'time': '08:30 AM - 09:15 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith', 'color': 'indigo'},
-            {'time': '09:20 AM - 10:05 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Banner', 'color': 'emerald'},
-            {'time': '10:05 AM - 10:20 AM', 'subject': 'Break', 'room': 'Cafeteria', 'teacher': '-', 'color': 'gray'},
-            {'time': '10:20 AM - 11:05 AM', 'subject': 'English Literature', 'room': 'Room 204', 'teacher': 'Ms. Jones', 'color': 'amber'},
-            {'time': '11:10 AM - 11:55 AM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mr. Turing', 'color': 'purple'}
-        ]
-        
-    if 'assignments' not in student:
-        student['assignments'] = [
-            {'title': 'Algebra Worksheet 5', 'subject': 'Mathematics', 'due_date': 'Tomorrow', 'status': 'Pending', 'urgent': True},
-            {'title': 'Physics Lab Report', 'subject': 'Physics', 'due_date': 'In 3 days', 'status': 'In Progress', 'urgent': False},
-            {'title': 'Essay on Shakespeare', 'subject': 'English', 'due_date': 'Next Week', 'status': 'Pending', 'urgent': False},
-            {'title': 'Programming Project', 'subject': 'Computer Science', 'due_date': 'Next Friday', 'status': 'Pending', 'urgent': False}
-        ]
-        
     # Fetch teachers for the Contact Directory
     teachers = list(db.users.find({'role': 'teacher'}, {'password': 0}))
     for t in teachers:
@@ -1005,6 +988,91 @@ def admin_reset_password():
             
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/student/timetable')
+def student_timetable():
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    # Generate mock timetable data
+    timetable = {
+        'Monday': [
+            {'time': '09:00 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith'},
+            {'time': '10:30 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Brown'},
+            {'time': '01:00 PM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mrs. Davis'}
+        ],
+        'Tuesday': [
+            {'time': '09:00 AM', 'subject': 'Chemistry', 'room': 'Lab 2', 'teacher': 'Dr. Wilson'},
+            {'time': '11:00 AM', 'subject': 'English Literature', 'room': 'Room 205', 'teacher': 'Ms. Taylor'}
+        ],
+        'Wednesday': [
+            {'time': '09:00 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith'},
+            {'time': '10:30 AM', 'subject': 'History', 'room': 'Room 302', 'teacher': 'Mr. Clark'},
+            {'time': '02:00 PM', 'subject': 'Physical Education', 'room': 'Gym', 'teacher': 'Coach Miller'}
+        ],
+        'Thursday': [
+            {'time': '09:30 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Brown'},
+            {'time': '11:30 AM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mrs. Davis'}
+        ],
+        'Friday': [
+            {'time': '09:00 AM', 'subject': 'Biology', 'room': 'Lab 4', 'teacher': 'Dr. Evans'},
+            {'time': '11:00 AM', 'subject': 'Art', 'room': 'Studio 1', 'teacher': 'Ms. White'},
+            {'time': '01:30 PM', 'subject': 'English Literature', 'room': 'Room 205', 'teacher': 'Ms. Taylor'}
+        ]
+    }
+    
+    # Get current day of week to highlight it
+    current_day = datetime.now().strftime('%A')
+    
+    return render_template('student_timetable.html', timetable=timetable, current_day=current_day)
+
+@app.route('/student/assignments')
+def student_assignments():
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    # Generate mock assignments data
+    now = datetime.now()
+    assignments = [
+        {
+            'id': 1,
+            'title': 'Calculus Final Project',
+            'subject': 'Mathematics',
+            'due_date': (now + timedelta(days=2)).strftime('%Y-%m-%d %H:%M'),
+            'days_left': 2,
+            'status': 'pending',
+            'type': 'Project'
+        },
+        {
+            'id': 2,
+            'title': 'Quantum Mechanics Essay',
+            'subject': 'Physics',
+            'due_date': (now + timedelta(days=5)).strftime('%Y-%m-%d %H:%M'),
+            'days_left': 5,
+            'status': 'pending',
+            'type': 'Homework'
+        },
+        {
+            'id': 3,
+            'title': 'Data Structures Implementation',
+            'subject': 'Computer Science',
+            'due_date': (now + timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
+            'days_left': 1,
+            'status': 'urgent',
+            'type': 'Lab Work'
+        },
+        {
+            'id': 4,
+            'title': 'World War II Analysis',
+            'subject': 'History',
+            'due_date': (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
+            'days_left': -1,
+            'status': 'submitted',
+            'type': 'Essay'
+        }
+    ]
+    
+    return render_template('student_assignments.html', assignments=assignments)
 
 @app.route('/student/materials')
 def student_materials():

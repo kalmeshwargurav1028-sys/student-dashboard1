@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Weekly Timetable</h1>
+            <p class="mt-2 text-sm text-gray-500">Your upcoming lectures and class schedules.</p>
+        </div>
+        <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center gap-2">
+            <span class="inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+            <span class="text-sm font-medium text-gray-700">Today: <span class="text-emerald-600 font-bold">{{ current_day }}</span></span>
+        </div>
+    </div>
+
+    <!-- Timetable Grid -->
+    <div class="space-y-8">
+        {% for day, classes in timetable.items() %}
+        <div class="bg-white shadow sm:rounded-xl border {% if day == current_day %}border-emerald-500 ring-1 ring-emerald-500{% else %}border-gray-100{% endif %} overflow-hidden">
+            <div class="px-4 py-4 {% if day == current_day %}bg-emerald-50{% else %}bg-gray-50{% endif %} border-b border-gray-200">
+                <h3 class="text-lg font-bold {% if day == current_day %}text-emerald-800{% else %}text-gray-800{% endif %} flex items-center gap-2">
+                    <i class="fa-regular fa-calendar text-gray-400"></i> {{ day }}
+                    {% if day == current_day %}
+                    <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        Today
+                    </span>
+                    {% endif %}
+                </h3>
+            </div>
+            
+            <div class="p-0 sm:p-4">
+                <ul role="list" class="divide-y divide-gray-100">
+                    {% for cls in classes %}
+                    <li class="relative flex flex-col sm:flex-row items-start sm:items-center py-5 px-4 sm:px-6 hover:bg-gray-50 rounded-lg transition-colors gap-4">
+                        
+                        <!-- Time Column -->
+                        <div class="min-w-[120px] flex flex-col justify-center">
+                            <span class="text-sm font-bold text-gray-900">{{ cls.time }}</span>
+                        </div>
+                        
+                        <!-- Details Column -->
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-lg font-bold text-indigo-600 truncate">{{ cls.subject }}</p>
+                                <div class="flex items-center gap-1 text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
+                                    <i class="fa-solid fa-location-dot text-red-500"></i>
+                                    {{ cls.room }}
+                                </div>
+                            </div>
+                            <div class="mt-1 flex items-center gap-2 text-sm text-gray-500">
+                                <i class="fa-solid fa-chalkboard-user"></i>
+                                <span>{{ cls.teacher }}</span>
+                            </div>
+                        </div>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if not classes %}
+                    <li class="py-5 px-4 text-center text-sm text-gray-500">
+                        No classes scheduled for this day. Enjoy your free time!
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
