@@ -209,28 +209,7 @@
 
         <!-- Scrollable Main Area -->
         <main class="flex-1 overflow-y-auto">
-            <!-- Active Announcements Banner -->
-            {% if active_announcements %}
-                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 space-y-3">
-                {% for ann in active_announcements %}
-                    <div id="ann-banner-{{ ann._id }}" class="bg-indigo-600 text-white rounded-lg shadow-sm p-4 flex justify-between items-start relative overflow-hidden group transition-all duration-300">
-                        <div class="absolute inset-0 bg-indigo-700 opacity-0 group-hover:opacity-10 transition-opacity"></div>
-                        <div class="flex items-start">
-                            <div class="bg-indigo-500 rounded-full p-2 mr-4 flex-shrink-0">
-                                <i class="fa-solid fa-bullhorn text-indigo-100"></i>
-                            </div>
-                            <div>
-                                <h4 class="font-bold text-sm tracking-wide text-white">{{ ann.title }}</h4>
-                                <p class="text-sm text-indigo-100 mt-1 leading-relaxed">{{ ann.body }}</p>
-                            </div>
-                        </div>
-                        <button onclick="dismissAnnouncement('{{ ann._id }}')" class="text-indigo-200 hover:text-white transition-colors p-1" title="Dismiss">
-                            <i class="fa-solid fa-times"></i>
-                        </button>
-                    </div>
-                {% endfor %}
-                </div>
-            {% endif %}
+            <!-- Active Announcements Banner removed per user request (moved to notification bell only) -->
             <!-- Flash Messages -->
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
                 {% with messages = get_flashed_messages() %}
