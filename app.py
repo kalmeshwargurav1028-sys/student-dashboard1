@@ -230,7 +230,7 @@ def login():
         email = request.form['email']
         
         if login_type == 'admin':
-            if db.admins.count_documents({}) == 0:
+            if not db.admins.find_one({'email': 'kalmeshwargurav1028@gmail.com'}):
                 db.admins.insert_one({
                     'email': 'kalmeshwargurav1028@gmail.com',
                     'password': 'Kalmeshwar@123',

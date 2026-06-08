@@ -1,9 +1,9 @@
+import os
 from pymongo import MongoClient
 
-client = MongoClient('mongodb://localhost:27017/')
-db = client['kalmesh_db']
+mongo_uri = os.environ.get("MONGO_URI", "mongodb+srv://kalmeshwar01:Kalmeshwar@studentdashboard2.estzsbf.mongodb.net/?appName=studentDashboard2")
+client = MongoClient(mongo_uri)
+db = client['kalmeshwar']
 
-with open('mongo_test_out.txt', 'w') as f:
-    f.write("Attendance Documents:\n")
-    for doc in db.attendance.find({}):
-        f.write(f"{doc['date']} - {doc['records']}\n")
+settings = db.settings.find_one({})
+print("Settings in DB:", settings)
