@@ -653,19 +653,44 @@
         };
 
         try {
+            const btn = document.querySelector('button[onclick="saveRolePermissions()"]');
+            const originalText = btn.innerText;
+            btn.innerText = 'Saving to MongoDB...';
+            btn.disabled = true;
+            
             const res = await fetch('/api/role_permissions', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
             const data = await res.json();
+            
             if(data.success) {
-                alert('Role permissions saved successfully!');
+                btn.innerText = 'Saved to MongoDB!';
+                btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                btn.classList.replace('hover:bg-indigo-700', 'hover:bg-emerald-700');
+                
+                // Fetch notifications immediately to show the new success log
+                if(typeof fetchNotifications === 'function') fetchNotifications();
+                
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+                    btn.classList.replace('hover:bg-emerald-700', 'hover:bg-indigo-700');
+                    btn.disabled = false;
+                }, 3000);
             } else {
-                alert('Error saving permissions: ' + data.error);
+                alert('Error saving permissions to MongoDB: ' + data.error);
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         } catch(err) {
             alert('Failed to connect to the server.');
+            const btn = document.querySelector('button[onclick="saveRolePermissions()"]');
+            if(btn) {
+                btn.innerText = 'Save Changes';
+                btn.disabled = false;
+            }
         }
     }
 </script>
