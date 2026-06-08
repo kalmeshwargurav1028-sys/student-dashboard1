@@ -7,9 +7,14 @@
             <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p class="text-sm text-gray-500 mt-1">System Overview & User Activity Tracking</p>
         </div>
-        <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors">
-            Logout Admin
-        </a>
+        <div class="flex items-center space-x-4">
+            <a href="{{ url_for('admin_profile') }}" class="px-4 py-2 bg-blue-50 text-blue-600 font-medium rounded-lg hover:bg-blue-100 transition-colors flex items-center">
+                <i class="fa-solid fa-user-shield mr-2"></i> Profile Settings
+            </a>
+            <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors">
+                Logout Admin
+            </a>
+        </div>
     </div>
 
     <!-- Analytics Overview -->

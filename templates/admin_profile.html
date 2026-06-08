@@ -1,94 +1,238 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Admin Profile{% endblock %}
-
 {% block content %}
-<div class="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Admin Profile</h1>
-        <p class="text-sm text-gray-500 mt-1">Manage your personal information and photo.</p>
+<div class="max-w-7xl mx-auto pb-12">
+    
+    <!-- Top Blue Banner -->
+    <div class="h-48 bg-gradient-to-r from-blue-500 to-blue-400 w-full relative">
+        <div class="absolute top-4 left-4 text-white">
+            <h1 class="text-lg font-bold flex items-center">
+                <i class="fa-solid fa-user-shield mr-2"></i> Profile
+            </h1>
+        </div>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 shadow overflow-hidden sm:rounded-lg border border-gray-100 dark:border-gray-700">
-        <div class="px-4 py-5 sm:p-6">
-            <form action="{{ url_for('admin_profile') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
-                
-                <!-- Profile Picture Card -->
-                <div class="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 flex flex-col sm:flex-row items-center gap-6">
-                    <div class="flex-shrink-0 relative group">
-                        {% if admin.get('photo_url') %}
-                            <img src="{{ admin.get('photo_url') }}" alt="Admin Photo" class="h-24 w-24 rounded-full object-cover border-4 border-emerald-100 dark:border-gray-700 shadow-sm">
-                        {% else %}
-                            <div class="h-24 w-24 rounded-full bg-gradient-to-r from-emerald-500 to-indigo-600 text-white flex items-center justify-center font-bold text-3xl shadow-sm border-4 border-emerald-100 dark:border-gray-700">
-                                {{ admin.get('first_name', admin.get('email', 'A'))[0]|upper }}
-                            </div>
-                        {% endif %}
+    <!-- Main Content Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column: Personal Information -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <!-- Avatar Section -->
+                    <div class="p-6 text-center border-b border-gray-100">
+                        <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-600 text-white text-4xl font-bold border-4 border-white shadow-sm mb-4">
+                            {{ admin.name[0] | upper if admin.name else 'A' }}
+                        </div>
+                        <h2 class="text-xl font-bold text-gray-900">{{ admin.name }}</h2>
+                        <p class="text-sm text-gray-500 flex items-center justify-center mt-1">
+                            <i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Super Admin
+                        </p>
+                        <p class="text-xs text-gray-400 mt-1">{{ admin.email }}</p>
                     </div>
-                    <div class="flex-1 w-full">
-                        <label for="photo" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Upload New Photo</label>
-                        <input type="file" name="photo" id="photo" accept="image/*" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 border bg-white dark:bg-gray-800 dark:text-gray-200 cursor-pointer">
-                        <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Supported formats: JPG, PNG. Best size: 256x256px.</p>
-                    </div>
-                </div>
 
-                <!-- Personal Information -->
-                <div class="bg-gray-50 dark:bg-gray-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700 mt-6">
-                    <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-gray-700 pb-2">Personal Information</h3>
-                    <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
+                    <!-- Personal Information Form -->
+                    <div class="p-6 bg-gray-50/30">
+                        <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fa-regular fa-id-card text-gray-400 mr-2"></i> Personal Information
+                        </h3>
                         
-                        <!-- First Name -->
-                        <div class="sm:col-span-3">
-                            <label for="first_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">First Name</label>
-                            <div class="mt-1">
-                                <input type="text" name="first_name" id="first_name" value="{{ admin.get('first_name', '') }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md py-2 px-3 border" placeholder="First Name">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
+                                <div class="w-full bg-gray-100 rounded-md py-2 px-3 text-sm text-gray-700">
+                                    {{ admin.email }}
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Phone Number</label>
+                                <input type="text" value="+91 9876543210" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-2">Schools</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">IX</span>
+                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">X</span>
+                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">XI</span>
+                                    <span class="px-3 py-1 bg-blue-600 text-white text-xs font-bold rounded-full shadow-sm">XII</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-2">Grades</label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 1</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 2</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 3</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 4</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 5</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 6</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 7</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 8</span>
+                                    <span class="px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded text-center">Grade 9</span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Department</label>
+                                <input type="text" value="ERL" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
 
-                        <!-- Last Name -->
-                        <div class="sm:col-span-3">
-                            <label for="last_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Last Name</label>
-                            <div class="mt-1">
-                                <input type="text" name="last_name" id="last_name" value="{{ admin.get('last_name', '') }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md py-2 px-3 border" placeholder="Last Name">
+            <!-- Right Column: Settings -->
+            <div class="lg:col-span-2 space-y-6 mt-24 lg:mt-0">
+                
+                <!-- Account Information Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
+                        <i class="fa-solid fa-shield-halved text-gray-400 mr-2"></i> Account Information
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Username</label>
+                            <div class="w-full border border-gray-200 bg-gray-50 rounded-md py-2.5 px-3 text-sm text-gray-700">
+                                {{ admin.email.split('@')[0] if admin.email else 'admin' }}
                             </div>
                         </div>
-
-                        <!-- Email (Disabled) -->
-                        <div class="sm:col-span-3">
-                            <label for="email" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address (Login ID)</label>
-                            <div class="mt-1">
-                                <input type="email" disabled value="{{ admin.get('email', '') }}" class="bg-gray-100 dark:bg-gray-700 shadow-sm block w-full sm:text-sm border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 border text-gray-500 dark:text-gray-400 cursor-not-allowed">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Role</label>
+                            <div class="w-full border border-gray-200 bg-gray-50 rounded-md py-2.5 px-3 text-sm text-gray-700">
+                                Super Admin
                             </div>
                         </div>
-
-                        <!-- Phone -->
-                        <div class="sm:col-span-3">
-                            <label for="phone" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-                            <div class="mt-1">
-                                <input type="tel" name="phone" id="phone" value="{{ admin.get('phone', '') }}" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md py-2 px-3 border" placeholder="+1234567890">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Date Joined</label>
+                            <div class="w-full border border-gray-200 bg-gray-50 rounded-md py-2.5 px-3 text-sm text-gray-700">
+                                {{ admin.date_joined if admin.get('date_joined') else '2023-08-11' }}
                             </div>
                         </div>
-
-                        <!-- Bio -->
-                        <div class="sm:col-span-6">
-                            <label for="bio" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Short Bio / Role Description</label>
-                            <div class="mt-1">
-                                <textarea id="bio" name="bio" rows="3" class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-md py-2 px-3" placeholder="Administrator at Indus International School">{{ admin.get('bio', '') }}</textarea>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Last Login</label>
+                            <div class="w-full border border-gray-200 bg-gray-50 rounded-md py-2.5 px-3 text-sm text-gray-700">
+                                {{ admin.last_active if admin.get('last_active') else 'Just now' }}
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="pt-5 flex justify-end gap-3">
-                    <a href="{{ url_for('dashboard') }}" class="bg-white dark:bg-gray-700 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Cancel
-                    </a>
-                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                        Save Profile
-                    </button>
+                <!-- Account Settings Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
+                        <i class="fa-solid fa-gear text-gray-400 mr-2"></i> Account Settings
+                    </h3>
+                    
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Subscribe Library</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Enable access to E-Library features</p>
+                            <p class="text-xs font-semibold text-emerald-600 mt-2 flex items-center" id="libStatus">
+                                <i class="fa-solid fa-circle-check mr-1"></i> Subscribed
+                            </p>
+                        </div>
+                        
+                        <!-- Toggle Switch -->
+                        <button type="button" onclick="toggleSetting('library')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ring-2 ring-emerald-500 ring-offset-2 {{ 'bg-emerald-500' if admin.get('subscribe_library', True) else 'bg-gray-200' }}" id="libraryToggle">
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ 'translate-x-5' if admin.get('subscribe_library', True) else 'translate-x-0' }}" id="libraryKnob"></span>
+                        </button>
+                    </div>
                 </div>
-            </form>
+
+                <!-- General Settings Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
+                        <i class="fa-solid fa-sliders text-gray-400 mr-2"></i> General Settings
+                    </h3>
+                    
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-100">
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-900">Mute Notifications</h4>
+                            <p class="text-xs text-gray-500 mt-0.5">Turn off notification sounds</p>
+                            <p class="text-xs font-semibold text-emerald-600 mt-2 flex items-center" id="notifStatus">
+                                <i class="fa-solid fa-volume-high mr-1"></i> Sound Enabled
+                            </p>
+                        </div>
+                        
+                        <!-- Toggle Switch -->
+                        <button type="button" onclick="toggleSetting('notifications')" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ring-2 ring-gray-400 ring-offset-2 {{ 'bg-emerald-500' if admin.get('mute_notifications', False) else 'bg-gray-200' }}" id="notifToggle">
+                            <span class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out {{ 'translate-x-5' if admin.get('mute_notifications', False) else 'translate-x-0' }}" id="notifKnob"></span>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    async function toggleSetting(setting) {
+        let isEnabled = false;
+        
+        if (setting === 'library') {
+            const toggle = document.getElementById('libraryToggle');
+            const knob = document.getElementById('libraryKnob');
+            const status = document.getElementById('libStatus');
+            
+            isEnabled = !toggle.classList.contains('bg-emerald-500');
+            
+            if (isEnabled) {
+                toggle.classList.remove('bg-gray-200');
+                toggle.classList.add('bg-emerald-500');
+                knob.classList.add('translate-x-5');
+                knob.classList.remove('translate-x-0');
+                status.innerHTML = '<i class="fa-solid fa-circle-check mr-1"></i> Subscribed';
+                status.classList.replace('text-gray-500', 'text-emerald-600');
+            } else {
+                toggle.classList.add('bg-gray-200');
+                toggle.classList.remove('bg-emerald-500');
+                knob.classList.remove('translate-x-5');
+                knob.classList.add('translate-x-0');
+                status.innerHTML = '<i class="fa-solid fa-circle-xmark mr-1"></i> Unsubscribed';
+                status.classList.replace('text-emerald-600', 'text-gray-500');
+            }
+        } else if (setting === 'notifications') {
+            const toggle = document.getElementById('notifToggle');
+            const knob = document.getElementById('notifKnob');
+            const status = document.getElementById('notifStatus');
+            
+            isEnabled = !toggle.classList.contains('bg-emerald-500');
+            
+            if (isEnabled) {
+                toggle.classList.remove('bg-gray-200');
+                toggle.classList.add('bg-emerald-500');
+                knob.classList.add('translate-x-5');
+                knob.classList.remove('translate-x-0');
+                status.innerHTML = '<i class="fa-solid fa-volume-xmark mr-1"></i> Muted';
+                status.classList.replace('text-emerald-600', 'text-gray-500');
+            } else {
+                toggle.classList.add('bg-gray-200');
+                toggle.classList.remove('bg-emerald-500');
+                knob.classList.remove('translate-x-5');
+                knob.classList.add('translate-x-0');
+                status.innerHTML = '<i class="fa-solid fa-volume-high mr-1"></i> Sound Enabled';
+                status.classList.replace('text-gray-500', 'text-emerald-600');
+            }
+        }
+        
+        // Save to DB
+        try {
+            const formData = new FormData();
+            formData.append('setting', setting);
+            formData.append('value', isEnabled);
+            
+            await fetch('{{ url_for("admin_update_setting") }}', {
+                method: 'POST',
+                body: formData
+            });
+        } catch(e) {
+            console.error('Failed to save setting', e);
+        }
+    }
+</script>
 {% endblock %}

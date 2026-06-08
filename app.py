@@ -678,6 +678,30 @@ def admin_dashboard():
     
     return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials)
 
+@app.route('/admin_profile')
+def admin_profile():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    admin = db.admins.find_one({'_id': ObjectId(session.get('user_id'))})
+    return render_template('admin_profile.html', admin=admin)
+
+@app.route('/admin/update_setting', methods=['POST'])
+def admin_update_setting():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False}), 403
+        
+    setting = request.form.get('setting')
+    value = request.form.get('value') == 'true'
+    
+    field = 'subscribe_library' if setting == 'library' else 'mute_notifications'
+    
+    db.admins.update_one(
+        {'_id': ObjectId(session.get('user_id'))},
+        {'$set': {field: value}}
+    )
+    return jsonify({'success': True})
+
 @app.route('/admin/reset_password', methods=['POST'])
 def admin_reset_password():
     if not session.get('logged_in') or session.get('role') != 'admin':
