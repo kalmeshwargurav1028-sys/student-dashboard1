@@ -1,0 +1,213 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="text-sm text-gray-500 mt-1">System Overview & User Activity Tracking</p>
+        </div>
+        <a href="{{ url_for('logout') }}" class="px-4 py-2 bg-red-50 text-red-600 font-medium rounded-lg hover:bg-red-100 transition-colors">
+            Logout Admin
+        </a>
+    </div>
+
+    <!-- Analytics Overview -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">User Activity Stats</h2>
+        
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+            <!-- Teachers Stats -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-blue-50 rounded-md p-3">
+                        <i class="fa-solid fa-chalkboard-user text-blue-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Teachers</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-semibold text-gray-900">{{ stats.total_teachers }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-emerald-50 rounded-md p-3">
+                        <i class="fa-solid fa-user-check text-emerald-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Teachers</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-emerald-600">{{ stats.active_teachers }}</div>
+                                <span class="ml-2 text-xs text-gray-400">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Stats -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-indigo-50 rounded-md p-3">
+                        <i class="fa-solid fa-graduation-cap text-indigo-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Total Students</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-semibold text-gray-900">{{ stats.total_students }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white overflow-hidden shadow-sm rounded-xl border border-gray-100 p-5">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-emerald-50 rounded-md p-3">
+                        <i class="fa-solid fa-user-check text-emerald-500 text-xl"></i>
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-medium text-gray-500 truncate">Active Students</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-semibold text-emerald-600">{{ stats.active_students }}</div>
+                                <span class="ml-2 text-xs text-gray-400">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Users Tables -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Teachers Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-800">Teacher Activity</h3>
+            </div>
+            <div class="max-h-96 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Teacher</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        <!-- Active Teachers -->
+                        {% for t in active_teachers %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 mt-1.5"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                Just now
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <!-- Inactive Teachers -->
+                        {% for t in inactive_teachers %}
+                        <tr class="hover:bg-gray-50 opacity-75">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-medium rounded-full bg-gray-100 text-gray-600">
+                                    Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                {{ t.last_active }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if not active_teachers and not inactive_teachers %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-gray-500 text-sm">No teachers registered.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+                <h3 class="text-lg font-bold text-gray-800">Student Activity</h3>
+            </div>
+            <div class="max-h-96 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Active</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        <!-- Active Students -->
+                        {% for s in active_students %}
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 mt-1.5"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                Just now
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <!-- Inactive Students -->
+                        {% for s in inactive_students %}
+                        <tr class="hover:bg-gray-50 opacity-75">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-medium rounded-full bg-gray-100 text-gray-600">
+                                    Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
+                                {{ s.last_active }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        
+                        {% if not active_students and not inactive_students %}
+                        <tr>
+                            <td colspan="3" class="px-6 py-8 text-center text-gray-500 text-sm">No students registered.</td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -55,6 +55,7 @@
             <div class="flex w-full max-w-sm mb-6 bg-gray-100 p-1 rounded-xl">
                 <button id="tabTeacher" onclick="switchTab('teacher')" class="flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all">Teacher</button>
                 <button id="tabStudent" onclick="switchTab('student')" class="flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all">Student</button>
+                <button id="tabAdmin" onclick="switchTab('admin')" class="flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all">Admin</button>
             </div>
 
             <form action="{{ url_for('login') }}" method="POST" class="w-full max-w-sm space-y-5">
@@ -125,26 +126,39 @@
             document.getElementById('login_type').value = type;
             const tabTeacher = document.getElementById('tabTeacher');
             const tabStudent = document.getElementById('tabStudent');
+            const tabAdmin = document.getElementById('tabAdmin');
             const passwordField = document.getElementById('passwordField');
             const passwordInput = document.getElementById('password');
             const studentIdField = document.getElementById('studentIdField');
             const studentIdInput = document.getElementById('student_id');
             const signupLink = document.getElementById('signupLink');
             
+            // Reset styles
+            tabTeacher.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+            tabStudent.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+            tabAdmin.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+
             if (type === 'teacher') {
                 tabTeacher.className = 'flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all';
-                tabStudent.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
                 passwordField.classList.remove('hidden');
                 passwordInput.required = true;
                 studentIdField.classList.add('hidden');
                 studentIdInput.required = false;
-            } else {
-                tabTeacher.className = 'flex-1 py-2 text-sm font-bold text-gray-500 hover:text-gray-700 transition-all';
+                if(signupLink) signupLink.classList.remove('hidden');
+            } else if (type === 'student') {
                 tabStudent.className = 'flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all';
                 passwordField.classList.add('hidden');
                 passwordInput.required = false;
                 studentIdField.classList.remove('hidden');
                 studentIdInput.required = true;
+                if(signupLink) signupLink.classList.remove('hidden');
+            } else if (type === 'admin') {
+                tabAdmin.className = 'flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm transition-all';
+                passwordField.classList.remove('hidden');
+                passwordInput.required = true;
+                studentIdField.classList.add('hidden');
+                studentIdInput.required = false;
+                if(signupLink) signupLink.classList.add('hidden');
             }
         }
         

@@ -180,6 +180,22 @@ def send_otp_email(email, otp, is_reset=False):
         print(f"Error sending email via SMTP: {error_msg}")
         return error_msg
 
+@app.before_request
+def update_last_active():
+    if session.get('logged_in'):
+        role = session.get('role')
+        user_id = session.get('user_id')
+        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        try:
+            if role == 'teacher':
+                db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'last_active': now_str}})
+            elif role == 'student':
+                db.student_users.update_one({'student_id': user_id}, {'$set': {'last_active': now_str}})
+            elif role == 'admin':
+                db.admins.update_one({'_id': ObjectId(user_id)}, {'$set': {'last_active': now_str}})
+        except Exception as e:
+            pass # Ignore malformed ObjectIds or DB errors
+
 @app.route('/file/<file_id>')
 def get_file(file_id):
     try:
@@ -199,7 +215,27 @@ def login():
         login_type = request.form.get('login_type', 'teacher')
         email = request.form['email']
         
-        if login_type == 'student':
+        if login_type == 'admin':
+            if db.admins.count_documents({}) == 0:
+                db.admins.insert_one({
+                    'email': 'admin@indusschool.com',
+                    'password': 'Admin@2026',
+                    'name': 'System Admin'
+                })
+                
+            admin = db.admins.find_one({'email': email})
+            password = request.form.get('password', '')
+            if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
+                session['logged_in'] = True
+                session['role'] = 'admin'
+                session['user_id'] = str(admin['_id'])
+                session['username'] = admin.get('name', 'Admin')
+                session['email'] = email
+                return redirect(url_for('admin_dashboard'))
+            else:
+                flash('Invalid admin credentials. Please try again.')
+                
+        elif login_type == 'student':
             student_id_or_password = request.form.get('student_id')
             
             # Check new student_users auth collection first
@@ -464,6 +500,8 @@ def dashboard():
         return redirect(url_for('login'))
     if session.get('role') == 'student':
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
+    if session.get('role') == 'admin':
+        return redirect(url_for('admin_dashboard'))
     
     students = list(db.students.find({}, {'_id': 0}))
     
@@ -552,6 +590,74 @@ def student_profile(student_id):
         ]
         
     return render_template('student_profile.html', student=student)
+
+@app.route('/admin_dashboard')
+def admin_dashboard():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    now = datetime.utcnow()
+    active_threshold = now - timedelta(minutes=15)
+    
+    # Process teachers
+    teachers = list(db.users.find({}))
+    active_teachers = []
+    inactive_teachers = []
+    for t in teachers:
+        last_active_str = t.get('last_active')
+        t_data = {
+            'email': t.get('email'),
+            'name': f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email').split('@')[0],
+            'last_active': last_active_str or 'Never'
+        }
+        if last_active_str:
+            try:
+                last_active = datetime.strptime(last_active_str, '%Y-%m-%d %H:%M:%S')
+                if last_active >= active_threshold:
+                    active_teachers.append(t_data)
+                else:
+                    inactive_teachers.append(t_data)
+            except ValueError:
+                inactive_teachers.append(t_data)
+        else:
+            inactive_teachers.append(t_data)
+            
+    # Process students
+    student_users = list(db.student_users.find({}))
+    student_profiles = {s['id']: s for s in db.students.find({}, {'_id': 0})}
+    
+    active_students = []
+    inactive_students = []
+    for s in student_users:
+        last_active_str = s.get('last_active')
+        profile = student_profiles.get(s.get('student_id'), {})
+        s_data = {
+            'email': s.get('email'),
+            'student_id': s.get('student_id'),
+            'name': profile.get('name', s.get('email')),
+            'last_active': last_active_str or 'Never'
+        }
+        
+        if last_active_str:
+            try:
+                last_active = datetime.strptime(last_active_str, '%Y-%m-%d %H:%M:%S')
+                if last_active >= active_threshold:
+                    active_students.append(s_data)
+                else:
+                    inactive_students.append(s_data)
+            except ValueError:
+                inactive_students.append(s_data)
+        else:
+            inactive_students.append(s_data)
+            
+    stats = {
+        'total_teachers': len(teachers),
+        'active_teachers': len(active_teachers),
+        'total_students': len(student_users),
+        'active_students': len(active_students)
+    }
+    
+    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students)
 
 @app.route('/student/materials')
 def student_materials():
