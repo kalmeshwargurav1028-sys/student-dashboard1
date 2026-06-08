@@ -678,8 +678,8 @@ def admin_dashboard():
     
     return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials)
 
-@app.route('/admin_profile')
-def admin_profile():
+@app.route('/super_admin_profile')
+def super_admin_profile():
     if not session.get('logged_in') or session.get('role') != 'admin':
         return redirect(url_for('login'))
         
