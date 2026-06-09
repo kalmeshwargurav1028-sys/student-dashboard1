@@ -904,6 +904,30 @@ def admin_dashboard():
     now = datetime.utcnow()
     active_threshold = now - timedelta(minutes=15)
     
+    # Process admins
+    admins = list(db.admins.find({}))
+    active_admins = []
+    inactive_admins = []
+    for a in admins:
+        last_active_str = a.get('last_active')
+        a_data = {
+            'id': str(a.get('_id')),
+            'email': a.get('email'),
+            'name': a.get('name', a.get('email').split('@')[0] if a.get('email') else 'Admin'),
+            'last_active': last_active_str or 'Never'
+        }
+        if last_active_str:
+            try:
+                last_active = datetime.strptime(last_active_str, '%Y-%m-%d %H:%M:%S')
+                if last_active >= active_threshold:
+                    active_admins.append(a_data)
+                else:
+                    inactive_admins.append(a_data)
+            except ValueError:
+                inactive_admins.append(a_data)
+        else:
+            inactive_admins.append(a_data)
+
     # Process teachers
     teachers = list(db.users.find({}))
     active_teachers = []
@@ -972,6 +996,8 @@ def admin_dashboard():
     system_errors = db.notifications.count_documents({'type': 'error', 'read': False})
 
     stats = {
+        'total_admins': len(admins),
+        'active_admins': len(active_admins),
         'total_teachers': len(teachers),
         'active_teachers': len(active_teachers),
         'total_students': len(student_users),
@@ -996,7 +1022,7 @@ def admin_dashboard():
     if not global_config.get('student'):
         global_config['student'] = {'view_dashboard': True}
     
-    return render_template('admin_dashboard.html', stats=stats, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config)
+    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
