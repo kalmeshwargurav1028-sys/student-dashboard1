@@ -417,15 +417,12 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    try:
-        config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    except Exception:
-        config_data = {}
-
-    smtp_server = config_data.get('MAIL_SERVER', 'smtp.office365.com')
-    smtp_port = int(config_data.get('MAIL_PORT', 587))
-    smtp_user = config_data.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    smtp_pass = config_data.get('MAIL_PASSWORD', 'Agent@2026')
+    # Use hardcoded credentials directly - do NOT read from DB
+    # This ensures OTP works even if DB password is changed to block error email spam
+    smtp_server = os.environ.get('MAIL_SERVER', 'smtp.office365.com')
+    smtp_port = int(os.environ.get('MAIL_PORT', 587))
+    smtp_user = os.environ.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
 
     subject = "Your OTP Code"
     body = f"Your OTP is: {otp}"
