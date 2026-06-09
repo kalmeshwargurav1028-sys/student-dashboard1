@@ -87,35 +87,8 @@ def send_sendgrid_email(email, subject, message_body):
         return False
 
 def send_error_email(error_details):
-    try:
-        config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    except Exception:
-        config_data = {}
-
-    smtp_server = config_data.get('MAIL_SERVER', 'smtp.office365.com')
-    smtp_port = int(config_data.get('MAIL_PORT', 587))
-    smtp_user = config_data.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    smtp_pass = config_data.get('MAIL_PASSWORD', 'Agent@2026')
-    admin_email = 'kalmeshwargurav1028@gmail.com'
-
-    subject = "CRITICAL: System Error Alert"
-    body = f"An unhandled exception occurred in the Student Dashboard:\n\n{error_details}"
-    
-    try:
-        msg = MIMEText(body)
-        msg['Subject'] = subject
-        msg['From'] = smtp_user
-        msg['To'] = admin_email
-
-        server = smtplib.SMTP(smtp_server, smtp_port)
-        server.starttls()
-        server.login(smtp_user, smtp_pass)
-        server.send_message(msg)
-        server.quit()
-        return True
-    except Exception as e:
-        print(f"Failed to send error alert email: {str(e)}")
-        return False
+    # PERMANENTLY DISABLED - Do not send any error alert emails
+    return False
 
 def configure_gemini():
     config_data = db.settings.find_one({}, {'_id': 0}) or {}
@@ -791,7 +764,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
