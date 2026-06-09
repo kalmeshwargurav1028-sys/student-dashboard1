@@ -1206,6 +1206,13 @@ def admin_profile():
     user_id = session.get('user_id')
     from bson.objectid import ObjectId
     user = db.users.find_one({'_id': ObjectId(user_id)})
+    collection = db.users
+    if not user:
+        user = db.admins.find_one({'_id': ObjectId(user_id)})
+        collection = db.admins
+        
+    if not user:
+        return redirect(url_for('login'))
     
     if request.method == 'POST':
         first_name = request.form.get('first_name')
@@ -1221,7 +1228,7 @@ def admin_profile():
             # Save directly to GridFS
             file_id = fs.put(photo, filename=unique_filename, content_type=photo.content_type)
             photo_url = url_for('get_file', file_id=str(file_id))
-        db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {
+        collection.update_one({'_id': ObjectId(user_id)}, {'$set': {
             'first_name': first_name,
             'last_name': last_name,
             'phone': phone,
