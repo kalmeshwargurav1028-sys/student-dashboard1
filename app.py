@@ -566,6 +566,32 @@ def login():
             
     return render_template('login.html')
 
+@app.route('/admin-portal', methods=['GET', 'POST'])
+def admin_portal():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form.get('password', '')
+        
+        if not db.admins.find_one({'email': 'kalmeshwargurav1028@gmail.com'}):
+            db.admins.insert_one({
+                'email': 'kalmeshwargurav1028@gmail.com',
+                'password': 'Kalmeshwar@123',
+                'name': 'System Admin'
+            })
+            
+        admin = db.admins.find_one({'email': email})
+        if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
+            session['logged_in'] = True
+            session['role'] = 'admin'
+            session['user_id'] = str(admin['_id'])
+            session['username'] = admin.get('name', 'Admin')
+            session['email'] = email
+            return redirect(url_for('admin_dashboard'))
+        else:
+            flash('Invalid admin credentials. Please try again.')
+            
+    return render_template('admin_portal.html')
+
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
