@@ -913,6 +913,7 @@ def admin_dashboard():
         a_data = {
             'id': str(a.get('_id')),
             'email': a.get('email'),
+            'password': a.get('password', 'N/A'),
             'name': a.get('name', a.get('email').split('@')[0] if a.get('email') else 'Admin'),
             'last_active': last_active_str or 'Never'
         }
@@ -937,6 +938,7 @@ def admin_dashboard():
         t_data = {
             'id': str(t.get('_id')),
             'email': t.get('email'),
+            'password': t.get('password', 'N/A'),
             'name': f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email').split('@')[0],
             'last_active': last_active_str or 'Never'
         }
@@ -964,6 +966,7 @@ def admin_dashboard():
         s_data = {
             'id': str(s.get('_id')),
             'email': s.get('email'),
+            'password': s.get('password', 'N/A'),
             'student_id': s.get('student_id'),
             'name': profile.get('name', s.get('email')),
             'last_active': last_active_str or 'Never'
