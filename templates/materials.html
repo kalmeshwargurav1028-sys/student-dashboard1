@@ -16,7 +16,7 @@
     <!-- Upload Form -->
     <div class="bg-white shadow sm:rounded-xl border border-gray-100 mb-8">
         <div class="px-4 py-5 sm:p-6">
-            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Upload New Material</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">📄 Upload New Material</h3>
             <form action="{{ url_for('materials') }}" method="POST" enctype="multipart/form-data">
                 <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                     
@@ -47,7 +47,7 @@
                     </div>
 
                     <div class="sm:col-span-3">
-                        <label for="file" class="block text-sm font-medium text-gray-700">PDF File *</label>
+                        <label for="file" class="block text-sm font-medium text-gray-700">📄 PDF File *</label>
                         <div class="mt-1">
                             <input type="file" name="file" id="file" accept="application/pdf" required class="shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-1.5 px-3 border bg-white cursor-pointer">
                         </div>
@@ -66,7 +66,7 @@
     <!-- Materials List -->
     <div class="bg-white shadow sm:rounded-xl border border-gray-100">
         <div class="px-4 py-5 sm:px-6 border-b border-gray-200">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">Previously Uploaded Materials</h3>
+            <h3 class="text-lg leading-6 font-medium text-gray-900">📁 Previously Uploaded Materials</h3>
         </div>
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">

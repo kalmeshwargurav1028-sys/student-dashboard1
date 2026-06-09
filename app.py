@@ -1889,7 +1889,11 @@ def settings():
     return render_template('settings.html', config_data=config_data)
 @app.errorhandler(Exception)
 def handle_exception(e):
+    from werkzeug.exceptions import HTTPException
     # Pass through HTTP errors
+    if isinstance(e, HTTPException):
+        return e
+
     if isinstance(e, Exception):
         error_type = type(e).__name__
         error_msg = str(e)
@@ -1902,8 +1906,8 @@ def handle_exception(e):
         full_details = f"User: {user}\nMethod: {method}\nURL: {url}\n\nError: {error_type} - {error_msg}\n\nTraceback:\n{tb}"
         print(f"\n--- [CRITICAL ERROR] ---\n{full_details}\n-----------------------\n")
         
-        # Send async so it doesn't block the response
-        threading.Thread(target=send_error_email, args=(full_details,)).start()
+        # Send async so it doesn't block the response (DISABLED to stop email spam)
+        # threading.Thread(target=send_error_email, args=(full_details,)).start()
         
         # Also log to DB notification system
         log_notification("System Error", f"{error_type}: {error_msg}", type="error")
