@@ -207,6 +207,8 @@
                     btn.classList.remove('opacity-75', 'cursor-not-allowed');
                     btn.disabled = false;
                 }, 2000);
+            } else {
+                throw new Error('Server returned ' + response.status);
             }
         } catch(e) {
             console.error('Failed to save profile', e);

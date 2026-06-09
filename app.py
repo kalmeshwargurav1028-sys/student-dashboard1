@@ -1011,7 +1011,7 @@ def super_admin_profile():
 
 @app.route('/super_admin_update_profile', methods=['POST'])
 def super_admin_update_profile():
-    if not session.get('logged_in') or session.get('role') != 'admin':
+    if not session.get('logged_in') or session.get('role') not in ['admin', 'teacher']:
         return jsonify({'success': False}), 403
         
     phone = request.form.get('phone')
