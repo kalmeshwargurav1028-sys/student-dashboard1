@@ -514,16 +514,17 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    # Always refresh mail config from DB/env before sending
-    refresh_mail_config()
-    smtp_server = app.config.get('MAIL_SERVER', 'smtp.office365.com')
-    smtp_port = int(app.config.get('MAIL_PORT', 587))
-    smtp_user = app.config.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    smtp_pass = app.config.get('MAIL_PASSWORD', 'Agent@2026')
+    # Use .env values directly, bypassing db.settings which may have stale credentials
+    smtp_server = 'smtp.office365.com'
+    smtp_port = 587
+    smtp_user = os.environ.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
 
-    subject = "Your OTP Code"
-    body = f"Your OTP is: {otp}"
-    print(f"\n--- [DEV] OTP for {email}: {otp} ---\n")
+    subject = "Your OTP Code - Indus Portal"
+    if is_reset:
+        subject = "Password Reset Code - Indus Portal"
+    body = f"Your verification code is: {otp}\n\nThis code expires in 5 minutes.\n\nRegards,\nIndus Portal"
+    print(f"\n--- [DEV] OTP for {email}: {otp} (using SMTP: {smtp_server}, user: {smtp_user}) ---\n")
     
     try:
         msg = MIMEText(body)
