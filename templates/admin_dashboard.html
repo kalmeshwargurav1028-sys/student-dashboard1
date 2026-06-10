@@ -182,6 +182,7 @@
                     <thead class="bg-white sticky top-0 shadow-sm z-10">
                         <tr>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Teacher</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
@@ -194,6 +195,13 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
                                 <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                                    {% for r in available_roles %}
+                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -214,6 +222,13 @@
                                 <div class="text-xs text-gray-500">{{ t.email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
+                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                                    {% for r in available_roles %}
+                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
                                 </span>
@@ -226,7 +241,7 @@
                         </tr>
                         {% endfor %}
                         {% if not active_teachers and not inactive_teachers %}
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
+                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -354,7 +369,16 @@
                         <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Feature Module</th>
                         <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Admin</th>
                         {% for role in custom_roles %}
-                        <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">{{ role }}</th>
+                        <th scope="col" class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <div class="flex items-center justify-center gap-2">
+                                {{ role }}
+                                {% if role not in ['teacher', 'student'] %}
+                                <button onclick="deleteCustomRole('{{ role }}')" class="text-red-400 hover:text-red-600 transition-colors" title="Delete role '{{ role }}'">
+                                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </th>
                         {% endfor %}
                     </tr>
                 </thead>
@@ -674,6 +698,51 @@
             }
         } catch(e) {
             alert('Failed to create custom role.');
+        }
+    }
+
+    async function deleteCustomRole(roleName) {
+        if(!confirm(`Are you sure you want to delete the role '${roleName}'?\n\nAll users assigned this role will be reset to 'Teacher'.`)) return;
+        
+        try {
+            const res = await fetch('/api/roles/' + encodeURIComponent(roleName), {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                alert(`Role '${roleName}' deleted successfully! Reloading page.`);
+                window.location.reload();
+            } else {
+                alert('Error deleting role: ' + data.error);
+            }
+        } catch(e) {
+            alert('Failed to delete custom role.');
+        }
+    }
+
+    async function changeUserRole(userId, newRole, userName) {
+        try {
+            const res = await fetch('/api/users/' + userId + '/role', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ role: newRole })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                // Show a brief inline confirmation
+                const badge = document.createElement('span');
+                badge.className = 'ml-2 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full';
+                badge.innerText = '✓ Saved';
+                event.target.parentNode.appendChild(badge);
+                setTimeout(() => badge.remove(), 2000);
+            } else {
+                alert('Error: ' + data.error);
+                window.location.reload();
+            }
+        } catch(e) {
+            alert('Failed to change user role.');
         }
     }
 

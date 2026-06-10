@@ -104,6 +104,25 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_production')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
+def has_permission(permission_name):
+    """Check if the current user has a specific permission based on their role."""
+    if not session.get('logged_in'):
+        return False
+    role = session.get('role', 'student')
+    if role == 'admin':
+        return True
+    try:
+        global_config = db.role_permissions.find_one({'_id': 'global_config'})
+        if global_config and global_config.get(role):
+            return global_config[role].get(permission_name, False)
+    except Exception:
+        pass
+    # Defaults for built-in roles
+    if role == 'teacher':
+        defaults = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
+        return defaults.get(permission_name, False)
+    return False
+
 @app.context_processor
 def inject_global_context():
     context = {'active_announcements': [], 'role_permissions': {}}
@@ -112,7 +131,7 @@ def inject_global_context():
     
     role = session.get('role', 'student')
     target = ['all']
-    if role in ('admin', 'teacher'):
+    if role in ('admin', 'teacher') or role not in ('student',):
         target.append('teachers')
     if role == 'student':
         target.append('students')
@@ -216,12 +235,90 @@ def add_custom_role():
         
         log_notification(
             "Custom Role Added", 
-            f"A new role '{role_name}' has been created.", 
+            f"A new role '{role_name}' has been created by {session.get('username', 'Admin')}.", 
             type='success', 
             role_target='admin'
         )
         
         return jsonify({'success': True, 'role': role_name})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/roles/<role_name>', methods=['DELETE'])
+def delete_custom_role(role_name):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        role_name = role_name.strip().lower()
+        reserved = ['admin', 'teacher', 'student', '_id']
+        if role_name in reserved:
+            return jsonify({'success': False, 'error': 'Cannot delete built-in roles'}), 400
+        
+        # Remove role from global_config
+        db.role_permissions.update_one(
+            {'_id': 'global_config'},
+            {'$unset': {role_name: ''}}
+        )
+        
+        # Reset any users with this custom role back to 'teacher'
+        db.users.update_many(
+            {'custom_role': role_name},
+            {'$unset': {'custom_role': ''}}
+        )
+        
+        log_notification(
+            "Custom Role Deleted",
+            f"Role '{role_name}' has been removed by {session.get('username', 'Admin')}. Affected users reset to 'teacher'.",
+            type='success',
+            role_target='admin'
+        )
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/users/<user_id>/role', methods=['POST'])
+def assign_user_role(user_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        data = request.json
+        new_role = data.get('role', '').strip().lower()
+        
+        if not new_role:
+            return jsonify({'success': False, 'error': 'Role name is required'}), 400
+        
+        user = db.users.find_one({'_id': ObjectId(user_id)})
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+        
+        user_name = f"{user.get('first_name', '')} {user.get('last_name', '')}".strip() or user.get('email', 'Unknown')
+        
+        if new_role == 'teacher':
+            # Reset to default teacher role
+            db.users.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$unset': {'custom_role': ''}}
+            )
+        else:
+            # Verify the custom role exists
+            global_config = db.role_permissions.find_one({'_id': 'global_config'})
+            if not global_config or not global_config.get(new_role):
+                return jsonify({'success': False, 'error': f"Role '{new_role}' does not exist. Create it first."}), 400
+            
+            db.users.update_one(
+                {'_id': ObjectId(user_id)},
+                {'$set': {'custom_role': new_role}}
+            )
+        
+        log_notification(
+            "User Role Updated",
+            f"{user_name}'s role changed to '{new_role}' by {session.get('username', 'Admin')}.",
+            type='success',
+            role_target='admin'
+        )
+        
+        return jsonify({'success': True, 'role': new_role, 'user_name': user_name})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -552,7 +649,7 @@ def login():
                     return redirect(url_for('verify_otp', email=email))
                     
                 session['logged_in'] = True
-                session['role'] = 'teacher'
+                session['role'] = user.get('custom_role', 'teacher')
                 session['user_id'] = str(user['_id'])
                 first = user.get('first_name') or ''
                 last = user.get('last_name') or ''
@@ -936,7 +1033,8 @@ def admin_dashboard():
             'email': t.get('email'),
             'password': t.get('password', 'N/A'),
             'name': f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email').split('@')[0],
-            'last_active': last_active_str or 'Never'
+            'last_active': last_active_str or 'Never',
+            'custom_role': t.get('custom_role', 'teacher')
         }
         if last_active_str:
             try:
@@ -1021,7 +1119,13 @@ def admin_dashboard():
     if not global_config.get('student'):
         global_config['student'] = {'view_dashboard': True}
     
-    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config)
+    # Build list of available roles for assignment dropdown
+    available_roles = ['teacher']
+    for key in global_config:
+        if key not in ('_id', 'admin', 'teacher', 'student'):
+            available_roles.append(key)
+    
+    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
@@ -1530,6 +1634,9 @@ def attendance():
         return redirect(url_for('login'))
     if session.get('role') == 'student':
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
+    if not has_permission('modify_attendance'):
+        flash('You do not have permission to access Attendance.')
+        return redirect(url_for('dashboard'))
         
     selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d')) or datetime.now().strftime('%Y-%m-%d')
     students = list(db.students.find({}, {'_id': 0}))
@@ -1618,6 +1725,9 @@ def attendance():
 def materials():
     if not session.get('logged_in') or session.get('role') == 'student':
         return redirect(url_for('login'))
+    if not has_permission('edit_materials'):
+        flash('You do not have permission to access Study Materials.')
+        return redirect(url_for('dashboard'))
         
     if request.method == 'POST':
         title = request.form.get('title')
@@ -1809,6 +1919,9 @@ def reports():
 def ai_box():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
+    if not has_permission('ai_insights'):
+        flash('You do not have permission to access AI Insights.')
+        return redirect(url_for('dashboard'))
     return render_template('ai_box.html')
 
 @app.route('/export_students')
