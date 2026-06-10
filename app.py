@@ -514,15 +514,12 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    # Hardcode Office 365 server - never use env vars for server
+    # Read credentials from db.settings (where the working password is stored)
+    refresh_mail_config()
     smtp_server = 'smtp.office365.com'
     smtp_port = 587
-    smtp_user = os.environ.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    
-    # Get password from env, but filter out old Gmail app passwords (16 chars, lowercase)
-    smtp_pass = os.environ.get('MAIL_PASSWORD', '')
-    if not smtp_pass or (len(smtp_pass) == 16 and smtp_pass.islower()):
-        smtp_pass = 'Agent@2026'
+    smtp_user = app.config.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = app.config.get('MAIL_PASSWORD', 'Agent@2026')
 
     subject = "Your OTP Code - Indus Portal"
     if is_reset:
