@@ -514,12 +514,12 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    # Use hardcoded credentials directly - do NOT read from DB
-    # This ensures OTP works even if DB password is changed to block error email spam
-    smtp_server = os.environ.get('MAIL_SERVER', 'smtp.office365.com')
-    smtp_port = int(os.environ.get('MAIL_PORT', 587))
-    smtp_user = os.environ.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    smtp_pass = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
+    # Always refresh mail config from DB/env before sending
+    refresh_mail_config()
+    smtp_server = app.config.get('MAIL_SERVER', 'smtp.office365.com')
+    smtp_port = int(app.config.get('MAIL_PORT', 587))
+    smtp_user = app.config.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass = app.config.get('MAIL_PASSWORD', 'Agent@2026')
 
     subject = "Your OTP Code"
     body = f"Your OTP is: {otp}"
