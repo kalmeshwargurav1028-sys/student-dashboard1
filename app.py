@@ -2060,6 +2060,64 @@ def settings():
         return redirect(url_for('settings'))
         
     return render_template('settings.html', config_data=config_data)
+
+@app.route('/api/test_smtp', methods=['POST'])
+def test_smtp():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        # Show what credentials are being used
+        refresh_mail_config()
+        smtp_server = 'smtp.office365.com'
+        smtp_port = 587
+        smtp_user = app.config.get('MAIL_USERNAME', 'agent4@indusschool.com')
+        smtp_pass = app.config.get('MAIL_PASSWORD', 'Agent@2026')
+        
+        # Mask password for display
+        masked = smtp_pass[:2] + '*' * (len(smtp_pass) - 4) + smtp_pass[-2:] if len(smtp_pass) > 4 else '****'
+        
+        # Also check what db.settings has
+        db_settings = db.settings.find_one({}, {'_id': 0}) or {}
+        db_user = db_settings.get('MAIL_USERNAME', '(not set)')
+        db_pass = db_settings.get('MAIL_PASSWORD', '(not set)')
+        db_masked = db_pass[:2] + '*' * (len(db_pass) - 4) + db_pass[-2:] if db_pass and len(db_pass) > 4 else db_pass
+        
+        # Try connecting
+        test_email = session.get('email', smtp_user)
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=15)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(smtp_user, smtp_pass)
+        
+        # Send test email
+        msg = MIMEText(f"SMTP test successful!\n\nServer: {smtp_server}\nUser: {smtp_user}\n\nThis confirms your email settings are working.")
+        msg['Subject'] = 'SMTP Test - Indus Portal'
+        msg['From'] = smtp_user
+        msg['To'] = test_email
+        server.sendmail(smtp_user, test_email, msg.as_string())
+        server.quit()
+        
+        return jsonify({
+            'success': True, 
+            'message': f'Test email sent to {test_email}',
+            'using_server': smtp_server,
+            'using_user': smtp_user,
+            'using_pass': masked,
+            'db_user': db_user,
+            'db_pass': db_masked
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False, 
+            'error': str(e),
+            'using_server': 'smtp.office365.com',
+            'using_user': app.config.get('MAIL_USERNAME', 'agent4@indusschool.com'),
+            'using_pass': masked if 'masked' in dir() else 'unknown',
+            'db_user': db_user if 'db_user' in dir() else 'unknown',
+            'db_pass': db_masked if 'db_masked' in dir() else 'unknown'
+        }), 500
+
 @app.errorhandler(Exception)
 def handle_exception(e):
     from werkzeug.exceptions import HTTPException
