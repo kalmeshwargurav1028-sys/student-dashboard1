@@ -1672,6 +1672,68 @@ def materials():
     all_materials = list(db.materials.find().sort('uploaded_at', -1))
     return render_template('materials.html', materials=all_materials)
 
+@app.route('/material/edit/<material_id>', methods=['POST'])
+def edit_material(material_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+    
+    title = request.form.get('title')
+    student_class = request.form.get('student_class')
+    subject = request.form.get('subject')
+    file = request.files.get('file')
+    
+    update_data = {
+        'title': title,
+        'class': student_class,
+        'subject': subject
+    }
+    
+    # If a new file is uploaded, replace the old one
+    if file and file.filename != '':
+        # Delete old file from GridFS
+        material = db.materials.find_one({'_id': ObjectId(material_id)})
+        if material and material.get('file_url'):
+            try:
+                old_file_id = material['file_url'].split('/file/')[-1]
+                fs.delete(ObjectId(old_file_id))
+            except Exception:
+                pass
+        
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+        file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
+        update_data['file_url'] = url_for('get_file', file_id=str(file_id))
+    
+    db.materials.update_one(
+        {'_id': ObjectId(material_id)},
+        {'$set': update_data}
+    )
+    
+    flash('Material updated successfully!')
+    return redirect(url_for('materials'))
+
+@app.route('/material/delete/<material_id>', methods=['POST'])
+def delete_material(material_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+    
+    material = db.materials.find_one({'_id': ObjectId(material_id)})
+    if material:
+        # Delete file from GridFS
+        if material.get('file_url'):
+            try:
+                file_id = material['file_url'].split('/file/')[-1]
+                fs.delete(ObjectId(file_id))
+            except Exception:
+                pass
+        
+        db.materials.delete_one({'_id': ObjectId(material_id)})
+        flash('Material deleted successfully!')
+    else:
+        flash('Material not found.')
+    
+    return redirect(url_for('materials'))
+
 @app.route('/reports')
 def reports():
     if not session.get('logged_in'):
