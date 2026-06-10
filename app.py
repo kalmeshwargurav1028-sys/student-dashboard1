@@ -2135,6 +2135,59 @@ def settings():
         
     return render_template('settings.html', config_data=config_data)
 
+@app.route('/api/smtp_debug')
+def smtp_debug():
+    """Diagnostic endpoint — shows exactly what SMTP config the app resolved.
+    Accessible without login so it can be checked on Vercel without a session.
+    Password is always masked. Remove this route after debugging is complete."""
+    env_user = os.environ.get('MAIL_USERNAME', '(not set in env)')
+    env_pass = os.environ.get('MAIL_PASSWORD', '(not set in env)')
+    env_pass_masked = env_pass[:2] + '****' + env_pass[-2:] if len(env_pass) > 5 else '(short/empty)'
+
+    try:
+        db_cfg = db.settings.find_one({}, {'_id': 0}) or {}
+        db_status = 'connected'
+    except Exception as e:
+        db_cfg = {}
+        db_status = f'error: {e}'
+
+    db_user = db_cfg.get('MAIL_USERNAME', '(not set in db.settings)')
+    db_pass = db_cfg.get('MAIL_PASSWORD', '(not set in db.settings)')
+    db_pass_masked = db_pass[:2] + '****' + db_pass[-2:] if len(db_pass) > 5 else '(short/empty)'
+    db_server = db_cfg.get('MAIL_SERVER', '(not set in db.settings)')
+
+    try:
+        resolved = _get_smtp_config()
+        resolved_pass_masked = resolved['password'][:2] + '****' + resolved['password'][-2:]
+        resolved_info = {
+            'server':   resolved['server'],
+            'port':     resolved['port'],
+            'username': resolved['username'],
+            'password': resolved_pass_masked,
+        }
+        config_error = None
+    except RuntimeError as e:
+        resolved_info = {}
+        config_error = str(e)
+
+    return jsonify({
+        'env_vars': {
+            'MAIL_USERNAME': env_user,
+            'MAIL_PASSWORD': env_pass_masked,
+            'MAIL_SERVER':   os.environ.get('MAIL_SERVER', '(not set — correct, should be ignored)'),
+        },
+        'db_settings': {
+            'status':       db_status,
+            'MAIL_USERNAME': db_user,
+            'MAIL_PASSWORD': db_pass_masked,
+            'MAIL_SERVER':   db_server,
+        },
+        'resolved_config': resolved_info,
+        'config_error':    config_error,
+        'note': 'resolved_config shows what send_otp_email will actually use',
+    })
+
+
 @app.route('/api/test_smtp', methods=['POST'])
 def test_smtp():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -2185,6 +2238,7 @@ def test_smtp():
             'using_user':   smtp_user,
             'using_pass':   masked,
         }), 500
+
 
 @app.errorhandler(Exception)
 def handle_exception(e):
