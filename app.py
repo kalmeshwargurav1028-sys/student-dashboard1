@@ -469,46 +469,46 @@ def dev_wipe_users():
 # ---------------------------------------------------------------------------
 def _get_smtp_config():
     """
-    Load SMTP settings with a 2-tier fallback:
-      1. Environment variables (.env / Vercel env vars)  <-- PRIMARY
-      2. db.settings (admin-saved values via Settings page)
-    Returns a dict with keys: server, port, username, password.
-    Raises RuntimeError if username or password cannot be resolved.
+    Load SMTP settings. MAIL_SERVER is intentionally NOT read from
+    environment variables because Vercel / deployment environments often
+    carry a stale 'MAIL_SERVER=smtp.gmail.com' value that silently
+    redirects all emails to Gmail (causing 535 gsmtp auth failures).
+
+    Credential priority (MAIL_USERNAME / MAIL_PASSWORD only):
+      1. Environment variables / .env  <-- PRIMARY
+      2. db.settings (admin-configurable via Settings page)
+
+    Server is always smtp.office365.com unless overridden in db.settings.
     """
-    # Tier 1: environment variables
-    server   = os.environ.get('MAIL_SERVER',   '').strip()
-    port_str = os.environ.get('MAIL_PORT',     '').strip()
+    # --- Credentials from environment ---
     username = os.environ.get('MAIL_USERNAME', '').strip()
     password = os.environ.get('MAIL_PASSWORD', '').strip()
 
-    # Tier 2: db.settings (only for missing values)
-    if not username or not password:
-        try:
-            cfg = db.settings.find_one({}, {'_id': 0}) or {}
-        except Exception:
-            cfg = {}
-        server   = server   or cfg.get('MAIL_SERVER',   '')
-        username = username or cfg.get('MAIL_USERNAME', '')
-        password = password or cfg.get('MAIL_PASSWORD', '')
-        if not port_str:
-            port_str = str(cfg.get('MAIL_PORT', ''))
-
-    # Sensible defaults for server/port (not credentials)
-    server = server or 'smtp.office365.com'
+    # --- All config from db.settings (fills gaps + provides server) ---
     try:
-        port = int(port_str)
+        cfg = db.settings.find_one({}, {'_id': 0}) or {}
+    except Exception:
+        cfg = {}
+
+    username = username or cfg.get('MAIL_USERNAME', '')
+    password = password or cfg.get('MAIL_PASSWORD', '')
+
+    # Server and port come ONLY from db.settings or default — never from env
+    server   = cfg.get('MAIL_SERVER', '') or 'smtp.office365.com'
+    try:
+        port = int(cfg.get('MAIL_PORT', 587))
     except (ValueError, TypeError):
         port = 587
 
     if not username:
         raise RuntimeError(
-            'SMTP username not configured. Set MAIL_USERNAME in your .env file '
-            'or in the Settings page.'
+            'SMTP username not configured. '
+            'Set MAIL_USERNAME in your .env file or in the Settings page.'
         )
     if not password:
         raise RuntimeError(
-            'SMTP password not configured. Set MAIL_PASSWORD in your .env file '
-            'or in the Settings page.'
+            'SMTP password not configured. '
+            'Set MAIL_PASSWORD in your .env file or in the Settings page.'
         )
 
     return {'server': server, 'port': port, 'username': username, 'password': password}
