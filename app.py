@@ -458,42 +458,83 @@ def dev_wipe_users():
 
 
 
-# Flask-Mail configuration — always Office 365, never Gmail
-SMTP_SERVER = 'smtp.office365.com'
-SMTP_PORT   = 587
+# ---------------------------------------------------------------------------
+# SMTP / Flask-Mail configuration
+# All values come from .env (or Vercel environment variables).
+# No credentials are hardcoded here — set them in your .env file:
+#   MAIL_SERVER=smtp.office365.com
+#   MAIL_PORT=587
+#   MAIL_USERNAME=agent4@indusschool.com
+#   MAIL_PASSWORD=Agent@2026
+# ---------------------------------------------------------------------------
+def _get_smtp_config():
+    """
+    Load SMTP settings with a 2-tier fallback:
+      1. Environment variables (.env / Vercel env vars)  <-- PRIMARY
+      2. db.settings (admin-saved values via Settings page)
+    Returns a dict with keys: server, port, username, password.
+    Raises RuntimeError if username or password cannot be resolved.
+    """
+    # Tier 1: environment variables
+    server   = os.environ.get('MAIL_SERVER',   '').strip()
+    port_str = os.environ.get('MAIL_PORT',     '').strip()
+    username = os.environ.get('MAIL_USERNAME', '').strip()
+    password = os.environ.get('MAIL_PASSWORD', '').strip()
 
-app.config['MAIL_SERVER']  = SMTP_SERVER
-app.config['MAIL_PORT']    = SMTP_PORT
-app.config['MAIL_USE_TLS'] = True
+    # Tier 2: db.settings (only for missing values)
+    if not username or not password:
+        try:
+            cfg = db.settings.find_one({}, {'_id': 0}) or {}
+        except Exception:
+            cfg = {}
+        server   = server   or cfg.get('MAIL_SERVER',   '')
+        username = username or cfg.get('MAIL_USERNAME', '')
+        password = password or cfg.get('MAIL_PASSWORD', '')
+        if not port_str:
+            port_str = str(cfg.get('MAIL_PORT', ''))
+
+    # Sensible defaults for server/port (not credentials)
+    server = server or 'smtp.office365.com'
+    try:
+        port = int(port_str)
+    except (ValueError, TypeError):
+        port = 587
+
+    if not username:
+        raise RuntimeError(
+            'SMTP username not configured. Set MAIL_USERNAME in your .env file '
+            'or in the Settings page.'
+        )
+    if not password:
+        raise RuntimeError(
+            'SMTP password not configured. Set MAIL_PASSWORD in your .env file '
+            'or in the Settings page.'
+        )
+
+    return {'server': server, 'port': port, 'username': username, 'password': password}
+
 
 def refresh_mail_config():
-    """Load SMTP username/password. Priority: .env > db.settings > hardcoded.
-    MAIL_SERVER is ALWAYS smtp.office365.com — never read from env/DB
-    to prevent stale Gmail config silently breaking email delivery."""
-    env_user = os.environ.get('MAIL_USERNAME', '').strip()
-    env_pw   = os.environ.get('MAIL_PASSWORD', '').strip()
+    """Refresh Flask-Mail config from environment / db.settings."""
+    try:
+        cfg = _get_smtp_config()
+        app.config['MAIL_SERVER']   = cfg['server']
+        app.config['MAIL_PORT']     = cfg['port']
+        app.config['MAIL_USE_TLS']  = True
+        app.config['MAIL_USERNAME'] = cfg['username']
+        app.config['MAIL_PASSWORD'] = cfg['password']
+    except RuntimeError as e:
+        print(f'[MAIL CONFIG] Warning: {e}')
+        # Set safe defaults so Flask-Mail doesn't crash at import time
+        app.config.setdefault('MAIL_SERVER',   'smtp.office365.com')
+        app.config.setdefault('MAIL_PORT',     587)
+        app.config.setdefault('MAIL_USE_TLS',  True)
+        app.config.setdefault('MAIL_USERNAME', '')
+        app.config.setdefault('MAIL_PASSWORD', '')
 
-    # Discard likely stale Gmail app-passwords (16 lowercase chars)
-    if len(env_pw) == 16 and env_pw.islower():
-        env_pw = ''
 
-    # Fall back to db.settings only if env vars are missing
-    if not env_user or not env_pw:
-        try:
-            config_data = db.settings.find_one({}, {'_id': 0}) or {}
-        except Exception:
-            config_data = {}
-        env_user = env_user or config_data.get('MAIL_USERNAME', '')
-        env_pw   = env_pw   or config_data.get('MAIL_PASSWORD', '')
-
-    app.config['MAIL_SERVER']   = SMTP_SERVER           # LOCKED — never changes
-    app.config['MAIL_PORT']     = SMTP_PORT
-    app.config['MAIL_USE_TLS']  = True
-    app.config['MAIL_USERNAME'] = env_user or 'agent4@indusschool.com'
-    app.config['MAIL_PASSWORD'] = env_pw   or 'Agent@2026'
-
+app.config['MAIL_USE_TLS'] = True   # needed before Mail(app) init
 refresh_mail_config()
-
 mail = Mail(app)
 
 
@@ -529,43 +570,36 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    """Send OTP/reset code via Office 365 SMTP.
+    """Send an OTP or password-reset code via SMTP.
 
-    SMTP server is HARDCODED to smtp.office365.com — it is intentionally
-    NOT read from environment variables or db.settings because old/stale
-    Gmail configs (MAIL_SERVER=smtp.gmail.com on Vercel env or in DB)
-    were silently redirecting traffic to Gmail and causing auth failures.
-
-    Credential priority: db.settings > os.environ > hardcoded default.
+    All credentials and server settings are loaded from:
+      1. Environment variables in .env  (MAIL_SERVER, MAIL_PORT,
+         MAIL_USERNAME, MAIL_PASSWORD)
+      2. db.settings (admin-configurable via the Settings page)
+    No credentials are hardcoded in this function.
     """
-    # --- Server always Office 365 ---
-    smtp_server = 'smtp.office365.com'
-    smtp_port   = 587
-
-    # --- Credentials: db.settings first (admin can update via Settings page) ---
     try:
-        config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    except Exception:
-        config_data = {}
+        cfg = _get_smtp_config()
+    except RuntimeError as e:
+        print(f'[OTP] Configuration error: {e}')
+        return str(e)
 
-    smtp_user = (
-        config_data.get('MAIL_USERNAME') or
-        os.environ.get('MAIL_USERNAME', '').strip() or
-        'agent4@indusschool.com'
-    )
-    smtp_pass = (
-        config_data.get('MAIL_PASSWORD') or
-        os.environ.get('MAIL_PASSWORD', '').strip() or
-        'Agent@2026'
-    )
+    smtp_server = cfg['server']
+    smtp_port   = cfg['port']
+    smtp_user   = cfg['username']
+    smtp_pass   = cfg['password']
 
-    subject = "Password Reset Code - Indus Portal" if is_reset else "Your OTP Code - Indus Portal"
+    subject = (
+        'Password Reset Code - Indus Portal'
+        if is_reset else
+        'Your OTP Code - Indus Portal'
+    )
     body = (
-        f"Your verification code is: {otp}\n\n"
-        f"This code expires in 5 minutes.\n\n"
-        f"Regards,\nIndus Portal"
+        f'Your verification code is: {otp}\n\n'
+        f'This code expires in 5 minutes.\n\n'
+        f'Regards,\nIndus Portal'
     )
-    print(f"\n--- [OTP] To: {email} | Code: {otp} | Server: {smtp_server} | User: {smtp_user} ---\n")
+    print(f'\n[OTP] Sending to {email} via {smtp_server}:{smtp_port} as {smtp_user}\n')
 
     try:
         msg = MIMEText(body)
@@ -580,11 +614,11 @@ def send_otp_email(email, otp, is_reset=False):
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, email, msg.as_string())
         server.quit()
-        print(f"[OTP] ✓ Email delivered to {email}")
+        print(f'[OTP] ✓ Delivered to {email}')
         return True
     except Exception as e:
         error_msg = str(e)
-        print(f"[OTP] ✗ Failed to deliver to {email}: {error_msg}")
+        print(f'[OTP] ✗ Failed to deliver to {email}: {error_msg}')
         return error_msg
 
 @app.before_request
@@ -2105,68 +2139,51 @@ def settings():
 def test_smtp():
     if not session.get('logged_in') or session.get('role') != 'admin':
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    # Resolve config the same way send_otp_email does — no hardcoded values
     try:
-        # SMTP server is always Office 365 — same as send_otp_email
-        smtp_server = 'smtp.office365.com'
-        smtp_port   = 587
+        cfg = _get_smtp_config()
+    except RuntimeError as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
-        # Credentials: db.settings > env > hardcoded (same priority as send_otp_email)
-        try:
-            db_settings = db.settings.find_one({}, {'_id': 0}) or {}
-        except Exception:
-            db_settings = {}
-        db_user = db_settings.get('MAIL_USERNAME', '(not set)')
-        db_pass = db_settings.get('MAIL_PASSWORD', '(not set)')
+    smtp_server = cfg['server']
+    smtp_port   = cfg['port']
+    smtp_user   = cfg['username']
+    smtp_pass   = cfg['password']
+    masked      = smtp_pass[:2] + '*' * (len(smtp_pass) - 4) + smtp_pass[-2:] if len(smtp_pass) > 4 else '****'
 
-        smtp_user = (
-            db_settings.get('MAIL_USERNAME') or
-            os.environ.get('MAIL_USERNAME', '').strip() or
-            'agent4@indusschool.com'
-        )
-        smtp_pass = (
-            db_settings.get('MAIL_PASSWORD') or
-            os.environ.get('MAIL_PASSWORD', '').strip() or
-            'Agent@2026'
-        )
-
-        # Mask password for display
-        masked    = smtp_pass[:2] + '*' * (len(smtp_pass) - 4) + smtp_pass[-2:] if len(smtp_pass) > 4 else '****'
-        db_masked = db_pass[:2]  + '*' * (len(db_pass)  - 4) + db_pass[-2:]  if db_pass and len(db_pass) > 4 else db_pass
-        
-        # Try connecting
+    try:
         test_email = session.get('email', smtp_user)
-        server = smtplib.SMTP(smtp_server, smtp_port, timeout=15)
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
         server.ehlo()
         server.starttls()
         server.ehlo()
         server.login(smtp_user, smtp_pass)
-        
-        # Send test email
-        msg = MIMEText(f"SMTP test successful!\n\nServer: {smtp_server}\nUser: {smtp_user}\n\nThis confirms your email settings are working.")
+
+        msg = MIMEText(
+            f'SMTP test successful!\n\nServer: {smtp_server}\nUser: {smtp_user}\n\n'
+            f'This confirms your email settings are working.'
+        )
         msg['Subject'] = 'SMTP Test - Indus Portal'
         msg['From'] = smtp_user
-        msg['To'] = test_email
+        msg['To']   = test_email
         server.sendmail(smtp_user, test_email, msg.as_string())
         server.quit()
-        
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': f'Test email sent to {test_email}',
             'using_server': smtp_server,
-            'using_user': smtp_user,
-            'using_pass': masked,
-            'db_user': db_user,
-            'db_pass': db_masked
+            'using_user':   smtp_user,
+            'using_pass':   masked,
         })
     except Exception as e:
         return jsonify({
-            'success': False, 
-            'error': str(e),
-            'using_server': 'smtp.office365.com',
-            'using_user': app.config.get('MAIL_USERNAME', 'agent4@indusschool.com'),
-            'using_pass': masked if 'masked' in dir() else 'unknown',
-            'db_user': db_user if 'db_user' in dir() else 'unknown',
-            'db_pass': db_masked if 'db_masked' in dir() else 'unknown'
+            'success': False,
+            'error':        str(e),
+            'using_server': smtp_server,
+            'using_user':   smtp_user,
+            'using_pass':   masked,
         }), 500
 
 @app.errorhandler(Exception)
