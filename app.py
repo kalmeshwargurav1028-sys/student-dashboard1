@@ -462,20 +462,29 @@ def dev_wipe_users():
 app.config['MAIL_SERVER'] = 'smtp.office365.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
+
 def refresh_mail_config():
-    try:
-        config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    except Exception:
-        config_data = {}
-    
-    app.config['MAIL_USERNAME'] = config_data.get('MAIL_USERNAME') or 'agent4@indusschool.com'
-    
-    # Prioritize config_data, then env var, but override if env var looks like the old gmail app password (16 chars, lowercase)
+    """Load SMTP credentials — env vars take priority over DB settings to avoid
+    stale/incorrect values in db.settings silently breaking email delivery."""
+    # Always prefer .env / environment variables first
+    env_user = os.environ.get('MAIL_USERNAME')
     env_pw = os.environ.get('MAIL_PASSWORD')
+
+    # Filter out likely stale Gmail app-passwords (16 lowercase chars)
     if env_pw and len(env_pw) == 16 and env_pw.islower():
-        env_pw = None # Ignore likely old gmail app password
-        
-    app.config['MAIL_PASSWORD'] = config_data.get('MAIL_PASSWORD') or env_pw or 'Agent@2026'
+        env_pw = None
+
+    # Only fall back to DB if env vars are missing
+    if not env_user or not env_pw:
+        try:
+            config_data = db.settings.find_one({}, {'_id': 0}) or {}
+        except Exception:
+            config_data = {}
+        env_user = env_user or config_data.get('MAIL_USERNAME') or 'agent4@indusschool.com'
+        env_pw   = env_pw   or config_data.get('MAIL_PASSWORD') or 'Agent@2026'
+
+    app.config['MAIL_USERNAME'] = env_user or 'agent4@indusschool.com'
+    app.config['MAIL_PASSWORD'] = env_pw   or 'Agent@2026'
 
 refresh_mail_config()
 
@@ -514,24 +523,27 @@ def generate_otp():
     return ''.join(random.choices(string.digits, k=6))
 
 def send_otp_email(email, otp, is_reset=False):
-    # Read credentials from db.settings (where the working password is stored)
-    refresh_mail_config()
-    smtp_server = 'smtp.office365.com'
-    smtp_port = 587
-    smtp_user = app.config.get('MAIL_USERNAME', 'agent4@indusschool.com')
-    smtp_pass = app.config.get('MAIL_PASSWORD', 'Agent@2026')
+    """Send OTP/reset code via Office 365 SMTP.
+    Reads credentials directly from environment variables to avoid depending
+    on MongoDB availability (DB outages were silently breaking email delivery)."""
+    smtp_server = os.environ.get('MAIL_SERVER', 'smtp.office365.com')
+    smtp_port   = int(os.environ.get('MAIL_PORT', 587))
+    smtp_user   = os.environ.get('MAIL_USERNAME', 'agent4@indusschool.com')
+    smtp_pass   = os.environ.get('MAIL_PASSWORD', 'Agent@2026')
 
-    subject = "Your OTP Code - Indus Portal"
-    if is_reset:
-        subject = "Password Reset Code - Indus Portal"
-    body = f"Your verification code is: {otp}\n\nThis code expires in 5 minutes.\n\nRegards,\nIndus Portal"
-    print(f"\n--- [DEV] OTP for {email}: {otp} (using SMTP: {smtp_server}, user: {smtp_user}) ---\n")
-    
+    subject = "Password Reset Code - Indus Portal" if is_reset else "Your OTP Code - Indus Portal"
+    body = (
+        f"Your verification code is: {otp}\n\n"
+        f"This code expires in 5 minutes.\n\n"
+        f"Regards,\nIndus Portal"
+    )
+    print(f"\n--- [DEV] OTP for {email}: {otp} (SMTP: {smtp_server}, user: {smtp_user}) ---\n")
+
     try:
         msg = MIMEText(body)
         msg['Subject'] = subject
-        msg['From'] = smtp_user
-        msg['To'] = email
+        msg['From']    = smtp_user
+        msg['To']      = email
 
         server = smtplib.SMTP(smtp_server, smtp_port, timeout=15)
         server.ehlo()
@@ -540,11 +552,11 @@ def send_otp_email(email, otp, is_reset=False):
         server.login(smtp_user, smtp_pass)
         server.sendmail(smtp_user, email, msg.as_string())
         server.quit()
-        print(f"Sent OTP email to {email}")
+        print(f"[OTP] Email sent successfully to {email}")
         return True
     except Exception as e:
         error_msg = str(e)
-        print(f"Error sending email via SMTP: {error_msg}")
+        print(f"[OTP] Failed to send email to {email}: {error_msg}")
         return error_msg
 
 @app.before_request
