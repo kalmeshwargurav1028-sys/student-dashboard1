@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block header_title %}Parent Connect Portal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8 flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div>
+            <h1 class="text-3xl font-black text-indigo-900 dark:text-indigo-400 tracking-tight flex items-center">
+                <i class="fa-solid fa-users-viewfinder mr-3 text-indigo-500"></i> Parent Connect Portal
+            </h1>
+            <p class="text-gray-500 mt-2 font-medium">Academic tracking, discipline records, and teacher communication for <span class="font-bold text-gray-800 dark:text-gray-200">{{ student.name }}</span>.</p>
+        </div>
+        <div class="bg-indigo-50 dark:bg-indigo-900/30 px-5 py-3 rounded-xl border border-indigo-100 dark:border-indigo-800 flex items-center">
+            <div class="mr-4">
+                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider">Attendance Rate</p>
+                <p class="text-2xl font-black text-indigo-700 dark:text-indigo-400">{{ student.attendance|default('100') }}%</p>
+            </div>
+            <div class="h-10 w-10 rounded-full bg-white dark:bg-gray-800 flex items-center justify-center shadow-sm">
+                <i class="fa-solid fa-calendar-check text-indigo-500"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Left Column: Academics & Discipline -->
+        <div class="lg:col-span-2 space-y-8">
+            
+            <!-- Academic Performance -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-graduation-cap text-emerald-500 mr-2"></i> Recent Academic Performance</h2>
+                </div>
+                <div class="p-6">
+                    {% if recent_assignments %}
+                    <div class="space-y-4">
+                        {% for a in recent_assignments %}
+                        <div class="flex items-center justify-between p-4 rounded-xl border border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                            <div>
+                                <h3 class="font-bold text-gray-900 dark:text-white">{{ a.title }}</h3>
+                                <p class="text-sm text-gray-500">{{ a.subject }} • Due: {{ a.due_date }}</p>
+                            </div>
+                            <div class="text-right">
+                                {% if a.my_grade %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                    {{ a.my_grade }}
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                                    Pending Grade
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fa-solid fa-clipboard-list text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                        <p class="text-gray-500 font-medium">No recent assignments found.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Discipline & Daily Remarks -->
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white"><i class="fa-solid fa-book-open-reader text-purple-500 mr-2"></i> Classroom Daily Remarks & Discipline</h2>
+                </div>
+                <div class="p-6">
+                    {% if daily_logs %}
+                    <div class="relative border-l-2 border-purple-100 dark:border-purple-900 ml-3 space-y-6">
+                        {% for log in daily_logs %}
+                        <div class="relative pl-6">
+                            <span class="absolute -left-[9px] top-1 h-4 w-4 rounded-full bg-purple-500 ring-4 ring-white dark:ring-gray-800"></span>
+                            <div class="bg-purple-50 dark:bg-purple-900/10 rounded-xl p-4 border border-purple-100 dark:border-purple-800/50">
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="font-bold text-purple-900 dark:text-purple-300">{{ log.subject }}</h3>
+                                    <span class="text-xs font-bold text-purple-500 bg-purple-100 dark:bg-purple-900/50 px-2 py-1 rounded-md">{{ log.date }}</span>
+                                </div>
+                                <p class="text-sm font-medium text-gray-800 dark:text-gray-200 mb-2"><strong>Topics:</strong> {{ log.topics }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 italic bg-white dark:bg-gray-800 p-3 rounded-lg border border-purple-100 dark:border-purple-800/50">"{{ log.remarks }}"</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8">
+                        <i class="fa-solid fa-face-smile text-4xl text-gray-300 dark:text-gray-600 mb-3"></i>
+                        <p class="text-gray-500 font-medium">No recent discipline or daily remarks.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Contact Teacher -->
+        <div class="lg:col-span-1 space-y-8">
+            <div class="bg-indigo-600 rounded-2xl shadow-lg overflow-hidden text-white">
+                <div class="p-6 text-center border-b border-indigo-500">
+                    <div class="h-16 w-16 bg-white rounded-full mx-auto flex items-center justify-center mb-4 shadow-inner">
+                        <i class="fa-solid fa-envelope-open-text text-2xl text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-xl font-bold mb-1">Contact Teacher</h2>
+                    <p class="text-indigo-200 text-sm">Schedule a Parent-Teacher meeting or ask questions.</p>
+                </div>
+                <div class="p-6 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                    <form action="{{ url_for('parent_portal') }}" method="POST" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                            <select name="subject" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:border-indigo-500 focus:ring-indigo-500" required>
+                                <option value="Meeting Request">Schedule PTM</option>
+                                <option value="Academic Inquiry">Academic Inquiry</option>
+                                <option value="Discipline/Behavior">Behavior/Discipline</option>
+                                <option value="Attendance/Leave">Attendance/Leave</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">Message</label>
+                            <textarea name="message" rows="4" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 focus:border-indigo-500 focus:ring-indigo-500 resize-none" placeholder="Type your message here..." required></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl transition-colors shadow-md flex items-center justify-center">
+                            <i class="fa-solid fa-paper-plane mr-2"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6">
+                <h3 class="font-bold text-amber-800 dark:text-amber-500 mb-2 flex items-center">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Note to Parents
+                </h3>
+                <p class="text-sm text-amber-700 dark:text-amber-400 leading-relaxed">
+                    Teachers typically respond to inquiries within 24-48 business hours. If you are scheduling a Parent-Teacher Meeting (PTM), please propose 2-3 potential time slots.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

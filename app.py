@@ -1509,6 +1509,55 @@ def daily_logs():
     return render_template(template_name, logs=logs)
 
 
+@app.route('/parent_portal', methods=['GET', 'POST'])
+def parent_portal():
+    if not session.get('logged_in') or session.get('role') != 'student':
+        flash('Parent Portal is only accessible through a student account.')
+        return redirect(url_for('login'))
+        
+    student_id = session.get('user_id')
+    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    if not student:
+        # Fallback to student_users table if student profile doesn't exist
+        student = db.student_users.find_one({'student_id': student_id}, {'_id': 0})
+        if not student:
+            return redirect(url_for('login'))
+            
+    if request.method == 'POST':
+        subject = request.form.get('subject')
+        message = request.form.get('message')
+        if subject and message:
+            db.messages.insert_one({
+                'student_id': student_id,
+                'student_name': student.get('name', session.get('username')),
+                'subject': subject,
+                'message': message,
+                'date_sent': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'status': 'unread'
+            })
+            flash('Your message has been sent to the teacher successfully!')
+        return redirect(url_for('parent_portal'))
+        
+    # Fetch recent assignments (last 5)
+    query = {}
+    if student.get('student_class'):
+        query['class_name'] = student.get('student_class')
+    
+    assignments_data = list(db.assignments.find(query).sort('due_date', -1).limit(5))
+    
+    # Process submissions to find the student's grade
+    for a in assignments_data:
+        subs = a.get('submissions', [])
+        my_sub = next((s for s in subs if s['student_id'] == student_id), None)
+        if my_sub and my_sub.get('grade'):
+            a['my_grade'] = my_sub.get('grade')
+            
+    # Fetch recent daily logs/discipline (last 5)
+    daily_logs = list(db.daily_logs.find(query).sort('date', -1).limit(5))
+    
+    return render_template('parent_portal.html', student=student, recent_assignments=assignments_data, daily_logs=daily_logs)
+
+
 @app.route('/student/materials')
 def student_materials():
     if not session.get('logged_in') or session.get('role') != 'student':

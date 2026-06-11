@@ -104,6 +104,15 @@
                     </a>
                 </li>
                 
+                {% if session.get('role') == 'student' %}
+                <li>
+                    <a href="{{ url_for('parent_portal') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <i class="fa-solid fa-users-viewfinder w-6 mr-3 text-center text-lg"></i>
+                        <span class="sidebar-text whitespace-nowrap">Parent Connect</span>
+                    </a>
+                </li>
+                {% endif %}
+                
                 {% if role_permissions.get('modify_attendance') %}
                 <li>
                     <a href="{{ url_for('attendance') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
