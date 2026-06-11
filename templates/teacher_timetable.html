@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block header_title %}Timetable Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8 flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Class Timetable</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage your weekly teaching schedule.</p>
+        </div>
+        <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Add Class
+        </button>
+    </div>
+
+    <!-- Weekly View -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'] %}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden {% if day == current_day %}ring-2 ring-emerald-500{% endif %}">
+            <div class="bg-gray-50 dark:bg-gray-900/50 px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                <h3 class="font-bold text-gray-800 dark:text-gray-200 text-center">{{ day }}</h3>
+            </div>
+            <div class="p-4 space-y-3 min-h-[200px]">
+                {% for item in timetable.get(day, []) %}
+                <div class="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-100 dark:border-emerald-800 p-3 rounded-lg relative group">
+                    <form action="{{ url_for('timetable') }}" method="POST" class="absolute top-2 right-2 hidden group-hover:block">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="{{ item._id }}">
+                        <button type="submit" class="text-red-500 hover:text-red-700"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </form>
+                    <div class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">{{ item.time }}</div>
+                    <div class="font-bold text-gray-800 dark:text-gray-200 text-sm">{{ item.subject }}</div>
+                    <div class="text-xs text-gray-500 mt-1 flex justify-between">
+                        <span>{{ item.class_name }}</span>
+                        <span>{{ item.room }}</span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center text-sm text-gray-400 py-4 italic">No classes scheduled</div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Add Modal -->
+<div id="addModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+        <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Add Class Schedule</h2>
+        <form action="{{ url_for('timetable') }}" method="POST">
+            <input type="hidden" name="action" value="add">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Day</label>
+                <select name="day" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Time</label>
+                <input type="time" name="time" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                <input type="text" name="subject" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class/Grade</label>
+                <input type="text" name="class_name" required placeholder="e.g. 10th Grade A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Room</label>
+                <input type="text" name="room" required placeholder="e.g. Room 101" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">Add Class</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

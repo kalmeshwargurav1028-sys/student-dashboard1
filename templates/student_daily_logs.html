@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block header_title %}Classroom Daily Logs{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8 bg-gradient-to-r from-indigo-600 to-indigo-800 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 24px 24px;"></div>
+        <div class="relative z-10">
+            <h1 class="text-3xl font-bold mb-2">Classroom Diary</h1>
+            <p class="text-indigo-100">Review what was taught in class today and read remarks from your teachers.</p>
+        </div>
+    </div>
+
+    <!-- Timeline of Logs -->
+    <div class="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-300 before:to-transparent">
+        {% for log in logs %}
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+            <!-- Icon -->
+            <div class="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white dark:border-gray-900 bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-400 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm relative z-10">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+            </div>
+            
+            <!-- Content Card -->
+            <div class="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+                <div class="flex items-center justify-between mb-1">
+                    <div class="font-bold text-gray-900 dark:text-white">{{ log.subject }}</div>
+                    <div class="text-xs font-medium text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30 px-2 py-1 rounded-md">{{ log.date }}</div>
+                </div>
+                <div class="text-xs text-gray-500 mb-3">Teacher: {{ log.teacher }}</div>
+                
+                <div class="mb-3">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Topics Covered</h4>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">{{ log.topics }}</p>
+                </div>
+                
+                <div class="bg-gray-50 dark:bg-gray-700/30 rounded-lg p-3 border-l-4 border-indigo-500">
+                    <h4 class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">Remarks for Parents</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 italic">"{{ log.remarks }}"</p>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="text-center py-12 relative z-10 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 max-w-2xl mx-auto shadow-sm">
+            <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            <p class="text-lg font-medium text-gray-900 dark:text-white">No diary entries yet</p>
+            <p class="text-gray-500 mt-1">Your teachers haven't posted any logs for your class.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

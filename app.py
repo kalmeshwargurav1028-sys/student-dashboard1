@@ -1335,90 +1335,175 @@ def admin_reset_password():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/timetable')
+@app.route('/timetable', methods=['GET', 'POST'])
 def timetable():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
-    # Generate mock timetable data
-    timetable_data = {
-        'Monday': [
-            {'time': '09:00 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith'},
-            {'time': '10:30 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Brown'},
-            {'time': '01:00 PM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mrs. Davis'}
-        ],
-        'Tuesday': [
-            {'time': '09:00 AM', 'subject': 'Chemistry', 'room': 'Lab 2', 'teacher': 'Dr. Wilson'},
-            {'time': '11:00 AM', 'subject': 'English Literature', 'room': 'Room 205', 'teacher': 'Ms. Taylor'}
-        ],
-        'Wednesday': [
-            {'time': '09:00 AM', 'subject': 'Mathematics', 'room': 'Room 101', 'teacher': 'Mr. Smith'},
-            {'time': '10:30 AM', 'subject': 'History', 'room': 'Room 302', 'teacher': 'Mr. Clark'},
-            {'time': '02:00 PM', 'subject': 'Physical Education', 'room': 'Gym', 'teacher': 'Coach Miller'}
-        ],
-        'Thursday': [
-            {'time': '09:30 AM', 'subject': 'Physics', 'room': 'Lab 3', 'teacher': 'Dr. Brown'},
-            {'time': '11:30 AM', 'subject': 'Computer Science', 'room': 'Lab 1', 'teacher': 'Mrs. Davis'}
-        ],
-        'Friday': [
-            {'time': '09:00 AM', 'subject': 'Biology', 'room': 'Lab 4', 'teacher': 'Dr. Evans'},
-            {'time': '11:00 AM', 'subject': 'Art', 'room': 'Studio 1', 'teacher': 'Ms. White'},
-            {'time': '01:30 PM', 'subject': 'English Literature', 'room': 'Room 205', 'teacher': 'Ms. Taylor'}
-        ]
-    }
+    role = session.get('role')
     
-    # Get current day of week to highlight it
+    if request.method == 'POST':
+        if role == 'student':
+            return redirect(url_for('timetable'))
+            
+        action = request.form.get('action')
+        if action == 'add':
+            db.timetable.insert_one({
+                'day': request.form.get('day'),
+                'time': request.form.get('time'),
+                'subject': request.form.get('subject'),
+                'room': request.form.get('room'),
+                'teacher': session.get('username') or request.form.get('teacher'),
+                'class_name': request.form.get('class_name')
+            })
+            flash('Timetable entry added!')
+        elif action == 'delete':
+            db.timetable.delete_one({'_id': ObjectId(request.form.get('id'))})
+            flash('Timetable entry deleted!')
+        return redirect(url_for('timetable'))
+        
+    # Get entries
+    query = {}
+    if role == 'student':
+        student = db.students.find_one({'id': session.get('user_id')})
+        if student and student.get('student_class'):
+            query['class_name'] = student.get('student_class')
+    elif role == 'teacher':
+        query['teacher'] = session.get('username')
+        
+    entries = list(db.timetable.find(query))
+    
+    # Organize by day
+    timetable_data = {'Monday': [], 'Tuesday': [], 'Wednesday': [], 'Thursday': [], 'Friday': []}
+    for e in entries:
+        day = e.get('day')
+        if day in timetable_data:
+            timetable_data[day].append(e)
+            
+    # Sort by time string (basic sorting)
+    for day in timetable_data:
+        timetable_data[day] = sorted(timetable_data[day], key=lambda x: x.get('time', ''))
+        
     current_day = datetime.now().strftime('%A')
     
-    return render_template('student_timetable.html', timetable=timetable_data, current_day=current_day)
+    template_name = 'student_timetable.html' if role == 'student' else 'teacher_timetable.html'
+    return render_template(template_name, timetable=timetable_data, current_day=current_day)
 
-@app.route('/assignments')
+@app.route('/assignments', methods=['GET', 'POST'])
 def assignments():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
-    # Generate mock assignments data
+    role = session.get('role')
     now = datetime.now()
-    assignments_data = [
-        {
-            'id': 1,
-            'title': 'Calculus Final Project',
-            'subject': 'Mathematics',
-            'due_date': (now + timedelta(days=2)).strftime('%Y-%m-%d %H:%M'),
-            'days_left': 2,
-            'status': 'pending',
-            'type': 'Project'
-        },
-        {
-            'id': 2,
-            'title': 'Quantum Mechanics Essay',
-            'subject': 'Physics',
-            'due_date': (now + timedelta(days=5)).strftime('%Y-%m-%d %H:%M'),
-            'days_left': 5,
-            'status': 'pending',
-            'type': 'Homework'
-        },
-        {
-            'id': 3,
-            'title': 'Data Structures Implementation',
-            'subject': 'Computer Science',
-            'due_date': (now + timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            'days_left': 1,
-            'status': 'urgent',
-            'type': 'Lab Work'
-        },
-        {
-            'id': 4,
-            'title': 'World War II Analysis',
-            'subject': 'History',
-            'due_date': (now - timedelta(days=1)).strftime('%Y-%m-%d %H:%M'),
-            'days_left': -1,
-            'status': 'submitted',
-            'type': 'Essay'
-        }
-    ]
     
-    return render_template('student_assignments.html', assignments=assignments_data)
+    if request.method == 'POST':
+        if role == 'student':
+            # Handle submission
+            assignment_id = request.form.get('assignment_id')
+            db.assignments.update_one(
+                {'_id': ObjectId(assignment_id)},
+                {'$push': {'submissions': {
+                    'student_id': session.get('user_id'),
+                    'student_name': session.get('username'),
+                    'submitted_at': now.strftime('%Y-%m-%d %H:%M'),
+                    'grade': None
+                }}}
+            )
+            flash('Assignment submitted!')
+        else:
+            action = request.form.get('action')
+            if action == 'create':
+                db.assignments.insert_one({
+                    'title': request.form.get('title'),
+                    'subject': request.form.get('subject'),
+                    'class_name': request.form.get('class_name'),
+                    'due_date': request.form.get('due_date'),
+                    'description': request.form.get('description'),
+                    'created_by': session.get('username'),
+                    'submissions': []
+                })
+                flash('Assignment created!')
+            elif action == 'grade':
+                assignment_id = request.form.get('assignment_id')
+                student_id = request.form.get('student_id')
+                grade = request.form.get('grade')
+                
+                db.assignments.update_one(
+                    {'_id': ObjectId(assignment_id), 'submissions.student_id': student_id},
+                    {'$set': {'submissions.$.grade': grade}}
+                )
+                flash('Grade saved!')
+            elif action == 'delete':
+                db.assignments.delete_one({'_id': ObjectId(request.form.get('id'))})
+                flash('Assignment deleted!')
+                
+        return redirect(url_for('assignments'))
+        
+    # Get entries
+    query = {}
+    if role == 'student':
+        student = db.students.find_one({'id': session.get('user_id')})
+        if student and student.get('student_class'):
+            query['class_name'] = student.get('student_class')
+    elif role == 'teacher':
+        query['created_by'] = session.get('username')
+        
+    assignments_data = list(db.assignments.find(query).sort('due_date', 1))
+    
+    # Enrich data for students
+    if role == 'student':
+        for a in assignments_data:
+            due_date_str = a.get('due_date')
+            try:
+                due = datetime.strptime(due_date_str, '%Y-%m-%d')
+                days_left = (due - now).days
+                a['days_left'] = days_left
+            except:
+                a['days_left'] = 0
+                
+            subs = a.get('submissions', [])
+            my_sub = next((s for s in subs if s['student_id'] == session.get('user_id')), None)
+            if my_sub:
+                a['status'] = 'submitted'
+                a['my_grade'] = my_sub.get('grade')
+            else:
+                a['status'] = 'pending' if a['days_left'] >= 0 else 'overdue'
+                
+    return render_template('assignments.html', assignments=assignments_data)
+
+@app.route('/daily_logs', methods=['GET', 'POST'])
+def daily_logs():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    role = session.get('role')
+    
+    if request.method == 'POST':
+        if role != 'student':
+            db.daily_logs.insert_one({
+                'date': request.form.get('date'),
+                'class_name': request.form.get('class_name'),
+                'subject': request.form.get('subject'),
+                'topics': request.form.get('topics'),
+                'remarks': request.form.get('remarks'),
+                'teacher': session.get('username')
+            })
+            flash('Daily log added successfully!')
+        return redirect(url_for('daily_logs'))
+        
+    # Get entries
+    query = {}
+    if role == 'student':
+        student = db.students.find_one({'id': session.get('user_id')})
+        if student and student.get('student_class'):
+            query['class_name'] = student.get('student_class')
+            
+    logs = list(db.daily_logs.find(query).sort('date', -1).limit(50))
+    
+    template_name = 'student_daily_logs.html' if role == 'student' else 'teacher_daily_logs.html'
+    return render_template(template_name, logs=logs)
+
 
 @app.route('/student/materials')
 def student_materials():

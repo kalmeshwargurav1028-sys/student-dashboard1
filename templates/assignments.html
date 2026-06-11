@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block header_title %}Assignments Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {% if session.get('role') != 'student' %}
+        <div class="mb-8 flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Class Assignments</h1>
+                <p class="text-sm text-gray-500 mt-1">Create, track, and grade homework assignments.</p>
+            </div>
+            <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                Create Assignment
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6">
+            {% for a in assignments %}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ a.title }}</h3>
+                        <div class="text-sm text-gray-500 flex gap-4 mt-1">
+                            <span>Subject: {{ a.subject }}</span>
+                            <span>Class: {{ a.class_name }}</span>
+                            <span class="text-emerald-600 dark:text-emerald-400 font-medium">Due: {{ a.due_date }}</span>
+                        </div>
+                    </div>
+                    <form action="{{ url_for('assignments') }}" method="POST">
+                        <input type="hidden" name="action" value="delete">
+                        <input type="hidden" name="id" value="{{ a._id }}">
+                        <button type="submit" class="text-red-500 hover:text-red-700 p-2"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                    </form>
+                </div>
+                
+                <div class="p-6">
+                    <p class="text-gray-700 dark:text-gray-300 mb-6">{{ a.description }}</p>
+                    
+                    <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-4">Submissions</h4>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                                    <th class="py-2 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Student Name</th>
+                                    <th class="py-2 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Submitted At</th>
+                                    <th class="py-2 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300">Grade</th>
+                                    <th class="py-2 px-4 font-semibold text-sm text-gray-600 dark:text-gray-300 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                {% for sub in a.submissions %}
+                                <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                                    <td class="py-3 px-4 text-gray-900 dark:text-white">{{ sub.student_name }}</td>
+                                    <td class="py-3 px-4 text-sm text-gray-500">{{ sub.submitted_at }}</td>
+                                    <td class="py-3 px-4 text-gray-900 dark:text-white font-medium">{{ sub.grade or 'Not Graded' }}</td>
+                                    <td class="py-3 px-4 text-right">
+                                        <form action="{{ url_for('assignments') }}" method="POST" class="flex justify-end items-center space-x-2">
+                                            <input type="hidden" name="action" value="grade">
+                                            <input type="hidden" name="assignment_id" value="{{ a._id }}">
+                                            <input type="hidden" name="student_id" value="{{ sub.student_id }}">
+                                            <input type="text" name="grade" placeholder="e.g. A, 95/100" class="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">Save Grade</button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="py-4 text-center text-gray-500 text-sm">No submissions yet.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                <svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                <p class="text-lg font-medium text-gray-900 dark:text-white">No assignments found</p>
+                <p class="text-gray-500 mt-1">Create an assignment to get started.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Add Modal -->
+        <div id="addModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Create Assignment</h2>
+                <form action="{{ url_for('assignments') }}" method="POST">
+                    <input type="hidden" name="action" value="create">
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+                        <input type="text" name="title" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
+                        <input type="text" name="subject" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class/Grade</label>
+                        <input type="text" name="class_name" required placeholder="e.g. 10th Grade A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
+                        <input type="date" name="due_date" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    </div>
+                    
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                        <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required></textarea>
+                    </div>
+                    
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">Create</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    {% else %}
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Assignments & Deadlines</h1>
+                <p class="mt-2 text-sm text-gray-500">Track your upcoming homework, projects, and exams.</p>
+            </div>
+            <div class="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-lg font-bold shadow-sm border border-indigo-100 dark:border-indigo-800/50 flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-check"></i>
+                {{ assignments|selectattr('status', 'equalto', 'pending')|list|length + assignments|selectattr('status', 'equalto', 'urgent')|list|length }} Pending
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {% for assignment in assignments %}
+            
+            {% set border_color = 'border-gray-200 dark:border-gray-700' %}
+            {% set bg_color = 'bg-white dark:bg-gray-800' %}
+            {% set text_color = 'text-gray-900 dark:text-white' %}
+            {% set badge_class = 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' %}
+            
+            {% if assignment.status == 'urgent' %}
+                {% set border_color = 'border-red-400 dark:border-red-600' %}
+                {% set bg_color = 'bg-red-50 dark:bg-red-900/20' %}
+                {% set text_color = 'text-red-900 dark:text-red-100' %}
+                {% set badge_class = 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300 animate-pulse' %}
+            {% elif assignment.status == 'pending' %}
+                {% set border_color = 'border-yellow-400 dark:border-yellow-600' %}
+                {% set badge_class = 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300' %}
+            {% elif assignment.status == 'overdue' %}
+                {% set border_color = 'border-red-400 dark:border-red-600' %}
+                {% set badge_class = 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' %}
+            {% elif assignment.status == 'submitted' %}
+                {% set border_color = 'border-emerald-200 dark:border-emerald-800' %}
+                {% set bg_color = 'bg-gray-50 dark:bg-gray-800/50 opacity-75' %}
+                {% set text_color = 'text-gray-500 dark:text-gray-400' %}
+                {% set badge_class = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' %}
+            {% endif %}
+
+            <div class="rounded-xl shadow-sm border-2 {{ border_color }} {{ bg_color }} overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+                <div class="p-5 flex-1">
+                    <div class="flex justify-between items-start mb-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 uppercase tracking-wider">
+                            Homework
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold {{ badge_class }}">
+                            {% if assignment.status == 'urgent' %}
+                                <i class="fa-solid fa-triangle-exclamation mr-1"></i> Due in {{ assignment.days_left }} day{% if assignment.days_left != 1 %}s{% endif %}
+                            {% elif assignment.status == 'pending' %}
+                                <i class="fa-regular fa-clock mr-1"></i> Due in {{ assignment.days_left }} days
+                            {% elif assignment.status == 'overdue' %}
+                                <i class="fa-solid fa-clock-rotate-left mr-1"></i> Overdue
+                            {% elif assignment.status == 'submitted' %}
+                                <i class="fa-solid fa-check mr-1"></i> Submitted
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <h3 class="text-xl font-bold {{ text_color }} mb-1">{{ assignment.title }}</h3>
+                    <p class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-4">{{ assignment.subject }} ({{ assignment.class_name }})</p>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">{{ assignment.description }}</p>
+                    
+                    <div class="flex items-center text-sm text-gray-600 dark:text-gray-400 gap-2 mt-auto pt-4 border-t border-gray-200 dark:border-gray-700">
+                        <i class="fa-regular fa-calendar-xmark"></i>
+                        <span class="font-medium">Deadline:</span>
+                        <span>{{ assignment.due_date }}</span>
+                    </div>
+                </div>
+                
+                <div class="px-5 py-3 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700 flex justify-end items-center">
+                    {% if assignment.status != 'submitted' %}
+                    <form action="{{ url_for('assignments') }}" method="POST">
+                        <input type="hidden" name="assignment_id" value="{{ assignment._id }}">
+                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                            Submit Work
+                        </button>
+                    </form>
+                    {% else %}
+                    <div class="flex items-center space-x-4">
+                        {% if assignment.my_grade %}
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
+                            Grade: {{ assignment.my_grade }}
+                        </span>
+                        {% endif %}
+                        <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                            <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                            Completed
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not assignments %}
+            <div class="col-span-full py-12 text-center bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 border-dashed">
+                <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900 dark:text-white">No Assignments</h3>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You are all caught up!</p>
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
