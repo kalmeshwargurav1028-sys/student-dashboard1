@@ -1,185 +1,350 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<style>
-  .ct-kpi { transition: transform .2s, box-shadow .2s; }
-  .ct-kpi:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-  .ct-action { display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;transition:all .15s; }
-  .ct-action:hover { transform:scale(1.12); }
-  .ct-badge { display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:999px;font-size:.7rem;font-weight:700; }
-</style>
-
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+            <p class="text-sm text-gray-500 mt-1">System Overview & User Activity Tracking</p>
+        </div>
+
+    </div>
 
     <!-- Dashboard View -->
     <div id="view-dashboard" class="view-section">
-
-      <div class="mb-6 flex items-center justify-between">
-        <div>
-          <h1 class="text-2xl font-black text-gray-900 tracking-tight">Admin Control Tower</h1>
-          <p class="text-xs text-gray-400 mt-0.5">Macro Institutional View &mdash; Indus Portal</p>
-        </div>
-        <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full font-bold">&#128336; Live Data</span>
-      </div>
-
-      <!-- KPI CARDS -->
-      <section class="mb-7">
-        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">&#128202; Analytics Overview</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#127891;</span><span class="ct-badge bg-indigo-50 text-indigo-700 border border-indigo-100">All</span></div>
-            <div>
-              <p class="text-3xl font-black text-gray-900">{{ analytics.total_students }}</p>
-              <p class="text-xs text-gray-500 mt-1 font-medium">Total Students</p>
-            </div>
-          </div>
-          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
-            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#9989;</span><span class="ct-badge bg-emerald-50 text-emerald-700 border border-emerald-100">Status</span></div>
-            <div>
-              <p class="text-3xl font-black text-gray-900"><span class="text-emerald-600">{{ analytics.present_count }}</span> <span class="text-gray-300">/</span> <span class="text-red-500">{{ analytics.absent_count }}</span></p>
-              <p class="text-xs text-gray-500 mt-1 font-medium">Active / Inactive</p>
-            </div>
-          </div>
-          <div class="ct-kpi bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-5 text-white flex flex-col justify-between">
-            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#128200;</span><span class="ct-badge bg-white/20 text-white">School</span></div>
-            <div>
-              <p class="text-3xl font-black">{{ analytics.avg_attendance }}%</p>
-              <p class="text-xs text-emerald-100 mt-1 font-medium">School Attendance</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- SYSTEM UTILITIES -->
-      <section class="mb-7">
-        <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">&#9881;&#65039; System Utilities</h2>
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex flex-wrap items-center gap-3">
-          <label for="csvImportInput" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold cursor-pointer transition shadow-sm">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            Import Students (CSV)
-          </label>
-          <form id="csvImportForm" action="{{ url_for('import_students') }}" method="POST" enctype="multipart/form-data" class="hidden">
-            <input type="file" id="csvImportInput" name="csv_file" accept=".csv" onchange="document.getElementById('csvImportForm').submit()">
-          </form>
-          <a href="{{ url_for('export_students') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition shadow-sm">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            Export Roster
-          </a>
-          <a href="{{ url_for('settings') }}" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold transition">
-            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            Global Settings
-          </a>
-          <button id="ctBulkDeleteBtn" onclick="ctBulkDelete()" class="hidden items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 text-sm font-bold transition">
-            Delete Selected (<span id="ctSelectedCount">0</span>)
-          </button>
-          <div class="ml-auto text-xs text-gray-400 font-medium hidden lg:block">Total: <span class="font-black text-gray-700">{{ students|length }}</span> records</div>
-        </div>
-      </section>
-
-      <!-- CENTRAL REGISTRATION ROSTER -->
-      <section class="mb-8">
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/60">
-            <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-              <div>
-                <h2 class="text-base font-black text-gray-800">&#128196; Central Registration Roster</h2>
-                <p class="text-xs text-gray-400 mt-0.5">Filter, manage, and take action on all enrolled students.</p>
-              </div>
-              <div class="flex flex-wrap items-center gap-2 lg:ml-auto">
-                <div class="relative">
-                  <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg></div>
-                  <input id="ctSearch" type="text" placeholder="Search name..." class="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none w-44 bg-white">
+    <!-- Analytics Overview -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">User Activity Stats</h2>
+        
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
+            <!-- Admins Stats -->
+            <div class="bg-gradient-to-br from-red-50 to-rose-100 overflow-hidden shadow-sm rounded-xl border border-red-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-red-100">
+                        💎
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-red-800 truncate">Total Admins</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-red-900">{{ stats.total_admins }}</div></dd>
+                        </dl>
+                    </div>
                 </div>
-                <select id="ctGrade" class="py-2 px-3 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
-                  <option value="All">Grade: All</option>
-                  {% for g in ['2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'] %}<option value="{{ g }}">{{ g }} Std</option>{% endfor %}
-                </select>
-                <select id="ctDivision" class="py-2 px-3 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
-                  <option value="All">Division: All</option>
-                  <option value="A">Div A</option><option value="B">Div B</option><option value="C">Div C</option><option value="D">Div D</option>
-                </select>
-                <a href="{{ url_for('profile_form') }}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition shadow-sm whitespace-nowrap">
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg> Add Student
-                </a>
-              </div>
             </div>
-          </div>
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-100">
-              <thead class="bg-gray-50"><tr>
-                <th class="px-4 py-3 text-left w-10"><input type="checkbox" id="ctSelectAll" onchange="ctToggleAll(this)" class="h-4 w-4 text-emerald-600 border-gray-300 rounded cursor-pointer"></th>
-                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student Name</th>
-                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grade</th>
-                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Division</th>
-                <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Attendance</th>
-                <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">System Actions</th>
-              </tr></thead>
-              <tbody class="bg-white divide-y divide-gray-50">
-                {% if students %}
-                  {% for student in students %}
-                  <tr class="ct-row hover:bg-emerald-50/30 transition-colors" data-name="{{ student.name | lower }}" data-class="{{ student.get('student_class', '10th') }}" data-division="{{ student.get('division', 'A') }}">
-                    <td class="px-4 py-3.5"><input type="checkbox" value="{{ student.id }}" class="ct-chk h-4 w-4 text-emerald-600 border-gray-300 rounded cursor-pointer" onchange="ctUpdateBulk()"></td>
-                    <td class="px-4 py-3.5 whitespace-nowrap">
-                      <div class="flex items-center gap-3">
-                        <div class="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">{{ (student.name or '?')[0] | upper }}</div>
-                        <div><div class="text-sm font-bold text-gray-900">{{ student.name | title }}</div><div class="text-xs text-gray-400">{{ student.id }}</div></div>
-                      </div>
-                    </td>
-                    <td class="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600 font-medium">{{ student.get('student_class', 'N/A') }} Standard</td>
-                    <td class="px-4 py-3.5 whitespace-nowrap"><span class="ct-badge bg-indigo-50 text-indigo-700 border border-indigo-100">Div {{ student.get('division', 'A') }}</span></td>
-                    <td class="px-4 py-3.5 whitespace-nowrap">
-                      {% set att = (student.get('attendance', 0) or 0) | float %}
-                      {% if att >= 75 %}<span class="ct-badge bg-emerald-50 text-emerald-700 border border-emerald-100"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{{ att }}%</span>
-                      {% else %}<span class="ct-badge bg-red-50 text-red-700 border border-red-100"><span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>{{ att }}%</span>{% endif %}
-                    </td>
-                    <td class="px-4 py-3.5 whitespace-nowrap text-right">
-                      <div class="flex items-center justify-end gap-1.5">
-                        <a href="{{ url_for('student_profile', student_id=student.id) }}" title="View" class="ct-action bg-emerald-50 text-emerald-600 hover:bg-emerald-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg></a>
-                        <a href="{{ url_for('profile_form', id=student.id) }}" title="Edit" class="ct-action bg-indigo-50 text-indigo-600 hover:bg-indigo-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></a>
-                        <form action="{{ url_for('delete_student', student_id=student.id) }}" method="POST" class="inline" onsubmit="return confirm('Delete {{ student.name | title }}?');"><button type="submit" title="Delete" class="ct-action bg-red-50 text-red-500 hover:bg-red-100"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button></form>
-                      </div>
-                    </td>
-                  </tr>
-                  {% endfor %}
-                  <tr id="ctEmpty" class="hidden"><td colspan="6" class="text-center py-14"><p class="text-4xl mb-2">&#128269;</p><p class="text-sm font-bold text-gray-700">No matching students</p></td></tr>
-                {% else %}
-                  <tr><td colspan="6" class="text-center py-14"><p class="text-4xl mb-2">&#127891;</p><p class="text-sm font-bold text-gray-700">No students enrolled yet</p></td></tr>
-                {% endif %}
-              </tbody>
-            </table>
-          </div>
-          <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-            <p class="text-xs text-gray-500">Showing <span id="ctStart" class="font-bold text-gray-700">1</span>&ndash;<span id="ctEnd" class="font-bold text-gray-700">{{ [students|length,10]|min }}</span> of <span id="ctTotal" class="font-bold text-gray-700">{{ students|length }}</span> entries</p>
-            <div class="flex items-center gap-2">
-              <label class="text-xs text-gray-500 mr-1">Rows per page:</label>
-              <select id="ctRpp" onchange="ctPaginate()" class="border border-gray-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none bg-white text-gray-700"><option value="10">10</option><option value="25">25</option><option value="50">50</option></select>
-              <button id="ctPrev" onclick="ctPage(-1)" disabled class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition">&lsaquo; Prev</button>
-              <span id="ctPageInfo" class="text-xs text-gray-500 px-1 font-medium">Page 1 of 1</span>
-              <button id="ctNext" onclick="ctPage(1)" class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition">Next &rsaquo;</button>
+            
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
+                        🛡️
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-emerald-800 truncate">Active Admins</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-emerald-900">{{ stats.active_admins }}</div>
+                                <span class="ml-2 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-          </div>
+
+            <!-- Teachers Stats -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
+                        👨‍🏫
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-blue-800 truncate">Total Teachers</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-blue-900">{{ stats.total_teachers }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
+                        ✅
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-emerald-800 truncate">Active Teachers</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-emerald-900">{{ stats.active_teachers }}</div>
+                                <span class="ml-2 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Stats -->
+            <div class="bg-gradient-to-br from-purple-50 to-fuchsia-100 overflow-hidden shadow-sm rounded-xl border border-purple-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-purple-100">
+                        🎓
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-purple-800 truncate">Total Students</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-purple-900">{{ stats.total_students }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
+                        🚀
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-emerald-800 truncate">Active Students</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-emerald-900">{{ stats.active_students }}</div>
+                                <span class="ml-2 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div></div>
+    </div>
+
+    <!-- Active Users Tables -->
+    <div class="grid grid-cols-1 gap-8">
+        
+        <!-- Admins Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-red-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-red-100 bg-red-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-red-800">💎 Admin Activity</h3>
+                <span class="text-xs font-bold text-red-600 bg-white px-2 py-1 rounded-full border border-red-200">Admins Only View</span>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Admin</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-red-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
+                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for t in active_admins %}
+                        <tr class="hover:bg-red-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-red-600 bg-red-50">{{ t.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"></td>
+                        </tr>
+                        {% endfor %}
+                        {% for t in inactive_admins %}
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ t.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-      </section>
 
-      <script>
-      (function(){
-        var search=document.getElementById('ctSearch'),grade=document.getElementById('ctGrade'),div=document.getElementById('ctDivision'),empty=document.getElementById('ctEmpty');
-        var page=1,filtered=[];
-        function rows(){return Array.from(document.querySelectorAll('.ct-row'));}
-        function filter(){var q=search.value.toLowerCase().trim(),g=grade.value,d=div.value;filtered=rows().filter(function(r){return r.dataset.name.includes(q)&&(g==='All'||r.dataset.class===g)&&(d==='All'||r.dataset.division===d)});page=1;paginate();}
-        function paginate(){var rpp=parseInt(document.getElementById('ctRpp').value),total=filtered.length,pages=Math.max(1,Math.ceil(total/rpp));page=Math.min(page,pages);var s=(page-1)*rpp,e=s+rpp;rows().forEach(function(r){r.style.display='none';});filtered.forEach(function(r,i){r.style.display=(i>=s&&i<e)?'':'none';});if(empty)empty.classList.toggle('hidden',total>0);document.getElementById('ctStart').textContent=total?s+1:0;document.getElementById('ctEnd').textContent=Math.min(e,total);document.getElementById('ctTotal').textContent=total;document.getElementById('ctPageInfo').textContent='Page '+page+' of '+pages;document.getElementById('ctPrev').disabled=page<=1;document.getElementById('ctNext').disabled=page>=pages;}
-        window.ctPaginate=paginate;
-        window.ctPage=function(d){page+=d;paginate();};
-        window.ctToggleAll=function(cb){document.querySelectorAll('.ct-chk').forEach(function(c){c.checked=cb.checked;});ctUpdateBulk();};
-        window.ctUpdateBulk=function(){var n=document.querySelectorAll('.ct-chk:checked').length;document.getElementById('ctSelectedCount').textContent=n;var btn=document.getElementById('ctBulkDeleteBtn');btn.classList.toggle('hidden',n===0);btn.classList.toggle('inline-flex',n>0);};
-        window.ctBulkDelete=function(){var ids=Array.from(document.querySelectorAll('.ct-chk:checked')).map(function(c){return c.value;});if(!ids.length||!confirm('Delete '+ids.length+' student(s)?'))return;ids.forEach(function(id){var f=document.createElement('form');f.method='POST';f.action='/student/'+id+'/delete';document.body.appendChild(f);f.submit();});};
-        filtered=rows();paginate();
-        search.addEventListener('input',filter);grade.addEventListener('change',filter);div.addEventListener('change',filter);
-      })();
-      </script>
+        <!-- Teachers Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-blue-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-blue-800">👨‍🏫 Teacher Activity</h3>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Teacher</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
+                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for t in active_teachers %}
+                        <tr class="hover:bg-blue-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                                    {% for r in available_roles %}
+                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600 bg-blue-50">{{ t.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for t in inactive_teachers %}
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
+                                    {% for r in available_roles %}
+                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ t.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not active_teachers and not inactive_teachers %}
+                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    </div> <!-- /view-dashboard -->
+        <!-- Students Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-purple-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-purple-100 bg-purple-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-purple-800">🎓 Student Activity</h3>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Student</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-purple-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
+                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for s in active_students %}
+                        <tr class="hover:bg-purple-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-purple-600 bg-purple-50">{{ s.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for s in inactive_students %}
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ s.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ s.password }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not active_students and not inactive_students %}
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 font-bold">No students registered.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
+    </div>
+    
+
+    <!-- System Files & Media -->
+    <div class="mt-8 bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-gray-800">📁 System Files & Media</h3>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{{ materials|length }} files</span>
+        </div>
+        <div class="p-6">
+            {% if materials %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for m in materials %}
+                <div class="border border-gray-200 rounded-lg p-4 flex items-start space-x-4 hover:shadow-md transition-shadow bg-white">
+                    <div class="flex-shrink-0 bg-blue-50 p-3 rounded-lg text-blue-500">
+                        <i class="fa-solid fa-file-pdf text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ m.get('title') }}">{{ m.get('title') }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ m.get('filename') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Class: {{ m.get('class') }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ m.get('file_url') or url_for('get_file', file_id=m.get('file_id')|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500 text-center py-4">No materials uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
+    </div> <!-- Close view-dashboard -->
+
+    <!-- Role Management View -->
     <div id="view-roles" class="view-section hidden">
         <div class="mb-6 flex justify-between items-center">
             <div>

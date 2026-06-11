@@ -1200,30 +1200,8 @@ def admin_dashboard():
     for key in global_config:
         if key not in ('_id', 'admin', 'teacher', 'student'):
             available_roles.append(key)
-
-    # Fetch full student profiles for the Control Tower roster + KPI analytics
-    students = list(db.students.find({}, {'_id': 0}))
-    total_stu = len(students)
-    present_count = 0
-    absent_count = 0
-    attendance_sum = 0.0
-    for s in students:
-        att = float(s.get('attendance', 0) or 0)
-        attendance_sum += att
-        if att >= 75:
-            present_count += 1
-        else:
-            absent_count += 1
-    avg_attendance = round(attendance_sum / total_stu, 1) if total_stu > 0 else 0
-
-    analytics = {
-        'total_students': total_stu,
-        'present_count': present_count,
-        'absent_count': absent_count,
-        'avg_attendance': avg_attendance,
-    }
-
-    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles, students=students, analytics=analytics)
+    
+    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():

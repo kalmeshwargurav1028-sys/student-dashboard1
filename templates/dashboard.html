@@ -1,432 +1,349 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Dashboard &rsaquo; Admin Control Tower{% endblock %}
+{% block header_title %}Dashboard &rsaquo; Student Management{% endblock %}
 
 {% block content %}
-<style>
-  .kpi-card { transition: transform .2s, box-shadow .2s; }
-  .kpi-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,.08); }
-  .roster-table th { position: sticky; top: 0; z-index: 5; }
-  .action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; transition:all .15s; }
-  .action-btn:hover { transform:scale(1.12); }
-  .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:999px; font-size:.7rem; font-weight:700; }
-</style>
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
 
-<div class="max-w-7xl mx-auto py-7 px-4 sm:px-6 lg:px-8 space-y-7">
-
-  <!-- Page Title -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Admin Control Tower</h1>
-      <p class="text-xs text-gray-400 mt-0.5">Macro Institutional View &mdash; Indus Portal</p>
+    <!-- Analytics Overview -->
+    {% if analytics %}
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Analytics Overview</h2>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+            <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-emerald-100 rounded-md p-3">
+                            <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">Total Students</dt>
+                                <dd class="flex items-baseline"><div class="text-2xl font-semibold text-gray-900">{{ analytics.total_students }}</div></dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <span class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1.5 rounded-full font-bold">
-      &#128336; Live Data
-    </span>
-  </div>
+    {% endif %}
 
-  <!-- ═══════════════════════════════════════════════════════
-       ANALYTICS OVERVIEW  (KPI Grid)
-  ═══════════════════════════════════════════════════════ -->
-  <section>
-    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">&#128202; Analytics Overview</h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <!-- Total Students -->
-      <div class="kpi-card bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-          <span class="text-2xl">&#127891;</span>
-          <span class="badge bg-indigo-50 text-indigo-700 border border-indigo-100">All</span>
-        </div>
-        <p class="text-3xl font-black text-gray-900">{{ analytics.total_students }}</p>
-        <p class="text-xs text-gray-500 mt-1 font-medium">Total Students</p>
-      </div>
-
-      <!-- Present / Good Attendance -->
-      <div class="kpi-card bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-          <span class="text-2xl">&#9989;</span>
-          <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span>
-        </div>
-        <p class="text-3xl font-black text-emerald-600">{{ analytics.present_count }}</p>
-        <p class="text-xs text-gray-500 mt-1 font-medium">Att. &ge;75%</p>
-      </div>
-
-      <!-- Absent / Low Attendance -->
-      <div class="kpi-card bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-        <div class="flex items-start justify-between mb-3">
-          <span class="text-2xl">&#128683;</span>
-          <span class="badge bg-red-50 text-red-700 border border-red-100">At Risk</span>
-        </div>
-        <p class="text-3xl font-black text-red-500">{{ analytics.absent_count }}</p>
-        <p class="text-xs text-gray-500 mt-1 font-medium">Att. &lt;75%</p>
-      </div>
-
-      <!-- School Attendance % -->
-      <div class="kpi-card bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-5 text-white">
-        <div class="flex items-start justify-between mb-3">
-          <span class="text-2xl">&#128200;</span>
-          <span class="badge bg-white/20 text-white">School</span>
-        </div>
-        <p class="text-3xl font-black">{{ analytics.avg_attendance }}%</p>
-        <p class="text-xs text-emerald-100 mt-1 font-medium">Avg. Attendance</p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════
-       SYSTEM UTILITIES  (Toolbar)
-  ═══════════════════════════════════════════════════════ -->
-  <section>
-    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">&#9881;&#65039; System Utilities</h2>
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-5 py-4 flex flex-wrap items-center gap-3">
-
-      <!-- Import -->
-      <label for="csvImportInput"
-             class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold cursor-pointer transition shadow-sm">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-        </svg>
-        Import Students (CSV)
-      </label>
-      <form id="csvImportForm" action="{{ url_for('import_students') }}" method="POST" enctype="multipart/form-data" class="hidden">
-        <input type="file" id="csvImportInput" name="csv_file" accept=".csv" onchange="document.getElementById('csvImportForm').submit()">
-      </form>
-
-      <!-- Export -->
-      <a href="{{ url_for('export_students') }}"
-         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold transition shadow-sm">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-        </svg>
-        Export Roster
-      </a>
-
-      <!-- Global Settings -->
-      <a href="{{ url_for('settings') }}"
-         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-bold transition">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-        </svg>
-        Global Settings
-      </a>
-
-      <!-- Bulk delete (shown when rows selected) -->
-      <button id="bulkDeleteBtn"
-              onclick="bulkDelete()"
-              class="hidden items-center gap-2 px-4 py-2 rounded-xl bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 text-sm font-bold transition">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-        </svg>
-        Delete Selected (<span id="selectedCount">0</span>)
-      </button>
-
-      <div class="ml-auto text-xs text-gray-400 font-medium hidden lg:block">
-        Total: <span class="font-black text-gray-700">{{ students|length }}</span> records
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══════════════════════════════════════════════════════
-       CENTRAL REGISTRATION ROSTER
-  ═══════════════════════════════════════════════════════ -->
-  <section>
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-
-      <!-- Roster Header -->
-      <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/60">
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-          <div>
-            <h2 class="text-base font-black text-gray-800">&#128196; Central Registration Roster</h2>
-            <p class="text-xs text-gray-400 mt-0.5">Filter, manage, and take action on all enrolled students.</p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-2 lg:ml-auto">
-            <!-- Search -->
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg class="h-3.5 w-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-              </div>
-              <input id="rosterSearch" type="text" placeholder="Search name..."
-                     class="pl-8 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none w-44 bg-white">
+    <!-- Data Management (Import / Export) -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">Data Management</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            
+            <!-- Export Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-2">
+                        <svg class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Export Students
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4">Download a CSV file containing all student records for a specific class, or export the entire school roster.</p>
+                </div>
+                <form action="{{ url_for('export_students') }}" method="GET" class="flex gap-3 mt-auto">
+                    <select name="class" class="flex-1 py-2 px-3 border border-gray-200 rounded-lg text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-gray-50">
+                        <option value="">All Classes</option>
+                        <option value="2nd">2nd Standard</option>
+                        <option value="3rd">3rd Standard</option>
+                        <option value="4th">4th Standard</option>
+                        <option value="5th">5th Standard</option>
+                        <option value="6th">6th Standard</option>
+                        <option value="7th">7th Standard</option>
+                        <option value="8th">8th Standard</option>
+                        <option value="9th">9th Standard</option>
+                        <option value="10th">10th Standard</option>
+                        <option value="11th">11th Standard</option>
+                        <option value="12th">12th Standard</option>
+                    </select>
+                    <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 transition">
+                        Export CSV
+                    </button>
+                </form>
             </div>
 
-            <!-- Grade Filter -->
-            <select id="gradeFilter" class="py-2 px-3 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
-              <option value="All">Grade: All</option>
-              {% for g in ['2nd','3rd','4th','5th','6th','7th','8th','9th','10th','11th','12th'] %}
-              <option value="{{ g }}">{{ g }} Std</option>
-              {% endfor %}
-            </select>
-
-            <!-- Division Filter -->
-            <select id="divisionFilter" class="py-2 px-3 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
-              <option value="All">Division: All</option>
-              <option value="A">Div A</option>
-              <option value="B">Div B</option>
-              <option value="C">Div C</option>
-              <option value="D">Div D</option>
-            </select>
-
-            <!-- Add Student -->
-            <a href="{{ url_for('profile_form') }}"
-               class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition shadow-sm whitespace-nowrap">
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-              </svg>
-              Add Student
-            </a>
-          </div>
+            <!-- Import Card -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 flex items-center gap-2 mb-2">
+                        <svg class="h-5 w-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        Import Students
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-4">Upload a CSV file to bulk import students. They will be assigned auto-generated IDs.</p>
+                </div>
+                <form action="{{ url_for('import_students') }}" method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-3 mt-auto">
+                    <input type="file" name="csv_file" accept=".csv" required class="flex-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 border border-gray-200 rounded-lg p-1 bg-gray-50 cursor-pointer">
+                    <select name="target_class" class="w-full sm:w-1/3 py-2 px-3 border border-gray-200 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50">
+                        <option value="">Default Class</option>
+                        <option value="2nd">2nd Standard</option>
+                        <option value="3rd">3rd Standard</option>
+                        <option value="4th">4th Standard</option>
+                        <option value="5th">5th Standard</option>
+                        <option value="6th">6th Standard</option>
+                        <option value="7th">7th Standard</option>
+                        <option value="8th">8th Standard</option>
+                        <option value="9th">9th Standard</option>
+                        <option value="10th">10th Standard</option>
+                        <option value="11th">11th Standard</option>
+                        <option value="12th">12th Standard</option>
+                    </select>
+                    <button type="submit" class="inline-flex justify-center items-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 transition">
+                        Upload
+                    </button>
+                </form>
+            </div>
+            
         </div>
-      </div>
-
-      <!-- Table -->
-      <div class="overflow-x-auto">
-        <table class="roster-table min-w-full divide-y divide-gray-100">
-          <thead class="bg-gray-50">
-            <tr>
-              <th class="px-4 py-3 text-left w-10">
-                <input type="checkbox" id="selectAll" onchange="toggleSelectAll(this)"
-                       class="h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer">
-              </th>
-              <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student Name</th>
-              <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Grade</th>
-              <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Division</th>
-              <th class="px-4 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Attendance</th>
-              <th class="px-4 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-50" id="rosterBody">
-            {% if students %}
-              {% for student in students %}
-              <tr class="student-row hover:bg-emerald-50/30 transition-colors"
-                  data-name="{{ student.name | lower }}"
-                  data-class="{{ student.get('student_class', '10th') }}"
-                  data-division="{{ student.get('division', 'A') }}">
-
-                <!-- Checkbox -->
-                <td class="px-4 py-3.5">
-                  <input type="checkbox" value="{{ student.id }}"
-                         class="row-checkbox h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500 cursor-pointer"
-                         onchange="updateBulkBar()">
-                </td>
-
-                <!-- Name + ID -->
-                <td class="px-4 py-3.5 whitespace-nowrap">
-                  <div class="flex items-center gap-3">
-                    <div class="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-black flex-shrink-0">
-                      {{ student.name[0] | upper if student.name else '?' }}
-                    </div>
-                    <div>
-                      <div class="text-sm font-bold text-gray-900">{{ student.name | title }}</div>
-                      <div class="text-xs text-gray-400">{{ student.id }}</div>
-                    </div>
-                  </div>
-                </td>
-
-                <!-- Grade -->
-                <td class="px-4 py-3.5 whitespace-nowrap text-sm text-gray-600 font-medium">
-                  {{ student.get('student_class', 'N/A') }} Standard
-                </td>
-
-                <!-- Division -->
-                <td class="px-4 py-3.5 whitespace-nowrap">
-                  <span class="badge bg-indigo-50 text-indigo-700 border border-indigo-100">
-                    Div {{ student.get('division', 'A') }}
-                  </span>
-                </td>
-
-                <!-- Attendance -->
-                <td class="px-4 py-3.5 whitespace-nowrap">
-                  {% set att = student.get('attendance', 0) | float %}
-                  {% if att >= 75 %}
-                    <span class="badge bg-emerald-50 text-emerald-700 border border-emerald-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{{ att }}%
-                    </span>
-                  {% else %}
-                    <span class="badge bg-red-50 text-red-700 border border-red-100">
-                      <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>{{ att }}%
-                    </span>
-                  {% endif %}
-                </td>
-
-                <!-- Actions -->
-                <td class="px-4 py-3.5 whitespace-nowrap text-right">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <!-- View -->
-                    <a href="{{ url_for('student_profile', student_id=student.id) }}"
-                       title="View Profile"
-                       class="action-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                      </svg>
-                    </a>
-                    <!-- Edit -->
-                    <a href="{{ url_for('profile_form', id=student.id) }}"
-                       title="Edit Student"
-                       class="action-btn bg-indigo-50 text-indigo-600 hover:bg-indigo-100">
-                      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                      </svg>
-                    </a>
-                    <!-- Delete -->
-                    <form action="{{ url_for('delete_student', student_id=student.id) }}" method="POST" class="inline"
-                          onsubmit="return confirm('Delete {{ student.name | title }}? This cannot be undone.');">
-                      <button type="submit" title="Delete Student"
-                              class="action-btn bg-red-50 text-red-500 hover:bg-red-100">
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              {% endfor %}
-
-              <!-- Empty-filter state -->
-              <tr id="emptyFilterState" class="hidden">
-                <td colspan="6" class="text-center py-16">
-                  <div class="text-4xl mb-3">&#128269;</div>
-                  <p class="text-sm font-bold text-gray-700">No matching students</p>
-                  <p class="text-xs text-gray-400 mt-1">Try adjusting your search or filters.</p>
-                </td>
-              </tr>
-            {% else %}
-              <tr>
-                <td colspan="6" class="text-center py-16">
-                  <div class="text-4xl mb-3">&#127891;</div>
-                  <p class="text-sm font-bold text-gray-700">No students enrolled yet</p>
-                  <p class="text-xs text-gray-400 mt-1">Click <strong>Add Student</strong> to get started.</p>
-                </td>
-              </tr>
-            {% endif %}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Footer -->
-      <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/40 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <p class="text-xs text-gray-500">
-          Showing <span id="visibleStart" class="font-bold text-gray-700">1</span>&ndash;<span id="visibleEnd" class="font-bold text-gray-700">{{ [students|length, 10]|min }}</span>
-          of <span id="totalVisible" class="font-bold text-gray-700">{{ students|length }}</span> entries
-        </p>
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-gray-500 mr-1">Rows per page:</label>
-          <select id="rowsPerPage" onchange="applyPagination()"
-                  class="border border-gray-200 rounded-lg text-xs px-2 py-1.5 focus:outline-none bg-white text-gray-700">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select>
-          <button id="prevBtn" onclick="changePage(-1)" disabled
-                  class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
-            &lsaquo; Prev
-          </button>
-          <span id="pageInfo" class="text-xs text-gray-500 px-1 font-medium">Page 1 of 1</span>
-          <button id="nextBtn" onclick="changePage(1)"
-                  class="px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed transition">
-            Next &rsaquo;
-          </button>
-        </div>
-      </div>
     </div>
-  </section>
 
+    <!-- Student Roster Card (merged header + controls) -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div class="shrink-0">
+                <h2 class="text-xl font-bold text-gray-900">Student Roster</h2>
+                <p class="text-xs text-gray-500 mt-0.5">Filter and manage students across all classes and divisions.</p>
+            </div>
+            
+            <!-- Filter Controls + Add Button -->
+            <div class="flex flex-wrap items-center gap-3">
+                <!-- Search bar -->
+                <div class="relative w-full sm:w-64">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input type="text" id="studentSearch" class="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none" placeholder="Search name..." autocomplete="off">
+                    <ul id="searchDropdown" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm hidden border border-gray-100">
+                    </ul>
+                </div>
+                
+                <!-- Grade Filter Selector -->
+                <div class="relative w-full sm:w-44">
+                    <select id="gradeFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
+                        <option value="All">All Grades</option>
+                        <option value="2nd">2nd Standard</option>
+                        <option value="3rd">3rd Standard</option>
+                        <option value="4th">4th Standard</option>
+                        <option value="5th">5th Standard</option>
+                        <option value="6th">6th Standard</option>
+                        <option value="7th">7th Standard</option>
+                        <option value="8th">8th Standard</option>
+                        <option value="9th">9th Standard</option>
+                        <option value="10th">10th Standard</option>
+                        <option value="11th">11th Standard</option>
+                        <option value="12th">12th Standard</option>
+                    </select>
+                </div>
+
+                <!-- Division Filter Selector -->
+                <div class="relative w-full sm:w-40">
+                    <select id="divisionFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
+                        <option value="All">All Divisions</option>
+                        <option value="A">Division A</option>
+                        <option value="B">Division B</option>
+                        <option value="C">Division C</option>
+                        <option value="D">Division D</option>
+                    </select>
+                </div>
+
+                <!-- Add Student Button -->
+                <a href="{{ url_for('profile_form') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition whitespace-nowrap">
+                    <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                    </svg>
+                    + Add Student
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bg-white shadow-lg overflow-hidden sm:rounded-xl border border-gray-100">
+        <ul role="list" class="divide-y divide-gray-200">
+            {% if students %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for student in students %}
+                            <tr class="student-row hover:bg-gray-50/80 transition-all duration-150" 
+                                data-name="{{ student.name | lower }}" 
+                                data-class="{{ student.get('student_class', '10th') }}" 
+                                data-division="{{ student.get('division', 'A') }}">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-semibold text-gray-800">{{ student.name | title }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
+                                    {{ student.get('student_class', 'N/A') }} Standard
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                        Division {{ student.get('division', 'A') }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <div class="flex justify-end gap-3">
+                                        <a href="{{ url_for('student_profile', student_id=student.id) }}" class="text-emerald-600 hover:text-emerald-900 flex items-center gap-1 font-semibold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                            Learn
+                                        </a>
+                                        <a href="{{ url_for('profile_form', id=student.id) }}" class="text-indigo-600 hover:text-indigo-900 flex items-center gap-1 font-semibold">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                            Edit
+                                        </a>
+                                        <form action="{{ url_for('delete_student', student_id=student.id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this student?');">
+                                            <button type="submit" class="text-red-600 hover:text-red-900 flex items-center gap-1 font-semibold">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                Delete
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            
+                            <!-- Empty Filter State -->
+                            <tr id="dashboard-empty-state" class="hidden">
+                                <td colspan="4" class="text-center py-16 px-4">
+                                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <h3 class="mt-4 text-sm font-bold text-gray-900">No matching students</h3>
+                                    <p class="mt-1 text-xs text-gray-500">Try adjusting your search keyword, grade filter, or division selection.</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-12">
+                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No students found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by creating a new student record.</p>
+                    <div class="mt-6">
+                        <a href="{{ url_for('profile_form') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            <svg class="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                            </svg>
+                            Add Student
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </ul>
+    </div>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-  const searchInput   = document.getElementById('rosterSearch');
-  const gradeFilter   = document.getElementById('gradeFilter');
-  const divFilter     = document.getElementById('divisionFilter');
-  const emptyState    = document.getElementById('emptyFilterState');
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('studentSearch');
+    const searchDropdown = document.getElementById('searchDropdown');
+    const gradeFilter = document.getElementById('gradeFilter');
+    const divisionFilter = document.getElementById('divisionFilter');
+    const studentRows = document.querySelectorAll('.student-row');
+    const emptyState = document.getElementById('dashboard-empty-state');
 
-  let currentPage = 1;
-  let filteredRows = [];
-
-  function getRows() { return Array.from(document.querySelectorAll('.student-row')); }
-
-  function applyFilters() {
-    const q   = searchInput.value.toLowerCase().trim();
-    const g   = gradeFilter.value;
-    const div = divFilter.value;
-
-    filteredRows = getRows().filter(row => {
-      const matchN = row.dataset.name.includes(q);
-      const matchG = g   === 'All' || row.dataset.class    === g;
-      const matchD = div === 'All' || row.dataset.division === div;
-      return matchN && matchG && matchD;
+    // Collected student names for autocomplete
+    const studentNames = [];
+    studentRows.forEach(row => {
+        studentNames.push(row.getAttribute('data-name'));
     });
 
-    currentPage = 1;
-    applyPagination();
-  }
+    // Integrated Filter Function
+    function applyFilters() {
+        const query = searchInput.value.toLowerCase().trim();
+        const selectedGrade = gradeFilter.value;
+        const selectedDivision = divisionFilter.value;
+        let visibleCount = 0;
+        
+        studentRows.forEach(row => {
+            const name = row.getAttribute('data-name');
+            const studentClass = row.getAttribute('data-class');
+            const studentDivision = row.getAttribute('data-division');
+            
+            const matchesSearch = name.includes(query);
+            const matchesGrade = selectedGrade === 'All' || studentClass === selectedGrade;
+            const matchesDivision = selectedDivision === 'All' || studentDivision === selectedDivision;
+            
+            if (matchesSearch && matchesGrade && matchesDivision) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
 
-  window.applyPagination = function () {
-    const rpp   = parseInt(document.getElementById('rowsPerPage').value);
-    const total = filteredRows.length;
-    const pages = Math.max(1, Math.ceil(total / rpp));
-    currentPage = Math.min(currentPage, pages);
+        // Toggle empty state
+        if (visibleCount === 0 && studentRows.length > 0) {
+            emptyState.classList.remove('hidden');
+        } else {
+            emptyState.classList.add('hidden');
+        }
+    }
 
-    const start = (currentPage - 1) * rpp;
-    const end   = start + rpp;
+    if (searchInput && searchDropdown) {
+        searchInput.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            searchDropdown.innerHTML = '';
+            
+            applyFilters();
 
-    getRows().forEach(r => r.style.display = 'none');
-    filteredRows.forEach((r, i) => { r.style.display = (i >= start && i < end) ? '' : 'none'; });
+            if (searchTerm === '') {
+                searchDropdown.classList.add('hidden');
+                return;
+            }
 
-    emptyState.classList.toggle('hidden', total > 0);
+            const matches = studentNames.filter(name => name.includes(searchTerm));
 
-    document.getElementById('visibleStart').textContent  = total ? start + 1 : 0;
-    document.getElementById('visibleEnd').textContent    = Math.min(end, total);
-    document.getElementById('totalVisible').textContent  = total;
-    document.getElementById('pageInfo').textContent      = `Page ${currentPage} of ${pages}`;
-    document.getElementById('prevBtn').disabled          = currentPage <= 1;
-    document.getElementById('nextBtn').disabled          = currentPage >= pages;
-  };
+            if (matches.length > 0) {
+                searchDropdown.classList.remove('hidden');
+                
+                // Helper to capitalize words
+                const capitalize = s => s.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
 
-  window.changePage = function (delta) { currentPage += delta; applyPagination(); };
+                matches.forEach(match => {
+                    const li = document.createElement('li');
+                    li.className = 'text-gray-900 cursor-default select-none relative py-2.5 pl-3 pr-9 hover:bg-emerald-50 hover:text-emerald-900 cursor-pointer text-sm transition-colors';
+                    li.innerHTML = `<span class="block truncate font-medium">${capitalize(match)}</span>`;
+                    
+                    li.addEventListener('click', () => {
+                        searchInput.value = capitalize(match);
+                        searchDropdown.classList.add('hidden');
+                        applyFilters();
+                    });
+                    
+                    searchDropdown.appendChild(li);
+                });
+            } else {
+                searchDropdown.classList.add('hidden');
+            }
+        });
 
-  // Init
-  filteredRows = getRows();
-  applyPagination();
+        // Select changes
+        gradeFilter.addEventListener('change', applyFilters);
+        divisionFilter.addEventListener('change', applyFilters);
 
-  searchInput.addEventListener('input',  applyFilters);
-  gradeFilter.addEventListener('change', applyFilters);
-  divFilter.addEventListener('change',   applyFilters);
-
-  // Select-all
-  window.toggleSelectAll = function (cb) {
-    document.querySelectorAll('.row-checkbox').forEach(c => { c.checked = cb.checked; });
-    updateBulkBar();
-  };
-
-  window.updateBulkBar = function () {
-    const n   = document.querySelectorAll('.row-checkbox:checked').length;
-    const btn = document.getElementById('bulkDeleteBtn');
-    document.getElementById('selectedCount').textContent = n;
-    btn.classList.toggle('hidden', n === 0);
-    btn.classList.toggle('inline-flex', n > 0);
-  };
-
-  window.bulkDelete = function () {
-    const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(c => c.value);
-    if (!ids.length) return;
-    if (!confirm(`Delete ${ids.length} student(s)? This cannot be undone.`)) return;
-    // Individual form submits
-    ids.forEach(id => {
-      const f = document.createElement('form');
-      f.method = 'POST';
-      f.action = `/student/${id}/delete`;
-      document.body.appendChild(f);
-      f.submit();
-    });
-  };
+        // Hide dropdown if clicked outside
+        document.addEventListener('click', (e) => {
+            if (!searchInput.contains(e.target) && !searchDropdown.contains(e.target)) {
+                searchDropdown.classList.add('hidden');
+            }
+        });
+    }
 });
 </script>
+
 {% endblock %}
