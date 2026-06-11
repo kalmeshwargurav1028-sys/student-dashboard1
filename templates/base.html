@@ -32,10 +32,7 @@
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-4 bg-emerald-600 dark:bg-gray-900 border-b border-emerald-400 dark:border-gray-700">
             <a href="{{ url_for('dashboard') }}" class="text-xl font-bold flex items-center gap-2 whitespace-nowrap overflow-hidden" id="sidebar-logo-text">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 flex-shrink-0 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                </svg>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto flex-shrink-0" alt="Logo">
                 <span class="sidebar-text transition-opacity duration-300">Indus Portal</span>
             </a>
             <button id="sidebar-toggle" class="text-emerald-300 hover:text-white focus:outline-none hidden sm:block">
