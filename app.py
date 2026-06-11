@@ -119,7 +119,7 @@ def has_permission(permission_name):
         pass
     # Defaults for built-in roles
     if role == 'teacher':
-        defaults = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
+        defaults = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True, 'manage_grades': True}
         return defaults.get(permission_name, False)
     return False
 
@@ -155,7 +155,8 @@ def inject_global_context():
                 'modify_attendance': True,
                 'view_system_health': True,
                 'send_announcements': True,
-                'ai_insights': True
+                'ai_insights': True,
+                'manage_grades': True
             }
         else:
             global_config = db.role_permissions.find_one({'_id': 'global_config'})
@@ -164,7 +165,7 @@ def inject_global_context():
             else:
                 # Defaults
                 if role == 'teacher':
-                    context['role_permissions'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True}
+                    context['role_permissions'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True, 'manage_grades': True}
                 else:
                     context['role_permissions'] = {'view_dashboard': True}
                     
@@ -223,7 +224,8 @@ def add_custom_role():
             'modify_attendance': False,
             'view_system_health': False,
             'send_announcements': False,
-            'ai_insights': False
+            'ai_insights': False,
+            'manage_grades': False
         }
         
         # Upsert the new role into global_config
@@ -1203,6 +1205,53 @@ def admin_dashboard():
     
     return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles)
 
+@app.route('/staff_management')
+def staff_management():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    # Get all teachers and admins
+    staff_members = list(db.users.find({'role': {'$in': ['teacher', 'admin']}}, {'password': 0}))
+    return render_template('staff_management.html', staff_members=staff_members)
+
+@app.route('/api/staff/add', methods=['POST'])
+def add_staff():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    first_name = request.form.get('first_name', '').strip()
+    last_name = request.form.get('last_name', '').strip()
+    email = request.form.get('email', '').strip()
+    role = request.form.get('role', 'teacher')
+    password = request.form.get('password', '')
+    
+    if not all([first_name, last_name, email, password]):
+        return jsonify({'success': False, 'error': 'All fields are required'}), 400
+        
+    existing_user = db.users.find_one({'email': email})
+    if existing_user:
+        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+        
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    
+    new_staff = {
+        'name': f"{first_name} {last_name}",
+        'email': email,
+        'role': role,
+        'password': hashed_password.decode('utf-8'),
+        'created_at': datetime.datetime.utcnow().isoformat()
+    }
+    
+    db.users.insert_one(new_staff)
+    
+    log_activity(
+        "Staff Member Created", 
+        f"Admin {session.get('username')} created a new {role}: {first_name} {last_name}.", 
+        role_target='admin'
+    )
+    
+    return jsonify({'success': True})
+
 @app.route('/super_admin_profile')
 def super_admin_profile():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -1796,6 +1845,78 @@ def attendance():
         all_dates=all_dates,
         stats=stats
     )
+
+@app.route('/gradebook', methods=['GET', 'POST'])
+def gradebook():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') == 'student':
+        return redirect(url_for('student_gradebook', student_id=session.get('user_id')))
+    if not has_permission('manage_grades'):
+        flash('You do not have permission to access Gradebook.')
+        return redirect(url_for('dashboard'))
+
+    students = list(db.students.find({}, {'_id': 0}))
+    subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History']
+
+    if request.method == 'POST':
+        for s in students:
+            s_id = s['id']
+            for sub in subjects:
+                ca = request.form.get(f'ca_{s_id}_{sub}', '')
+                exam = request.form.get(f'exam_{s_id}_{sub}', '')
+                if ca or exam:
+                    db.grades.update_one(
+                        {'student_id': s_id, 'subject': sub},
+                        {'$set': {'ca_mark': ca, 'exam_mark': exam}},
+                        upsert=True
+                    )
+        flash('Grades updated successfully!')
+        return redirect(url_for('gradebook'))
+
+    # Prepare grades dict for the template
+    all_grades = list(db.grades.find({}, {'_id': 0}))
+    grades_dict = {}
+    for g in all_grades:
+        sid = g.get('student_id')
+        sub = g.get('subject')
+        if sid not in grades_dict:
+            grades_dict[sid] = {}
+        grades_dict[sid][sub] = g
+
+    return render_template(
+        'gradebook.html',
+        students=students,
+        subjects=subjects,
+        grades_dict=grades_dict
+    )
+
+@app.route('/student/<student_id>/gradebook')
+def student_gradebook(student_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    if session.get('role') == 'student' and session.get('user_id') != student_id:
+        flash('You can only view your own gradebook.')
+        return redirect(url_for('dashboard'))
+        
+    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('dashboard'))
+
+    student_grades = list(db.grades.find({'student_id': student_id}, {'_id': 0}))
+    
+    # Calculate totals and format for display
+    grades_display = []
+    for g in student_grades:
+        ca = float(g.get('ca_mark') or 0)
+        exam = float(g.get('exam_mark') or 0)
+        total = ca + exam
+        g['total'] = total
+        grades_display.append(g)
+
+    return render_template('student_gradebook.html', student=student, grades=grades_display)
 
 @app.route('/materials', methods=['GET', 'POST'])
 def materials():

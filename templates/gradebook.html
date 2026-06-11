@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block header_title %}Gradebook Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mb-8 flex justify-between items-center bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Academic Gradebook</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage continuous assessments and final exam marks for all students.</p>
+        </div>
+        <div class="flex space-x-3">
+            <button onclick="document.getElementById('gradeForm').submit()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                Save All Grades
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden border border-gray-100 dark:border-gray-700">
+        <div class="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div class="flex flex-col sm:flex-row justify-between gap-4">
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="searchInput" onkeyup="filterStudents()" placeholder="Search students..." class="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-gray-100">
+                    <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <form id="gradeForm" method="POST" action="{{ url_for('gradebook') }}">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700" id="gradesTable">
+                    <thead class="bg-gray-50 dark:bg-gray-900/50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider sticky left-0 bg-gray-50 dark:bg-gray-900/50">Student</th>
+                            {% for sub in subjects %}
+                            <th scope="col" class="px-6 py-3 text-center text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider border-l border-gray-200 dark:border-gray-700">
+                                {{ sub }}
+                                <div class="flex justify-between mt-2 text-[10px] text-gray-400">
+                                    <span>CA (40)</span>
+                                    <span>Exam (60)</span>
+                                </div>
+                            </th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for s in students %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors student-row">
+                            <td class="px-6 py-4 whitespace-nowrap sticky left-0 bg-white dark:bg-gray-800 group-hover:bg-gray-50 dark:group-hover:bg-gray-700/50">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        {% if s.photo_url %}
+                                        <img class="h-10 w-10 rounded-full object-cover border-2 border-emerald-100 dark:border-emerald-900" src="{{ s.photo_url }}" alt="">
+                                        {% else %}
+                                        <div class="h-10 w-10 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+                                            {{ s.name[0]|upper if s.name else 'S' }}
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-semibold text-gray-900 dark:text-white student-name">{{ s.name }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ s.id }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            {% for sub in subjects %}
+                            {% set ca_val = grades_dict.get(s.id, {}).get(sub, {}).get('ca_mark', '') %}
+                            {% set exam_val = grades_dict.get(s.id, {}).get(sub, {}).get('exam_mark', '') %}
+                            <td class="px-6 py-4 whitespace-nowrap border-l border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <input type="number" name="ca_{{ s.id }}_{{ sub }}" value="{{ ca_val }}" min="0" max="40" step="0.1" class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-emerald-500 focus:border-emerald-500 text-center" placeholder="CA">
+                                    <span class="text-gray-300 dark:text-gray-600">+</span>
+                                    <input type="number" name="exam_{{ s.id }}_{{ sub }}" value="{{ exam_val }}" min="0" max="60" step="0.1" class="w-16 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-emerald-500 focus:border-emerald-500 text-center" placeholder="Exam">
+                                </div>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterStudents() {
+    let input = document.getElementById('searchInput');
+    let filter = input.value.toUpperCase();
+    let rows = document.querySelectorAll('.student-row');
+    
+    rows.forEach(row => {
+        let name = row.querySelector('.student-name').textContent;
+        if (name.toUpperCase().indexOf(filter) > -1) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Staff Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    
+    <!-- Header Area -->
+    <div class="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+        <div>
+            <h1 class="text-2xl font-black text-gray-900 tracking-tight">Staff Directory</h1>
+            <p class="text-sm text-gray-500 mt-1">Manage administrators and teachers.</p>
+        </div>
+        <button onclick="openAddStaffModal()" class="mt-4 sm:mt-0 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-xl shadow-sm transition flex items-center gap-2">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add Staff Member
+        </button>
+    </div>
+
+    <!-- Staff Table -->
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Role</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Email</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for staff in staff_members %}
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-gradient-to-br {% if staff.role == 'admin' %}from-red-400 to-pink-500{% else %}from-blue-400 to-indigo-500{% endif %} rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {{ staff.name[0]|upper }}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-bold text-gray-900">{{ staff.name }}</div>
+                                    <div class="text-xs text-gray-500">{{ staff.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full {% if staff.role == 'admin' %}bg-red-100 text-red-800 border border-red-200{% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}">
+                                {{ staff.role|capitalize }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ staff.email }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                                Active
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="alert('Feature coming soon!')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-indigo-100">Edit</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not staff_members %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500 font-medium">No staff members found.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div id="addStaffModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-900 bg-opacity-75 transition-opacity backdrop-blur-sm" aria-hidden="true" onclick="closeAddStaffModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        
+        <div class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full border border-gray-100">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-emerald-100 sm:mx-0 sm:h-10 sm:w-10">
+                        <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                    </div>
+                    <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">Add New Staff Member</h3>
+                        <div class="mt-4">
+                            <form id="addStaffForm">
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                        <input type="text" id="staffFirstName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                        <input type="text" id="staffLastName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                    </div>
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" id="staffEmail" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                </div>
+                                <div class="mb-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
+                                    <select id="staffRole" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm bg-white">
+                                        <option value="teacher">Teacher</option>
+                                        <option value="admin">Administrator</option>
+                                    </select>
+                                </div>
+                                <div class="mb-5">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Temporary Password</label>
+                                    <input type="password" id="staffPassword" required class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm">
+                                </div>
+                            </form>
+                            <div id="addStaffAlert" class="hidden rounded-lg p-3 text-sm mb-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-2xl border-t border-gray-200">
+                <button type="button" onclick="submitAddStaff()" id="submitStaffBtn" class="w-full inline-flex justify-center rounded-xl border border-transparent shadow-sm px-4 py-2 bg-emerald-600 text-base font-medium text-white hover:bg-emerald-700 focus:outline-none sm:ml-3 sm:w-auto sm:text-sm transition">
+                    Create Member
+                </button>
+                <button type="button" onclick="closeAddStaffModal()" class="mt-3 w-full inline-flex justify-center rounded-xl border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function openAddStaffModal() {
+    document.getElementById('addStaffModal').classList.remove('hidden');
+    document.getElementById('addStaffForm').reset();
+    document.getElementById('addStaffAlert').classList.add('hidden');
+}
+
+function closeAddStaffModal() {
+    document.getElementById('addStaffModal').classList.add('hidden');
+}
+
+async function submitAddStaff() {
+    const fn = document.getElementById('staffFirstName').value.trim();
+    const ln = document.getElementById('staffLastName').value.trim();
+    const email = document.getElementById('staffEmail').value.trim();
+    const role = document.getElementById('staffRole').value;
+    const pwd = document.getElementById('staffPassword').value;
+    const alertBox = document.getElementById('addStaffAlert');
+    const btn = document.getElementById('submitStaffBtn');
+
+    if (!fn || !ln || !email || !pwd) {
+        alertBox.className = 'rounded-lg p-3 text-sm mb-4 bg-red-50 text-red-700 border border-red-200 font-medium';
+        alertBox.textContent = 'Please fill out all fields.';
+        alertBox.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Creating...';
+
+    try {
+        const formData = new FormData();
+        formData.append('first_name', fn);
+        formData.append('last_name', ln);
+        formData.append('email', email);
+        formData.append('role', role);
+        formData.append('password', pwd);
+
+        const response = await fetch('/api/staff/add', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            alertBox.className = 'rounded-lg p-3 text-sm mb-4 bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium';
+            alertBox.textContent = 'Staff member created successfully!';
+            alertBox.classList.remove('hidden');
+            setTimeout(() => window.location.reload(), 1000);
+        } else {
+            alertBox.className = 'rounded-lg p-3 text-sm mb-4 bg-red-50 text-red-700 border border-red-200 font-medium';
+            alertBox.textContent = data.error || 'Failed to create staff member.';
+            alertBox.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = 'Create Member';
+        }
+    } catch (err) {
+        alertBox.className = 'rounded-lg p-3 text-sm mb-4 bg-red-50 text-red-700 border border-red-200 font-medium';
+        alertBox.textContent = 'Network error. Please try again.';
+        alertBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerHTML = 'Create Member';
+    }
+}
+</script>
+{% endblock %}

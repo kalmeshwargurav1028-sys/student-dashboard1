@@ -65,6 +65,15 @@
                 </li>
                 {% endif %}
                 
+                {% if session.get('role') == 'admin' %}
+                <li>
+                    <a href="{{ url_for('staff_management') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <span class="text-xl mr-3 opacity-90 group-hover:opacity-100">👔</span>
+                        <span class="sidebar-text whitespace-nowrap">Staff Management</span>
+                    </a>
+                </li>
+                {% endif %}
+                
 
                 {% if role_permissions.get('edit_materials') %}
                 <li>
@@ -94,6 +103,15 @@
                     <a href="{{ url_for('attendance') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
                         <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         <span class="sidebar-text whitespace-nowrap">Attendance</span>
+                    </a>
+                </li>
+                {% endif %}
+
+                {% if role_permissions.get('manage_grades') %}
+                <li>
+                    <a href="{{ url_for('gradebook') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Gradebook</span>
                     </a>
                 </li>
                 {% endif %}
@@ -155,6 +173,12 @@
                     <a href="{{ url_for('assignments') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
                         <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
                         <span class="sidebar-text whitespace-nowrap">Assignments</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('gradebook') }}" class="flex items-center px-4 py-3 text-emerald-100 hover:bg-emerald-600 dark:hover:bg-gray-700 hover:text-white group transition-colors">
+                        <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap">Gradebook</span>
                     </a>
                 </li>
                 {% endif %}
