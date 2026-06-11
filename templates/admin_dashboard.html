@@ -25,26 +25,27 @@
       <!-- KPI CARDS -->
       <section class="mb-7">
         <h2 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">&#128202; Analytics Overview</h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
             <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#127891;</span><span class="ct-badge bg-indigo-50 text-indigo-700 border border-indigo-100">All</span></div>
-            <p class="text-3xl font-black text-gray-900">{{ analytics.total_students }}</p>
-            <p class="text-xs text-gray-500 mt-1 font-medium">Total Students</p>
+            <div>
+              <p class="text-3xl font-black text-gray-900">{{ analytics.total_students }}</p>
+              <p class="text-xs text-gray-500 mt-1 font-medium">Total Students</p>
+            </div>
           </div>
-          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#9989;</span><span class="ct-badge bg-emerald-50 text-emerald-700 border border-emerald-100">Active</span></div>
-            <p class="text-3xl font-black text-emerald-600">{{ analytics.present_count }}</p>
-            <p class="text-xs text-gray-500 mt-1 font-medium">Att. &ge;75%</p>
+          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
+            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#9989;</span><span class="ct-badge bg-emerald-50 text-emerald-700 border border-emerald-100">Status</span></div>
+            <div>
+              <p class="text-3xl font-black text-gray-900"><span class="text-emerald-600">{{ analytics.present_count }}</span> <span class="text-gray-300">/</span> <span class="text-red-500">{{ analytics.absent_count }}</span></p>
+              <p class="text-xs text-gray-500 mt-1 font-medium">Active / Inactive</p>
+            </div>
           </div>
-          <div class="ct-kpi bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#128683;</span><span class="ct-badge bg-red-50 text-red-700 border border-red-100">At Risk</span></div>
-            <p class="text-3xl font-black text-red-500">{{ analytics.absent_count }}</p>
-            <p class="text-xs text-gray-500 mt-1 font-medium">Att. &lt;75%</p>
-          </div>
-          <div class="ct-kpi bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-5 text-white">
+          <div class="ct-kpi bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-sm p-5 text-white flex flex-col justify-between">
             <div class="flex items-start justify-between mb-3"><span class="text-2xl">&#128200;</span><span class="ct-badge bg-white/20 text-white">School</span></div>
-            <p class="text-3xl font-black">{{ analytics.avg_attendance }}%</p>
-            <p class="text-xs text-emerald-100 mt-1 font-medium">School Attendance</p>
+            <div>
+              <p class="text-3xl font-black">{{ analytics.avg_attendance }}%</p>
+              <p class="text-xs text-emerald-100 mt-1 font-medium">School Attendance</p>
+            </div>
           </div>
         </div>
       </section>
