@@ -1418,8 +1418,12 @@ def assignments():
                     'title': request.form.get('title'),
                     'subject': request.form.get('subject'),
                     'class_name': request.form.get('class_name'),
+                    'gradebook_category': request.form.get('gradebook_category'),
+                    'max_points': request.form.get('max_points'),
                     'due_date': request.form.get('due_date'),
                     'description': request.form.get('description'),
+                    'smart_alert_parents': request.form.get('smart_alert_parents') == 'on',
+                    'smart_pin_calendar': request.form.get('smart_pin_calendar') == 'on',
                     'created_by': session.get('username'),
                     'submissions': []
                 })

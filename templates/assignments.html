@@ -85,40 +85,143 @@
         </div>
 
         <!-- Add Modal -->
-        <div id="addModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-md w-full p-6">
-                <h2 class="text-xl font-bold mb-4 text-gray-900 dark:text-white">Create Assignment</h2>
-                <form action="{{ url_for('assignments') }}" method="POST">
+        <div id="addModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-3xl w-full my-8">
+                <div class="px-8 py-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 rounded-t-2xl">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Create New Classroom Assignment</h2>
+                    <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <form action="{{ url_for('assignments') }}" method="POST" class="px-8 py-6">
                     <input type="hidden" name="action" value="create">
                     
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-                        <input type="text" name="title" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <!-- Target Audience -->
+                    <div class="mb-6 flex items-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800/50">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        <span class="font-medium">Target Audience:</span>
+                        <input type="text" name="class_name" value="Grade 10-A" required class="bg-transparent border-none p-0 focus:ring-0 text-sm font-bold text-indigo-700 dark:text-indigo-300 w-32" readonly>
+                        <span class="text-indigo-400 dark:text-indigo-500 italic">(Locked Room Context)</span>
                     </div>
                     
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Subject</label>
-                        <input type="text" name="subject" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class/Grade</label>
-                        <input type="text" name="class_name" required placeholder="e.g. 10th Grade A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Due Date</label>
-                        <input type="date" name="due_date" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
-                    </div>
-                    
+                    <!-- Assignment Title -->
                     <div class="mb-6">
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-                        <textarea name="description" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required></textarea>
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Assignment Title <span class="text-red-500">*</span></label>
+                        <input type="text" name="title" required maxlength="80" placeholder="e.g. Suraj's Chapter 4 Quiz Review" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white font-medium text-lg shadow-sm">
                     </div>
                     
-                    <div class="flex justify-end gap-3">
-                        <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors">Create</button>
+                    <!-- Subject & Category Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Subject <span class="text-red-500">*</span></label>
+                            <select name="subject" required class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm appearance-none cursor-pointer">
+                                <option value="Mathematics">Mathematics</option>
+                                <option value="Physics">Physics</option>
+                                <option value="Chemistry">Chemistry</option>
+                                <option value="Biology">Biology</option>
+                                <option value="English">English</option>
+                                <option value="History">History</option>
+                                <option value="Computer Science">Computer Science</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Gradebook Category <span class="text-red-500">*</span></label>
+                            <div class="flex items-center gap-4 mt-3">
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="gradebook_category" value="Homework" checked class="form-radio text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Homework</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="gradebook_category" value="Quiz" class="form-radio text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Quiz</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="gradebook_category" value="Exam" class="form-radio text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Exam</span>
+                                </label>
+                                <label class="inline-flex items-center">
+                                    <input type="radio" name="gradebook_category" value="Project" class="form-radio text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                    <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Project</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Points & Date Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Maximum Score Points <span class="text-red-500">*</span></label>
+                            <div class="relative">
+                                <input type="number" name="max_points" required value="50" min="1" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm pr-12">
+                                <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-500">pts</div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Submission Due Date <span class="text-red-500">*</span></label>
+                            <input type="date" name="due_date" required class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm cursor-pointer">
+                        </div>
+                    </div>
+                    
+                    <!-- Instructions Area -->
+                    <div class="mb-8">
+                        <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Assignment Details & Instructions</label>
+                        <div class="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden shadow-sm bg-white dark:bg-gray-700 focus-within:ring-1 focus-within:ring-indigo-500 focus-within:border-indigo-500 transition-all">
+                            <!-- Mock Rich Text Toolbar -->
+                            <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 px-3 py-2 flex flex-wrap items-center gap-4">
+                                <div class="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-4">
+                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><strong class="font-serif">B</strong></button>
+                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><em class="font-serif">I</em></button>
+                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><u class="font-serif">U</u></button>
+                                </div>
+                                <button type="button" class="flex items-center text-sm text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                    Attach File <span class="text-xs text-gray-400 ml-1">(PDF/Docs max 10MB)</span>
+                                </button>
+                                <button type="button" class="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 ml-auto font-medium transition-colors">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    Auto-Generate Rubric
+                                </button>
+                            </div>
+                            <textarea name="description" rows="5" class="w-full px-4 py-3 border-none focus:ring-0 bg-transparent text-gray-900 dark:text-white resize-y" placeholder="Please complete all problems from Section 4.3 on page 112. Show your formulas step-by-step. Late submissions will automatically incur a 10% penalty per day." required></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Smart Automation Settings -->
+                    <div class="mb-8 bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700">
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white uppercase tracking-wider flex items-center mb-4">
+                            <svg class="w-4 h-4 mr-2 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            Smart Automation Settings
+                        </h4>
+                        <div class="space-y-3">
+                            <label class="flex items-start cursor-pointer group">
+                                <div class="flex items-center h-5">
+                                    <input type="checkbox" name="smart_alert_parents" checked class="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Send automated push alert to Parent Mobile App upon creation</span>
+                                </div>
+                            </label>
+                            <label class="flex items-start cursor-pointer group">
+                                <div class="flex items-center h-5">
+                                    <input type="checkbox" name="smart_pin_calendar" checked class="w-4 h-4 text-indigo-600 bg-white border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 cursor-pointer">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <span class="font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Pin assignment overview to Student Dashboard Calendar</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
+                        <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Cancel
+                        </button>
+                        <button type="submit" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                            Publish Now
+                        </button>
                     </div>
                 </form>
             </div>
