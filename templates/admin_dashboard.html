@@ -7,7 +7,13 @@
             <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
             <p class="text-sm text-gray-500 mt-1">System Overview & User Activity Tracking</p>
         </div>
-
+        <!-- Admin Nav Tabs -->
+        <div class="flex items-center gap-2 flex-wrap">
+            <a href="#dashboard" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Overview</a>
+            <a href="#analytics" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition-colors">Analytics</a>
+            <a href="#roles" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Roles</a>
+            <a href="#announcements" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors">Announcements</a>
+        </div>
     </div>
 
     <!-- Dashboard View -->
@@ -524,6 +530,60 @@
 
 </div>
 
+<!-- Analytics View — Syllabus Pace, Roster Conflicts, Faculty Performance -->
+<div id="view-analytics" class="hidden max-w-7xl mx-auto py-4">
+    <div class="mb-6">
+        <h2 class="text-xl font-bold text-gray-900">Admin Analytics</h2>
+        <p class="text-sm text-gray-500 mt-1">Curriculum compliance, scheduling conflicts, and faculty performance health.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Syllabus Pace -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <span class="text-xl">📚</span> Syllabus Pace
+                </h3>
+                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-full">30-day window</span>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Monitors curriculum compliance by counting daily log entries per class. Green = on schedule, Red = behind.</p>
+            <div id="syllabus-pace-container">
+                <div class="text-sm text-gray-400 text-center py-4">Click "Analytics" to load</div>
+            </div>
+        </div>
+
+        <!-- Roster Conflicts -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <span class="text-xl">⚠️</span> Roster Conflicts
+                </h3>
+                <button onclick="loadRosterConflicts()" class="text-xs text-indigo-600 hover:underline">Refresh</button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Detects teachers scheduled in multiple classes simultaneously, or rooms double-booked at the same time.</p>
+            <div id="roster-conflicts-container">
+                <div class="text-sm text-gray-400 text-center py-4">Click "Analytics" to load</div>
+            </div>
+        </div>
+
+        <!-- Faculty Analytics -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-base font-bold text-gray-900 flex items-center gap-2">
+                    <span class="text-xl">📊</span> Faculty Performance
+                </h3>
+                <button onclick="loadFacultyAnalytics()" class="text-xs text-indigo-600 hover:underline">Refresh</button>
+            </div>
+            <p class="text-xs text-gray-500 mb-4">Health score combines log frequency (40%) and average student performance across taught classes (60%).</p>
+            <div id="faculty-analytics-container" class="max-h-[500px] overflow-y-auto pr-1">
+                <div class="text-sm text-gray-400 text-center py-4">Click "Analytics" to load</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
 <!-- Reset Password Modal -->
 <div id="resetModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
@@ -785,6 +845,155 @@
                 btn.innerText = 'Save Changes';
                 btn.disabled = false;
             }
+        }
+    }
+
+    // ===========================================================================
+    // ADMIN ANALYTICS — Syllabus Pace, Roster Conflicts, Faculty Analytics
+    // Loaded lazily when the #analytics view is activated
+    // ===========================================================================
+
+    async function loadAnalyticsView() {
+        await Promise.all([loadSyllabusPace(), loadRosterConflicts(), loadFacultyAnalytics()]);
+    }
+
+    async function loadSyllabusPace() {
+        const container = document.getElementById('syllabus-pace-container');
+        if (!container) return;
+        container.innerHTML = '<div class="text-sm text-gray-400 animate-pulse py-4 text-center">Loading syllabus data...</div>';
+        try {
+            const res = await fetch('/api/admin/syllabus_pace');
+            const data = await res.json();
+            if (data.error) { container.innerHTML = `<p class="text-red-500 text-sm">${data.error}</p>`; return; }
+
+            let html = `<div class="text-xs text-gray-500 mb-4">Last 30 days · ${data.total_logs} total log entries</div>`;
+            const pace = data.pace_health;
+            if (Object.keys(pace).length === 0) {
+                html += '<p class="text-sm text-gray-400 text-center py-6">No daily logs recorded in the last 30 days.</p>';
+            } else {
+                html += '<div class="space-y-3">';
+                for (const [cls, info] of Object.entries(pace)) {
+                    const colorMap = {red: 'bg-red-100 text-red-700 border-red-200', yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200', green: 'bg-emerald-50 text-emerald-700 border-emerald-200'};
+                    const barMap = {red: 'bg-red-400', yellow: 'bg-yellow-400', green: 'bg-emerald-500'};
+                    const pct = Math.min((info.count / 20) * 100, 100);
+                    const labelMap = {behind: 'Behind Schedule', on_track: 'On Track', ahead: 'Ahead of Schedule'};
+                    html += `
+                        <div class="border rounded-xl p-4 ${colorMap[info.color]}">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-bold">${cls}</span>
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-white/60">${labelMap[info.status]} · ${info.count} logs</span>
+                            </div>
+                            <div class="w-full bg-white/50 rounded-full h-2">
+                                <div class="${barMap[info.color]} h-2 rounded-full transition-all" style="width:${pct}%"></div>
+                            </div>
+                        </div>`;
+                }
+                html += '</div>';
+            }
+            container.innerHTML = html;
+        } catch(e) {
+            container.innerHTML = '<p class="text-red-500 text-sm">Failed to load syllabus data.</p>';
+        }
+    }
+
+    async function loadRosterConflicts() {
+        const container = document.getElementById('roster-conflicts-container');
+        if (!container) return;
+        container.innerHTML = '<div class="text-sm text-gray-400 animate-pulse py-4 text-center">Scanning for conflicts...</div>';
+        try {
+            const res = await fetch('/api/admin/roster_conflicts');
+            const data = await res.json();
+            if (data.error) { container.innerHTML = `<p class="text-red-500 text-sm">${data.error}</p>`; return; }
+
+            if (data.total_conflicts === 0) {
+                container.innerHTML = '<div class="text-center py-8"><div class="text-4xl mb-2">✅</div><p class="text-sm font-bold text-emerald-700">No conflicts detected</p><p class="text-xs text-gray-500 mt-1">All timetable entries look clean.</p></div>';
+                return;
+            }
+
+            let html = `<div class="mb-3 flex items-center gap-2"><span class="text-sm font-bold text-gray-800">${data.total_conflicts} conflict${data.total_conflicts > 1 ? 's' : ''} found</span>${data.has_critical ? '<span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded-full border border-red-200">Critical</span>' : ''}</div><div class="space-y-3">`;
+            for (const c of data.conflicts) {
+                const sev = c.severity === 'high' ? 'border-red-300 bg-red-50' : 'border-yellow-300 bg-yellow-50';
+                const icon = c.severity === 'high' ? '🔴' : '🟡';
+                html += `
+                    <div class="border rounded-xl p-4 ${sev}">
+                        <div class="flex items-start gap-2">
+                            <span class="text-base mt-0.5">${icon}</span>
+                            <div>
+                                <p class="text-sm font-bold text-gray-800">${c.type === 'teacher_double_booked' ? 'Teacher Double-Booked' : 'Room Double-Booked'}</p>
+                                <p class="text-xs text-gray-600 mt-0.5">${c.message}</p>
+                            </div>
+                        </div>
+                    </div>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            container.innerHTML = '<p class="text-red-500 text-sm">Failed to scan for conflicts.</p>';
+        }
+    }
+
+    async function loadFacultyAnalytics() {
+        const container = document.getElementById('faculty-analytics-container');
+        if (!container) return;
+        container.innerHTML = '<div class="text-sm text-gray-400 animate-pulse py-4 text-center">Computing faculty scores...</div>';
+        try {
+            const res = await fetch('/api/admin/faculty_analytics');
+            const data = await res.json();
+            if (data.error) { container.innerHTML = `<p class="text-red-500 text-sm">${data.error}</p>`; return; }
+
+            if (data.faculty.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-400 text-center py-6">No teacher accounts found.</p>';
+                return;
+            }
+
+            let html = `<div class="text-xs text-gray-500 mb-4">Avg health score: <strong>${data.avg_health_score}/100</strong> · ${data.total_teachers} teachers</div><div class="space-y-3">`;
+            for (const t of data.faculty) {
+                const labelColors = {excellent: 'bg-emerald-100 text-emerald-700', good: 'bg-blue-100 text-blue-700', needs_attention: 'bg-yellow-100 text-yellow-700', at_risk: 'bg-red-100 text-red-700'};
+                const barColor = t.health_score >= 80 ? 'bg-emerald-500' : t.health_score >= 60 ? 'bg-blue-500' : t.health_score >= 40 ? 'bg-yellow-500' : 'bg-red-500';
+                html += `
+                    <div class="border border-gray-200 rounded-xl p-4 bg-white hover:shadow-sm transition-shadow">
+                        <div class="flex items-center justify-between mb-2">
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">${t.name}</p>
+                                <p class="text-xs text-gray-400">${t.email} · Last active: ${t.last_active}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-black text-gray-800">${t.health_score}<span class="text-xs text-gray-400 font-normal">/100</span></p>
+                                <span class="px-2 py-0.5 text-xs font-bold rounded-full ${labelColors[t.health_label]}">${t.health_label.replace('_', ' ')}</span>
+                            </div>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 mb-2">
+                            <div class="${barColor} h-1.5 rounded-full" style="width:${t.health_score}%"></div>
+                        </div>
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span>📓 ${t.logs_last_30d} logs (30d)</span>
+                            <span>📊 Avg perf: ${t.avg_student_performance}%</span>
+                            <span>🏫 Classes: ${t.classes_taught.join(', ') || 'None'}</span>
+                        </div>
+                    </div>`;
+            }
+            html += '</div>';
+            container.innerHTML = html;
+        } catch(e) {
+            container.innerHTML = '<p class="text-red-500 text-sm">Failed to load faculty data.</p>';
+        }
+    }
+
+    // Update routing to also load analytics when switching to that view
+    const _origUpdateViewFromHash = window.updateViewFromHash;
+    function updateViewFromHash() {
+        const hash = window.location.hash.replace('#', '') || 'dashboard';
+        const sections = document.querySelectorAll('.view-section');
+        sections.forEach(el => el.classList.add('hidden'));
+        const target = document.getElementById('view-' + hash);
+        if (target) {
+            target.classList.remove('hidden');
+            if (hash === 'analytics') {
+                loadAnalyticsView();
+            }
+        } else {
+            const db = document.getElementById('view-dashboard');
+            if (db) db.classList.remove('hidden');
         }
     }
 </script>

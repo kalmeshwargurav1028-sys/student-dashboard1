@@ -298,6 +298,7 @@
     </div>
 
     <!-- Sidebar Script -->
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
 
         // Sidebar functionality
@@ -307,10 +308,9 @@
             const toggleBtn = document.getElementById('sidebar-toggle');
             const sidebarTexts = document.querySelectorAll('.sidebar-text');
             
-            // Notification Polling
+            // Initial notification fetch
             if(document.getElementById('notifBadge')) {
                 fetchNotifications();
-                setInterval(fetchNotifications, 300000); // Check every 5 minutes instead of 30s to reduce Vercel lag
             }
 
             if (toggleBtn) {
@@ -321,6 +321,52 @@
                 });
             }
         });
+
+        // ===========================================================================
+        // SOCKET.IO — Real-Time WebSocket Notifications
+        // Replaces 30-second HTTP polling with instant push from server.
+        // ===========================================================================
+        {% if session.get('logged_in') %}
+        (function() {
+            const socket = io({ transports: ['websocket', 'polling'] });
+
+            socket.on('connect', function() {
+                console.log('[SocketIO] Connected:', socket.id);
+            });
+
+            // Real-time new notification pushed from server
+            socket.on('new_notification', function(data) {
+                // Flash red dot immediately
+                const badge = document.getElementById('notifBadge');
+                if (badge) {
+                    badge.classList.remove('hidden');
+                    const current = parseInt(badge.innerText) || 0;
+                    badge.innerText = current + 1 > 9 ? '9+' : current + 1;
+                }
+                // Refresh the notification list panel
+                fetchNotifications();
+            });
+
+            // Real-time timetable update
+            socket.on('timetable_updated', function(data) {
+                const banner = document.createElement('div');
+                banner.className = 'fixed top-4 right-4 z-[9999] bg-emerald-600 text-white px-5 py-3 rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold animate-bounce';
+                banner.innerHTML = `<svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg><span>Timetable updated for ${data.class_name}!</span>`;
+                document.body.appendChild(banner);
+                setTimeout(() => banner.remove(), 5000);
+            });
+
+            // Real-time log sync (admin sees when teacher saves a log)
+            socket.on('log_synced', function(data) {
+                // Only admins care about this event
+                fetchNotifications();
+            });
+
+            socket.on('disconnect', function() {
+                console.log('[SocketIO] Disconnected');
+            });
+        })();
+        {% endif %}
         
         // Notifications Logic
         let notifDropdownOpen = false;
@@ -408,12 +454,6 @@
             } catch(e) {
                 console.error("Error clearing notifications", e);
             }
-        }
-        
-        // Start polling every 30 seconds
-        if(document.getElementById('bellBtn')) {
-            fetchNotifications();
-            setInterval(fetchNotifications, 30000);
         }
     </script>
 </body>

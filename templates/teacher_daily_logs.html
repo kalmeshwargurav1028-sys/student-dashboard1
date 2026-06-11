@@ -58,7 +58,20 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class/Grade</label>
-                    <input type="text" name="class_name" required placeholder="e.g. 10th Grade A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                    <select name="class_name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">— Select Class —</option>
+                        <option value="2nd">2nd Standard</option>
+                        <option value="3rd">3rd Standard</option>
+                        <option value="4th">4th Standard</option>
+                        <option value="5th">5th Standard</option>
+                        <option value="6th">6th Standard</option>
+                        <option value="7th">7th Standard</option>
+                        <option value="8th">8th Standard</option>
+                        <option value="9th">9th Standard</option>
+                        <option value="10th">10th Standard</option>
+                        <option value="11th">11th Standard</option>
+                        <option value="12th">12th Standard</option>
+                    </select>
                 </div>
             </div>
             
@@ -84,4 +97,21 @@
         </form>
     </div>
 </div>
+
+<script>
+// After the form submits and page reloads, auto-sync the latest log to admin
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('#addModal form');
+    if (form) {
+        form.addEventListener('submit', async function() {
+            // Let the form submit naturally, but also fire the sync event
+            const className = form.querySelector('[name="class_name"]')?.value || '';
+            const subject = form.querySelector('[name="subject"]')?.value || '';
+            const date = form.querySelector('[name="date"]')?.value || '';
+            // Fire and forget — the form will navigate away anyway
+            navigator.sendBeacon('/api/daily_logs/sync', JSON.stringify({class_name: className, subject: subject, date: date}));
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import threading
 import traceback
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file, jsonify
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
@@ -538,6 +539,45 @@ def refresh_mail_config():
 app.config['MAIL_USE_TLS'] = True   # needed before Mail(app) init
 refresh_mail_config()
 mail = Mail(app)
+
+# ---------------------------------------------------------------------------
+# Flask-SocketIO — Real-Time WebSocket Notifications
+# Uses eventlet for async. Falls back to threading if eventlet unavailable.
+# ---------------------------------------------------------------------------
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+
+@socketio.on('connect')
+def on_connect():
+    """Client connected — join their role-based room for targeted broadcasts."""
+    if session.get('logged_in'):
+        role = session.get('role', 'student')
+        user_id = str(session.get('user_id', ''))
+        join_room(role)          # role room: 'admin', 'teacher', 'student'
+        join_room(user_id)       # personal room for direct messages
+        join_room('all')         # broadcast room for everyone
+        emit('connected', {'status': 'ok', 'role': role})
+
+@socketio.on('disconnect')
+def on_disconnect():
+    pass
+
+def broadcast_notification(title, message, notif_type='info', role_target='all'):
+    """
+    Save notification to DB and push it in real-time to all connected clients
+    in the target room via SocketIO.
+    role_target: 'all', 'admin', 'teacher', 'student'
+    """
+    log_notification(title, message, type=notif_type, role_target=role_target)
+    payload = {
+        'title': title,
+        'message': message,
+        'type': notif_type,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }
+    socketio.emit('new_notification', payload, room=role_target)
+    if role_target != 'all':
+        # Also push to 'all' room watchers (admins see everything)
+        socketio.emit('new_notification', payload, room='admin')
 
 
 def recalculate_students_attendance():
@@ -1365,6 +1405,9 @@ def timetable():
         student = db.students.find_one({'id': session.get('user_id')})
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
+        else:
+            # No class assigned — return empty timetable rather than all entries
+            query['class_name'] = '__no_class__'
     elif role == 'teacher':
         query['teacher'] = session.get('username')
         
@@ -1447,6 +1490,8 @@ def assignments():
         student = db.students.find_one({'id': session.get('user_id')})
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
+        else:
+            query['class_name'] = '__no_class__'
     elif role == 'teacher':
         query['created_by'] = session.get('username')
         
@@ -1499,11 +1544,13 @@ def daily_logs():
         student = db.students.find_one({'id': session.get('user_id')})
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
+        else:
+            query['class_name'] = '__no_class__'
             
     logs = list(db.daily_logs.find(query).sort('date', -1).limit(50))
     
     template_name = 'student_daily_logs.html' if role == 'student' else 'teacher_daily_logs.html'
-    return render_template(template_name, logs=logs)
+    return render_template(template_name, logs=logs, current_date=datetime.now().strftime('%Y-%m-%d'))
 
 
 @app.route('/parent_portal', methods=['GET', 'POST'])
@@ -2345,6 +2392,391 @@ def import_students():
     return redirect(url_for('dashboard'))
 
 
+# ===========================================================================
+# GLOBAL CLASS ID MAPPING — db.classes registry
+# Provides a canonical class document that timetable, assignments, logs,
+# and materials can reference by class_id. Resolves the implicit string
+# matching problem shown in the architecture diagram.
+# ===========================================================================
+
+@app.route('/api/classes', methods=['GET'])
+def get_classes():
+    """Return all registered class definitions."""
+    if not session.get('logged_in'):
+        return jsonify([]), 401
+    classes = list(db.classes.find({}, {'_id': 0}))
+    return jsonify(classes)
+
+@app.route('/api/classes', methods=['POST'])
+def create_class():
+    """Admin creates a class entry in the global registry."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    class_id = data.get('class_id', '').strip()
+    display_name = data.get('display_name', '').strip()
+    grade = data.get('grade', '').strip()
+    division = data.get('division', 'A').strip()
+    homeroom_teacher = data.get('homeroom_teacher', '')
+
+    if not class_id or not display_name:
+        return jsonify({'success': False, 'error': 'class_id and display_name are required'}), 400
+
+    existing = db.classes.find_one({'class_id': class_id})
+    if existing:
+        return jsonify({'success': False, 'error': f"Class '{class_id}' already exists"}), 409
+
+    db.classes.insert_one({
+        'class_id': class_id,
+        'display_name': display_name,
+        'grade': grade,
+        'division': division,
+        'homeroom_teacher': homeroom_teacher,
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    })
+    log_notification(
+        'Class Registry Updated',
+        f"New class '{display_name}' (ID: {class_id}) added by {session.get('username', 'Admin')}.",
+        type='success', role_target='admin'
+    )
+    return jsonify({'success': True, 'class_id': class_id})
+
+@app.route('/api/classes/<class_id_param>', methods=['PUT'])
+def update_class(class_id_param):
+    """Update homeroom teacher or display name for a class."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.json or {}
+    update_fields = {}
+    for field in ('display_name', 'homeroom_teacher', 'grade', 'division'):
+        if field in data:
+            update_fields[field] = data[field]
+    if not update_fields:
+        return jsonify({'success': False, 'error': 'Nothing to update'}), 400
+    db.classes.update_one({'class_id': class_id_param}, {'$set': update_fields})
+    return jsonify({'success': True})
+
+@app.route('/api/classes/<class_id_param>', methods=['DELETE'])
+def delete_class(class_id_param):
+    """Remove a class from the global registry."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    db.classes.delete_one({'class_id': class_id_param})
+    return jsonify({'success': True})
+
+
+# ===========================================================================
+# TIMETABLE PUBLISH — broadcasts real-time update to all students in the class
+# ===========================================================================
+
+@app.route('/api/timetable/publish', methods=['POST'])
+def publish_timetable():
+    """Teacher publishes their timetable, saves a snapshot, and broadcasts via SocketIO."""
+    if not session.get('logged_in') or session.get('role') not in ('teacher', 'admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.json or {}
+    class_name = data.get('class_name', '').strip()
+    if not class_name:
+        return jsonify({'success': False, 'error': 'class_name is required'}), 400
+
+    teacher_name = session.get('username', 'Teacher')
+    entries = list(db.timetable.find({'class_name': class_name}, {'_id': 0}))
+
+    db.timetable_published.update_one(
+        {'class_name': class_name},
+        {'$set': {
+            'class_name': class_name,
+            'teacher': teacher_name,
+            'entries': entries,
+            'published_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }},
+        upsert=True
+    )
+
+    broadcast_notification(
+        f'Timetable Updated - {class_name}',
+        f'{teacher_name} just published the timetable for {class_name}. Check your schedule.',
+        notif_type='info',
+        role_target='student'
+    )
+
+    log_notification(
+        f'Timetable Published: {class_name}',
+        f'{teacher_name} published timetable for {class_name}.',
+        type='success', role_target='admin'
+    )
+
+    socketio.emit('timetable_updated', {
+        'class_name': class_name,
+        'teacher': teacher_name,
+        'entries': entries,
+        'published_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    }, room='student')
+
+    return jsonify({'success': True, 'entries_count': len(entries)})
+
+
+# ===========================================================================
+# DAILY LOGS SYNC — push real-time event to admin room after saving a log
+# ===========================================================================
+
+@app.route('/api/daily_logs/sync', methods=['POST'])
+def sync_daily_log():
+    """Called after a teacher saves a daily log. Emits SocketIO event to admin room."""
+    if not session.get('logged_in') or session.get('role') not in ('teacher', 'admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.json or {}
+    class_name = data.get('class_name', '')
+    subject = data.get('subject', '')
+    date = data.get('date', datetime.now().strftime('%Y-%m-%d'))
+    teacher = session.get('username', 'Teacher')
+
+    broadcast_notification(
+        f'Log Synced - {class_name}',
+        f'{teacher} logged {subject} for {class_name} on {date}.',
+        notif_type='success',
+        role_target='admin'
+    )
+
+    socketio.emit('log_synced', {
+        'class_name': class_name,
+        'subject': subject,
+        'date': date,
+        'teacher': teacher
+    }, room='admin')
+
+    return jsonify({'success': True})
+
+
+# ===========================================================================
+# ASSIGNMENT FILE UPLOAD — teacher uploads PDF/document for an assignment
+# ===========================================================================
+
+@app.route('/api/assignments/<assignment_id>/upload', methods=['POST'])
+def upload_assignment_file(assignment_id):
+    """Upload a PDF/document attachment to an assignment via GridFS."""
+    if not session.get('logged_in') or session.get('role') not in ('teacher', 'admin'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        return jsonify({'success': False, 'error': 'No file provided'}), 400
+
+    allowed_extensions = {'.pdf', '.doc', '.docx', '.ppt', '.pptx', '.txt', '.png', '.jpg', '.jpeg'}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed_extensions:
+        return jsonify({'success': False, 'error': f'File type {ext} not allowed'}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+        file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
+        file_url = url_for('get_file', file_id=str(file_id))
+
+        db.assignments.update_one(
+            {'_id': ObjectId(assignment_id)},
+            {'$set': {'file_url': file_url, 'file_name': filename}}
+        )
+
+        assignment = db.assignments.find_one({'_id': ObjectId(assignment_id)})
+        if assignment:
+            class_name = assignment.get('class_name', '')
+            title = assignment.get('title', 'Assignment')
+            broadcast_notification(
+                f'File Attached - {title}',
+                f'A document has been attached to "{title}" for {class_name}. Download it from Assignments.',
+                notif_type='info',
+                role_target='student'
+            )
+
+        return jsonify({'success': True, 'file_url': file_url, 'file_name': filename})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ===========================================================================
+# ADMIN ANALYTICS — Syllabus Pace, Roster Conflicts, Faculty Analytics
+# ===========================================================================
+
+@app.route('/api/admin/syllabus_pace', methods=['GET'])
+def admin_syllabus_pace():
+    """Monitors curriculum compliance by analysing daily log frequency per class (last 30 days)."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    logs = list(db.daily_logs.find({'date': {'$gte': thirty_days_ago}}, {'_id': 0}))
+
+    class_counts = {}
+    subject_counts = {}
+    teacher_counts = {}
+    for log in logs:
+        cn = log.get('class_name', 'Unknown')
+        sub = log.get('subject', 'Unknown')
+        teacher = log.get('teacher', 'Unknown')
+        class_counts[cn] = class_counts.get(cn, 0) + 1
+        subject_counts[sub] = subject_counts.get(sub, 0) + 1
+        teacher_counts[teacher] = teacher_counts.get(teacher, 0) + 1
+
+    pace_health = {}
+    for cls, count in class_counts.items():
+        if count < 10:
+            pace_health[cls] = {'count': count, 'status': 'behind', 'color': 'red'}
+        elif count < 20:
+            pace_health[cls] = {'count': count, 'status': 'on_track', 'color': 'yellow'}
+        else:
+            pace_health[cls] = {'count': count, 'status': 'ahead', 'color': 'green'}
+
+    return jsonify({
+        'pace_health': pace_health,
+        'subject_distribution': subject_counts,
+        'teacher_log_counts': teacher_counts,
+        'period_days': 30,
+        'total_logs': len(logs)
+    })
+
+
+@app.route('/api/admin/roster_conflicts', methods=['GET'])
+def admin_roster_conflicts():
+    """Detects teacher double-booking and room conflicts in the timetable."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    entries = list(db.timetable.find({}, {'_id': 0}))
+    conflicts = []
+
+    slot_map = {}
+    for entry in entries:
+        key = (entry.get('day', ''), entry.get('time', ''))
+        if key not in slot_map:
+            slot_map[key] = []
+        slot_map[key].append(entry)
+
+    for (day, time_slot), slot_entries in slot_map.items():
+        if len(slot_entries) < 2:
+            continue
+
+        teacher_classes = {}
+        for e in slot_entries:
+            t = e.get('teacher', '')
+            if t:
+                if t not in teacher_classes:
+                    teacher_classes[t] = []
+                teacher_classes[t].append(e.get('class_name', ''))
+        for teacher, classes in teacher_classes.items():
+            if len(classes) > 1:
+                conflicts.append({
+                    'type': 'teacher_double_booked',
+                    'day': day,
+                    'time': time_slot,
+                    'teacher': teacher,
+                    'classes': classes,
+                    'severity': 'high',
+                    'message': f"{teacher} is scheduled in {', '.join(classes)} simultaneously on {day} at {time_slot}"
+                })
+
+        room_classes = {}
+        for e in slot_entries:
+            room = e.get('room', '')
+            if room:
+                if room not in room_classes:
+                    room_classes[room] = []
+                room_classes[room].append({'class': e.get('class_name', ''), 'teacher': e.get('teacher', '')})
+        for room, bookings in room_classes.items():
+            if len(bookings) > 1:
+                conflicts.append({
+                    'type': 'room_double_booked',
+                    'day': day,
+                    'time': time_slot,
+                    'room': room,
+                    'bookings': bookings,
+                    'severity': 'medium',
+                    'message': f"Room {room} is double-booked on {day} at {time_slot}"
+                })
+
+    return jsonify({
+        'conflicts': conflicts,
+        'total_conflicts': len(conflicts),
+        'has_critical': any(c['severity'] == 'high' for c in conflicts)
+    })
+
+
+@app.route('/api/admin/faculty_analytics', methods=['GET'])
+def admin_faculty_analytics():
+    """Faculty performance health: log frequency, student outcomes, last active."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    teachers = list(db.users.find({}, {'password': 0}))
+    students = list(db.students.find({}, {'_id': 0}))
+    thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+    logs = list(db.daily_logs.find({'date': {'$gte': thirty_days_ago}}, {'_id': 0}))
+
+    log_counts = {}
+    for log in logs:
+        t = log.get('teacher', '')
+        log_counts[t] = log_counts.get(t, 0) + 1
+
+    timetable_entries = list(db.timetable.find({}, {'_id': 0}))
+    teacher_classes = {}
+    for entry in timetable_entries:
+        t = entry.get('teacher', '')
+        cn = entry.get('class_name', '')
+        if t and cn:
+            if t not in teacher_classes:
+                teacher_classes[t] = set()
+            teacher_classes[t].add(cn)
+
+    class_performance = {}
+    for s in students:
+        cn = s.get('student_class', '')
+        try:
+            perf = float(s.get('performance', 0))
+        except (ValueError, TypeError):
+            perf = 0.0
+        if cn not in class_performance:
+            class_performance[cn] = []
+        class_performance[cn].append(perf)
+
+    avg_class_perf = {cn: round(sum(v)/len(v), 1) for cn, v in class_performance.items() if v}
+
+    result = []
+    for t in teachers:
+        name = f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email', 'Unknown').split('@')[0]
+        classes = list(teacher_classes.get(name, []))
+        class_perfs = [avg_class_perf.get(cn, 0) for cn in classes]
+        avg_perf = round(sum(class_perfs) / len(class_perfs), 1) if class_perfs else 0
+        logs_30d = log_counts.get(name, 0)
+
+        log_score = min(logs_30d / 20, 1.0) * 40
+        perf_score = (avg_perf / 100) * 60
+        health_score = round(log_score + perf_score, 1)
+
+        result.append({
+            'name': name,
+            'email': t.get('email', ''),
+            'last_active': t.get('last_active', 'Never'),
+            'classes_taught': classes,
+            'logs_last_30d': logs_30d,
+            'avg_student_performance': avg_perf,
+            'health_score': health_score,
+            'health_label': (
+                'excellent' if health_score >= 80 else
+                'good' if health_score >= 60 else
+                'needs_attention' if health_score >= 40 else
+                'at_risk'
+            )
+        })
+
+    result.sort(key=lambda x: x['health_score'], reverse=True)
+
+    return jsonify({
+        'faculty': result,
+        'total_teachers': len(result),
+        'avg_health_score': round(sum(r['health_score'] for r in result) / len(result), 1) if result else 0
+    })
 
 
 
@@ -2532,4 +2964,4 @@ def dev_test_error():
     raise ValueError("This is a simulated system crash to test automated email notifications!")
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=True, port=5000)
+    socketio.run(app, host='0.0.0.0', debug=True, port=5000)
