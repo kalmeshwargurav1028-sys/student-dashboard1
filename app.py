@@ -1205,20 +1205,6 @@ def admin_dashboard():
     
     return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles)
 
-@app.route('/access_control')
-def access_control():
-    if not session.get('logged_in') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
-    global_config = db.role_permissions.find_one({'_id': 'global_config'}) or {}
-    if not global_config.get('teacher'):
-        global_config['teacher'] = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True, 'manage_grades': True}
-    if not global_config.get('student'):
-        global_config['student'] = {'view_dashboard': True}
-    audit_logs = list(db.notifications.find({'role_target': 'admin'}).sort('_id', -1).limit(10))
-    for log in audit_logs:
-        log['timestamp'] = log.get('timestamp', '')[:16] if log.get('timestamp') else ''
-    return render_template('access_control.html', global_config=global_config, audit_logs=audit_logs)
-
 @app.route('/staff_management')
 def staff_management():
     if not session.get('logged_in') or session.get('role') != 'admin':
