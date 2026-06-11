@@ -101,7 +101,16 @@ def configure_gemini():
 configure_gemini()
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'super_secret_key_change_in_production')
+_secret_key = os.environ.get('SECRET_KEY', '')
+if not _secret_key:
+    import warnings
+    warnings.warn(
+        "SECRET_KEY environment variable is not set. "
+        "Using an insecure default — set SECRET_KEY in your .env file before deploying.",
+        stacklevel=2
+    )
+    _secret_key = 'super_secret_key_change_in_production'
+app.secret_key = _secret_key
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 def has_permission(permission_name):
@@ -447,16 +456,7 @@ def clear_all_notifications():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@app.route('/dev/wipe_users')
-def dev_wipe_users():
-    try:
-        db.users.delete_many({})
-        db.student_users.delete_many({})
-        db.students.delete_many({})
-        db.admins.delete_many({})
-        return "SUCCESS: All user credentials, students, teachers, and admins have been completely removed. You can now start fresh!"
-    except Exception as e:
-        return f"Error wiping database: {str(e)}"
+# /dev/wipe_users has been permanently removed (unauthenticated destructive endpoint).
 
 
 
@@ -662,7 +662,7 @@ def login():
             if not db.admins.find_one({'email': 'kalmeshwargurav1028@gmail.com'}):
                 db.admins.insert_one({
                     'email': 'kalmeshwargurav1028@gmail.com',
-                    'password': 'Kalmeshwar@123',
+                    'password': generate_password_hash('Kalmeshwar@123'),
                     'name': 'System Admin'
                 })
                 
@@ -684,7 +684,7 @@ def login():
             # Check new student_users auth collection first
             auth_user = db.student_users.find_one({'email': email})
             
-            if auth_user and auth_user.get('password') == student_id_or_password:
+            if auth_user and (check_password_hash(auth_user.get('password', ''), student_id_or_password) or auth_user.get('password') == student_id_or_password):
                 student_id = auth_user.get('student_id')
                 session['logged_in'] = True
                 session['role'] = 'student'
@@ -750,7 +750,7 @@ def admin_portal():
         if not db.admins.find_one({'email': 'kalmeshwargurav1028@gmail.com'}):
             db.admins.insert_one({
                 'email': 'kalmeshwargurav1028@gmail.com',
-                'password': 'Kalmeshwar@123',
+                'password': generate_password_hash('Kalmeshwar@123'),
                 'name': 'System Admin'
             })
             
@@ -805,7 +805,7 @@ def signup():
             db.student_users.insert_one({
                 'student_id': new_id,
                 'email': email,
-                'password': password
+                'password': generate_password_hash(password)
             })
             
             # Create profile entry
@@ -836,7 +836,7 @@ def signup():
             'first_name': first_name,
             'last_name': last_name,
             'email': email,
-            'password': password,
+            'password': generate_password_hash(password),
             'verified': False
         })
         
@@ -938,11 +938,11 @@ def reset_password():
                 student_profile = db.students.find_one({'email': email})
                 
                 if user:
-                    db.users.update_one({'email': email}, {'$set': {'password': new_password}})
+                    db.users.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
                 if student:
-                    db.student_users.update_one({'email': email}, {'$set': {'password': new_password}})
+                    db.student_users.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
                 if student_profile:
-                    db.students.update_one({'email': email}, {'$set': {'password': new_password}})
+                    db.students.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
                     
                 session.pop('otp_code', None)
                 session.pop('otp_email', None)
@@ -1084,7 +1084,6 @@ def admin_dashboard():
         a_data = {
             'id': str(a.get('_id')),
             'email': a.get('email'),
-            'password': a.get('password', 'N/A'),
             'name': a.get('name', a.get('email').split('@')[0] if a.get('email') else 'Admin'),
             'last_active': last_active_str or 'Never'
         }
@@ -1109,7 +1108,6 @@ def admin_dashboard():
         t_data = {
             'id': str(t.get('_id')),
             'email': t.get('email'),
-            'password': t.get('password', 'N/A'),
             'name': f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email').split('@')[0],
             'last_active': last_active_str or 'Never',
             'custom_role': t.get('custom_role', 'teacher')
@@ -1138,7 +1136,6 @@ def admin_dashboard():
         s_data = {
             'id': str(s.get('_id')),
             'email': s.get('email'),
-            'password': s.get('password', 'N/A'),
             'student_id': s.get('student_id'),
             'name': profile.get('name', s.get('email')),
             'last_active': last_active_str or 'Never'

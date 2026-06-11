@@ -130,8 +130,6 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Admin</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-red-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
-                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
@@ -147,8 +145,6 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-red-600 bg-red-50">{{ t.password }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"></td>
                         </tr>
                         {% endfor %}
                         {% for t in inactive_admins %}
@@ -163,8 +159,6 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ t.password }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"></td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -185,7 +179,6 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-blue-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
                             <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
@@ -209,7 +202,6 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-blue-600 bg-blue-50">{{ t.password }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
                             </td>
@@ -234,14 +226,13 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ t.password }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
                             </td>
                         </tr>
                         {% endfor %}
                         {% if not active_teachers and not inactive_teachers %}
-                        <tr><td colspan="6" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
@@ -260,7 +251,6 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Student</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
                             <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-purple-500 uppercase tracking-wider bg-gray-50"><i class="fa-solid fa-key mr-1"></i>Password</th>
                             <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
                         </tr>
                     </thead>
@@ -277,7 +267,6 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-purple-600 bg-purple-50">{{ s.password }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
                             </td>
@@ -295,14 +284,13 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ s.last_active }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-mono font-bold text-gray-600 bg-gray-50">{{ s.password }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
                             </td>
                         </tr>
                         {% endfor %}
                         {% if not active_students and not inactive_students %}
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 font-bold">No students registered.</td></tr>
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 font-bold">No students registered.</td></tr>
                         {% endif %}
                     </tbody>
                 </table>
