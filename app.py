@@ -1296,7 +1296,6 @@ def add_staff():
             'role': role,
             'assigned_class': assigned_class,
             'password': hashed_password,
-            'verified': True,
             'created_at': datetime.utcnow().isoformat()
         }
         
