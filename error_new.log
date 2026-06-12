@@ -4,3 +4,33 @@ sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecur
  * Debugger is active!
  * Debugger PIN: 388-916-418
 (14868) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/Desktop/student_dashboard/app.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(16731) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/Desktop/student_dashboard/app.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(16763) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/Desktop/student_dashboard/app.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(16792) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/Desktop/student_dashboard/app.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(16825) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/Desktop/student_dashboard/app.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(16849) wsgi starting up on http://0.0.0.0:5000

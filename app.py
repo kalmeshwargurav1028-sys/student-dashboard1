@@ -117,6 +117,17 @@ if not _secret_key:
 app.secret_key = _secret_key
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
+def get_student_query(base_query=None):
+    if base_query is None:
+        base_query = {}
+    
+    if session.get('role') == 'teacher':
+        assigned_class = session.get('assigned_class')
+        if assigned_class and assigned_class != 'all':
+            base_query['student_class'] = assigned_class
+            
+    return base_query
+
 def has_permission(permission_name):
     """Check if the current user has a specific permission based on their role."""
     if not session.get('logged_in'):
@@ -584,7 +595,7 @@ def broadcast_notification(title, message, notif_type='info', role_target='all')
 
 
 def recalculate_students_attendance():
-    students = list(db.students.find({}))
+    students = list(db.students.find(get_student_query()))
     attendance_data = list(db.attendance.find({}))
     
     for s in students:
@@ -771,6 +782,7 @@ def login():
                     
                 session['logged_in'] = True
                 session['role'] = user.get('custom_role', 'teacher')
+                session['assigned_class'] = user.get('assigned_class', 'all')
                 session['user_id'] = str(user['_id'])
                 first = user.get('first_name') or ''
                 last = user.get('last_name') or ''
@@ -1013,7 +1025,7 @@ def dashboard():
     if session.get('role') == 'student':
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
     
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     
     # Analytics Calculations
     total_students = len(students)
@@ -1076,7 +1088,7 @@ def student_profile(student_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     
     if not student:
         flash('Student not found.')
@@ -1169,7 +1181,7 @@ def admin_dashboard():
             
     # Process students
     student_users = list(db.student_users.find({}))
-    student_profiles = {s['id']: s for s in db.students.find({}, {'_id': 0})}
+    student_profiles = {s['id']: s for s in db.students.find(get_student_query(), {'_id': 0})}
     
     active_students = []
     inactive_students = []
@@ -1263,6 +1275,7 @@ def add_staff():
     last_name = request.form.get('last_name', '').strip()
     email = request.form.get('email', '').strip()
     role = request.form.get('role', 'teacher')
+    assigned_class = request.form.get('assigned_class', 'all')
     password = request.form.get('password', '')
     
     if not all([first_name, last_name, email, password]):
@@ -1275,9 +1288,12 @@ def add_staff():
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
     
     new_staff = {
+        'first_name': first_name,
+        'last_name': last_name,
         'name': f"{first_name} {last_name}",
         'email': email,
         'role': role,
+        'assigned_class': assigned_class,
         'password': hashed_password.decode('utf-8'),
         'created_at': datetime.datetime.utcnow().isoformat()
     }
@@ -1405,7 +1421,7 @@ def timetable():
     # Get entries
     query = {}
     if role == 'student':
-        student = db.students.find_one({'id': session.get('user_id')})
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
         else:
@@ -1497,7 +1513,7 @@ def assignments():
     # Get entries
     query = {}
     if role == 'student':
-        student = db.students.find_one({'id': session.get('user_id')})
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
         else:
@@ -1551,7 +1567,7 @@ def daily_logs():
     # Get entries
     query = {}
     if role == 'student':
-        student = db.students.find_one({'id': session.get('user_id')})
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
         if student and student.get('student_class'):
             query['class_name'] = student.get('student_class')
         else:
@@ -1570,7 +1586,7 @@ def parent_portal():
         return redirect(url_for('login'))
         
     student_id = session.get('user_id')
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     if not student:
         # Fallback to student_users table if student profile doesn't exist
         student = db.student_users.find_one({'student_id': student_id}, {'_id': 0})
@@ -1618,7 +1634,7 @@ def student_materials():
         return redirect(url_for('login'))
         
     student_id = session.get('user_id')
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     if not student:
         return redirect(url_for('login'))
         
@@ -1634,7 +1650,7 @@ def student_id_card(student_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
         
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     
     if not student:
         flash('Student not found.')
@@ -1700,7 +1716,7 @@ def profile_form():
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
     student_id = request.args.get('id')
-    student = db.students.find_one({'id': student_id}, {'_id': 0}) if student_id else None
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0}) if student_id else None
 
     if request.method == 'POST':
         name = request.form.get('name')
@@ -1849,7 +1865,7 @@ def analyze_student(student_id):
     if not session.get('logged_in'):
         return {'error': 'Unauthorized'}, 401
         
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     
     if not student:
         return {'error': 'Student not found'}, 404
@@ -1894,7 +1910,7 @@ def dashboard_ai():
     if not session.get('logged_in'):
         return {'error': 'Unauthorized'}, 401
         
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     data = request.get_json()
     message = data.get('message', '').strip()
     
@@ -1956,7 +1972,7 @@ def attendance():
         return redirect(url_for('dashboard'))
         
     selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d')) or datetime.now().strftime('%Y-%m-%d')
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     
     if request.method == 'POST':
         new_records = {}
@@ -1978,7 +1994,7 @@ def attendance():
         recalculate_students_attendance()
         
         # --- Absent alerts: send SMS/email to parent for EVERY absent student ---
-        updated_students = list(db.students.find({}, {'_id': 0}))
+        updated_students = list(db.students.find(get_student_query(), {'_id': 0}))
         alerts_sent = 0
         for s in updated_students:
             status_today = new_records.get(s['id'], 'Present')
@@ -2099,7 +2115,7 @@ def gradebook():
         flash('You do not have permission to access Gradebook.')
         return redirect(url_for('dashboard'))
 
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History']
 
     if request.method == 'POST':
@@ -2143,7 +2159,7 @@ def student_gradebook(student_id):
         flash('You can only view your own gradebook.')
         return redirect(url_for('dashboard'))
         
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     if not student:
         flash('Student not found.')
         return redirect(url_for('dashboard'))
@@ -2291,7 +2307,7 @@ def reports():
     if session.get('role') == 'student':
         return redirect(url_for('student_profile', student_id=session.get('user_id')))
         
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     
     total_students = len(students)
     board_counts = {}
@@ -2375,7 +2391,7 @@ def export_students():
     if student_class:
         query['student_class'] = student_class
         
-    students = list(db.students.find(query, {'_id': 0}))
+    students = list(db.students.find(get_student_query(query), {'_id': 0}))
         
     output = io.StringIO()
     fieldnames = ['id', 'name', 'dob', 'gender', 'board', 'student_class', 'division', 'academic_year', 'roll_number', 'parent_name', 'relationship', 'parent_phone', 'parent_email', 'occupation']
@@ -2771,7 +2787,7 @@ def admin_faculty_analytics():
         return jsonify({'error': 'Unauthorized'}), 403
 
     teachers = list(db.users.find({}, {'password': 0}))
-    students = list(db.students.find({}, {'_id': 0}))
+    students = list(db.students.find(get_student_query(), {'_id': 0}))
     thirty_days_ago = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
     logs = list(db.daily_logs.find({'date': {'$gte': thirty_days_ago}}, {'_id': 0}))
 
@@ -2850,10 +2866,7 @@ def parent_alerts_page():
     if not session.get('logged_in') or session.get('role') == 'student':
         return redirect(url_for('login'))
 
-    students = list(db.students.find({}, {'_id': 0, 'id': 1, 'name': 1,
-                                          'parent_name': 1, 'parent_phone': 1,
-                                          'parent_email': 1, 'student_class': 1,
-                                          'attendance': 1}))
+    students = list(db.students.find(get_student_query(), {'_id': 0, 'id': 1, 'name': 1, 'student_class': 1, 'parent_name': 1, 'parent_phone': 1, 'parent_email': 1, 'attendance': 1}))
     # Recent alert log (last 100)
     alerts = list(db.parent_alerts.find().sort('timestamp', -1).limit(100))
     for a in alerts:
@@ -2883,7 +2896,7 @@ def send_attendance_alert():
     if not student_id:
         return jsonify({'success': False, 'error': 'student_id is required'}), 400
 
-    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     if not student:
         return jsonify({'success': False, 'error': 'Student not found'}), 404
 
