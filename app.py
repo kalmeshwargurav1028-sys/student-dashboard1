@@ -1286,7 +1286,7 @@ def add_staff():
         if existing_user:
             return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
             
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        hashed_password = generate_password_hash(password)
         
         new_staff = {
             'first_name': first_name,
@@ -1295,7 +1295,7 @@ def add_staff():
             'email': email,
             'role': role,
             'assigned_class': assigned_class,
-            'password': hashed_password.decode('utf-8'),
+            'password': hashed_password,
             'created_at': datetime.datetime.utcnow().isoformat()
         }
         
