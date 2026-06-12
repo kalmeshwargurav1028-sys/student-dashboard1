@@ -135,6 +135,10 @@ def has_permission(permission_name):
     role = session.get('role', 'student')
     if role == 'admin':
         return True
+        
+    if role == 'teacher' and permission_name == 'manage_grades':
+        return True
+        
     try:
         global_config = db.role_permissions.find_one({'_id': 'global_config'})
         if global_config and global_config.get(role):
