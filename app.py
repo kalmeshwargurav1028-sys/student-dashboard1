@@ -1301,7 +1301,7 @@ def add_staff():
         
         db.users.insert_one(new_staff)
         
-        log_activity(
+        log_notification(
             "Staff Member Created", 
             f"Admin {session.get('username')} created a new {role}: {first_name} {last_name}.", 
             role_target='admin'
