@@ -1281,32 +1281,35 @@ def add_staff():
     if not all([first_name, last_name, email, password]):
         return jsonify({'success': False, 'error': 'All fields are required'}), 400
         
-    existing_user = db.users.find_one({'email': email})
-    if existing_user:
-        return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+    try:
+        existing_user = db.users.find_one({'email': email})
+        if existing_user:
+            return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
+            
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-    
-    new_staff = {
-        'first_name': first_name,
-        'last_name': last_name,
-        'name': f"{first_name} {last_name}",
-        'email': email,
-        'role': role,
-        'assigned_class': assigned_class,
-        'password': hashed_password.decode('utf-8'),
-        'created_at': datetime.datetime.utcnow().isoformat()
-    }
-    
-    db.users.insert_one(new_staff)
-    
-    log_activity(
-        "Staff Member Created", 
-        f"Admin {session.get('username')} created a new {role}: {first_name} {last_name}.", 
-        role_target='admin'
-    )
-    
-    return jsonify({'success': True})
+        new_staff = {
+            'first_name': first_name,
+            'last_name': last_name,
+            'name': f"{first_name} {last_name}",
+            'email': email,
+            'role': role,
+            'assigned_class': assigned_class,
+            'password': hashed_password.decode('utf-8'),
+            'created_at': datetime.datetime.utcnow().isoformat()
+        }
+        
+        db.users.insert_one(new_staff)
+        
+        log_activity(
+            "Staff Member Created", 
+            f"Admin {session.get('username')} created a new {role}: {first_name} {last_name}.", 
+            role_target='admin'
+        )
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': f"Database connection failed: {str(e)}"}), 500
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
