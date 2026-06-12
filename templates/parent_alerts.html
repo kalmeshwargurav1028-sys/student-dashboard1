@@ -172,7 +172,11 @@
                 <select id="composeStudent" class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none bg-white">
                     <option value="">— Select student —</option>
                     {% for s in students %}
-                    <option value="{{ s.id }}">{{ s.name }} ({{ s.student_class or '—' }})
+                    <option value="{{ s.id }}" 
+                            data-parent-name="{{ s.parent_name | default('', true) }}" 
+                            data-parent-phone="{{ s.parent_phone | default('', true) }}" 
+                            data-parent-email="{{ s.parent_email | default('', true) }}">
+                        {{ s.name }} ({{ s.student_class or '—' }})
                         | {% if s.parent_phone %}📱 {{ s.parent_phone }}{% endif %} {% if s.parent_email %}✉️ {{ s.parent_email }}{% endif %}
                     </option>
                     {% endfor %}
@@ -197,6 +201,24 @@
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="composeType" value="custom" class="accent-amber-500"> <span class="text-sm text-gray-700">Custom</span>
                     </label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <div class="sm:col-span-2">
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Parent Name</label>
+                    <input type="text" id="composeParentName" placeholder="e.g. John Doe"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Phone Number</label>
+                    <input type="text" id="composeParentPhone" placeholder="e.g. +1234567890"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email ID</label>
+                    <input type="email" id="composeParentEmail" placeholder="e.g. parent@example.com"
+                           class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none bg-white">
                 </div>
             </div>
 
@@ -291,6 +313,10 @@ async function sendComposedMessage() {
     const studentId = document.getElementById('composeStudent').value;
     const alertType = document.querySelector('input[name="composeType"]:checked').value;
     const message = document.getElementById('composeMessage').value.trim();
+    const overrideName = document.getElementById('composeParentName').value.trim();
+    const overridePhone = document.getElementById('composeParentPhone').value.trim();
+    const overrideEmail = document.getElementById('composeParentEmail').value.trim();
+
     const errDiv = document.getElementById('composeError');
     const okDiv = document.getElementById('composeSuccess');
     const btn = document.getElementById('composeSendBtn');
@@ -308,10 +334,19 @@ async function sendComposedMessage() {
     btn.innerHTML = '<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Sending…';
 
     try {
+        const payload = {
+            student_id: studentId,
+            alert_type: alertType,
+            message: message,
+            override_parent_name: overrideName,
+            override_parent_phone: overridePhone,
+            override_parent_email: overrideEmail
+        };
+
         const res = await fetch('/api/attendance/send_alert', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({student_id: studentId, alert_type: alertType, message: message})
+            body: JSON.stringify(payload)
         });
         const data = await res.json();
         if (data.success) {
@@ -338,6 +373,21 @@ document.getElementById('studentSearchAlert').addEventListener('input', function
     const q = this.value.toLowerCase();
     document.querySelectorAll('.student-alert-row').forEach(row => {
         row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+    });
+});
+
+// Auto-fill parent details on student select
+document.getElementById('composeStudent').addEventListener('change', function() {
+    const opt = this.options[this.selectedIndex];
+    if (opt && opt.value) {
+        document.getElementById('composeParentName').value = opt.getAttribute('data-parent-name') || '';
+        document.getElementById('composeParentPhone').value = opt.getAttribute('data-parent-phone') || '';
+        document.getElementById('composeParentEmail').value = opt.getAttribute('data-parent-email') || '';
+    } else {
+        document.getElementById('composeParentName').value = '';
+        document.getElementById('composeParentPhone').value = '';
+        document.getElementById('composeParentEmail').value = '';
+    }
 });
 
 // Edit and Delete Alert Functions

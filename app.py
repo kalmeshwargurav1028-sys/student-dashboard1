@@ -51,7 +51,7 @@ def send_twilio_sms(phone, message):
     
     if not (account_sid and auth_token and from_phone):
         print(f"[MOCK SMS] To: {phone} - Message: {message}")
-        return
+        raise ValueError("Twilio credentials not configured")
 
     try:
         client = TwilioClient(account_sid, auth_token)
@@ -71,7 +71,7 @@ def send_sendgrid_email(email, subject, message_body):
     
     if not (api_key and from_email):
         print(f"[MOCK EMAIL] To: {email} - Subject: {subject} - Body: {message_body}")
-        return
+        raise ValueError("SendGrid credentials not configured")
 
     try:
         sg = sendgrid.SendGridAPIClient(api_key=api_key)
@@ -85,18 +85,21 @@ def send_sendgrid_email(email, subject, message_body):
         print(f"Email sent successfully: {response.status_code}")
     except Exception as e:
         print(f"Failed to send email via SMTP: {str(e)}")
-        return False
+        raise e
 
 def send_error_email(error_details):
     # PERMANENTLY DISABLED - Do not send any error alert emails
     return False
 
 def configure_gemini():
-    config_data = db.settings.find_one({}, {'_id': 0}) or {}
-    api_key = config_data.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
-    if api_key:
-        client = genai.Client(api_key=api_key)
-        return client, api_key
+    try:
+        config_data = db.settings.find_one({}, {'_id': 0}) or {}
+        api_key = config_data.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
+        if api_key:
+            client = genai.Client(api_key=api_key)
+            return client, api_key
+    except Exception as e:
+        print(f"Warning: Failed to configure Gemini during startup. Error: {e}")
     return None, None
 
 configure_gemini()
@@ -2017,7 +2020,16 @@ def attendance():
                     send_sendgrid_email(email_addr, subject, msg)
                     sent = True
                 except Exception:
-                    pass
+                    try:
+                        refresh_mail_config()
+                        flask_msg = Message(subject,
+                                            sender=app.config.get('MAIL_USERNAME'),
+                                            recipients=[email_addr])
+                        flask_msg.body = msg
+                        mail.send(flask_msg)
+                        sent = True
+                    except Exception as e:
+                        print(f"SMTP fallback failed in attendance: {e}")
             if sent:
                 alerts_sent += 1
                 # Log to parent_alerts collection for the Message Parents page
@@ -2864,6 +2876,10 @@ def send_attendance_alert():
     alert_type = data.get('alert_type', 'absent')
     custom_message = data.get('message', '').strip()
 
+    override_name = data.get('override_parent_name', '').strip()
+    override_phone = data.get('override_parent_phone', '').strip()
+    override_email = data.get('override_parent_email', '').strip()
+
     if not student_id:
         return jsonify({'success': False, 'error': 'student_id is required'}), 400
 
@@ -2924,8 +2940,8 @@ def send_attendance_alert():
         msg = f"Dear Parent, this is an update regarding {name} from {school_name}."
         subject = f"School Notice — {name}"
 
-    phone = student.get('parent_phone') or student.get('phone')
-    email_addr = student.get('parent_email') or student.get('email')
+    phone = override_phone if override_phone else (student.get('parent_phone') or student.get('phone'))
+    email_addr = override_email if override_email else (student.get('parent_email') or student.get('email'))
 
     sent_via = []
     if phone:
@@ -2942,7 +2958,7 @@ def send_attendance_alert():
             print(f"Email failed: {e}")
 
     # Also try SMTP as fallback if no SendGrid key
-    if not sent_via and email_addr:
+    if 'Email' not in sent_via and email_addr:
         try:
             refresh_mail_config()
             flask_msg = Message(subject,
@@ -2961,6 +2977,7 @@ def send_attendance_alert():
     db.parent_alerts.insert_one({
         'student_id': student_id,
         'student_name': name,
+        'parent_name': override_name or student.get('parent_name', ''),
         'parent_phone': phone,
         'parent_email': email_addr,
         'message': msg,

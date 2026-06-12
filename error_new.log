@@ -1,0 +1,6 @@
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(14868) wsgi starting up on http://0.0.0.0:5000
