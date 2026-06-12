@@ -72,7 +72,8 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="alert('Feature coming soon!')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-indigo-100">Edit</button>
+                            <button onclick="alert('Feature coming soon!')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-indigo-100 mr-2">Edit</button>
+                            <button onclick="deleteStaff('{{ staff._id }}')" class="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-red-100">Delete</button>
                         </td>
                     </tr>
                     {% endfor %}
@@ -277,12 +278,29 @@ async function submitAddStaff() {
             btn.disabled = false;
             btn.innerHTML = 'Create Member';
         }
-    } catch (err) {
+    } catch (error) {
         alertBox.className = 'rounded-lg p-3 text-sm mb-4 bg-red-50 text-red-700 border border-red-200 font-medium';
         alertBox.textContent = 'Network error. Please try again.';
         alertBox.classList.remove('hidden');
+        console.error(error);
         btn.disabled = false;
         btn.innerHTML = 'Create Member';
+    }
+}
+
+async function deleteStaff(id) {
+    if (!confirm("Are you sure you want to permanently delete this staff member? This action cannot be undone.")) return;
+    
+    try {
+        const res = await fetch('/api/staff/delete/' + id, { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            location.reload();
+        } else {
+            alert('Error deleting staff member: ' + (data.error || 'Unknown error'));
+        }
+    } catch (e) {
+        alert('Database connection failed or network error. Please try again later.');
     }
 }
 </script>

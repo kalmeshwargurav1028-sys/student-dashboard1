@@ -1311,6 +1311,29 @@ def add_staff():
     except Exception as e:
         return jsonify({'success': False, 'error': f"Error: {str(e)}"}), 500
 
+@app.route('/api/staff/delete/<staff_id>', methods=['POST'])
+def delete_staff(staff_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    # Prevent self-deletion
+    if str(staff_id) == session.get('user_id'):
+        return jsonify({'success': False, 'error': 'You cannot delete your own account.'}), 400
+        
+    try:
+        result = db.users.delete_one({'_id': ObjectId(staff_id)})
+        if result.deleted_count > 0:
+            log_notification(
+                "Staff Member Deleted", 
+                f"Admin {session.get('username')} deleted staff member with ID {staff_id}.", 
+                role_target='admin'
+            )
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Staff member not found.'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': f"Database error: {str(e)}"}), 500
+
 @app.route('/super_admin_profile')
 def super_admin_profile():
     if not session.get('logged_in') or session.get('role') != 'admin':
