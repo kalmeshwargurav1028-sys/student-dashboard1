@@ -82,3 +82,9 @@ sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecur
  * Debugger is active!
  * Debugger PIN: 388-916-418
 (24190) wsgi starting up on http://0.0.0.0:5000
+ * Detected change in '/home/ihl/.local/lib/python3.10/site-packages/werkzeug/sansio/__init__.py', reloading
+ * Restarting with stat
+sys:1: UserWarning: SECRET_KEY environment variable is not set. Using an insecure default — set SECRET_KEY in your .env file before deploying.
+ * Debugger is active!
+ * Debugger PIN: 388-916-418
+(27551) wsgi starting up on http://0.0.0.0:5000

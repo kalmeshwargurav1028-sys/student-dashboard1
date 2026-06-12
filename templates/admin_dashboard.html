@@ -190,11 +190,9 @@
                                 <div class="text-xs text-gray-500">{{ t.email }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
-                                    {% for r in available_roles %}
-                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
-                                    {% endfor %}
-                                </select>
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
@@ -213,13 +211,9 @@
                                 <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
                                 <div class="text-xs text-gray-500">{{ t.email }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <select onchange="changeUserRole('{{ t.id }}', this.value, '{{ t.name }}')" class="text-xs font-bold border border-gray-200 rounded-md px-2 py-1 bg-white focus:ring-indigo-500 focus:border-indigo-500 cursor-pointer">
-                                    {% for r in available_roles %}
-                                    <option value="{{ r }}" {% if t.custom_role == r %}selected{% endif %}>{{ r|capitalize }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </span>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
                                     <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive

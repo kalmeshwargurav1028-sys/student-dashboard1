@@ -190,34 +190,6 @@
         </div>
     </div>
 
-    <!-- AI Mentor Assistant -->
-    <div class="mt-8 bg-white shadow sm:rounded-xl border border-gray-100 overflow-hidden flex flex-col h-[500px]">
-        <div class="px-4 py-3 sm:px-6 border-b border-gray-200 bg-emerald-600 flex items-center justify-between">
-            <h3 class="text-lg leading-6 font-medium text-white flex items-center gap-2">
-                <svg class="h-6 w-6 text-emerald-100" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                AI Mentor Assistant
-            </h3>
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
-                Online
-            </span>
-        </div>
-        
-        <!-- Chat History -->
-        <div id="ai-chat-history" class="flex-1 p-4 overflow-y-auto bg-gray-50 flex flex-col gap-4">
-            <!-- Messages will be injected here -->
-        </div>
-        
-        <!-- Input Area -->
-        <div class="p-4 border-t border-gray-200 bg-white">
-            <form id="ai-chat-form" class="flex gap-2">
-                <input type="text" id="ai-chat-input" class="flex-1 shadow-sm focus:ring-emerald-500 focus:border-emerald-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border" placeholder="Ask for tips or improvement suggestions...">
-                <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                    Send
-                    <svg class="ml-2 -mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-                </button>
-            </form>
-        </div>
-    </div>
 
     <!-- Teacher Contact Directory -->
     {% if teachers %}
@@ -254,80 +226,5 @@
 
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const chatHistory = document.getElementById('ai-chat-history');
-    const chatForm = document.getElementById('ai-chat-form');
-    const chatInput = document.getElementById('ai-chat-input');
-    const studentId = "{{ student.id }}";
-    
-    function addMessage(text, isUser) {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
-        
-        const bubble = document.createElement('div');
-        bubble.className = `max-w-[75%] rounded-lg px-4 py-2 text-sm ${isUser ? 'bg-emerald-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'}`;
-        bubble.innerText = text;
-        
-        msgDiv.appendChild(bubble);
-        chatHistory.appendChild(msgDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-    }
-    
-    function addTypingIndicator() {
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'flex justify-start typing-indicator-container';
-        msgDiv.innerHTML = `
-            <div class="bg-white border border-gray-200 rounded-lg rounded-bl-none px-4 py-3 shadow-sm flex items-center gap-1">
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
-            </div>
-        `;
-        chatHistory.appendChild(msgDiv);
-        chatHistory.scrollTop = chatHistory.scrollHeight;
-        return msgDiv;
-    }
-
-    async function sendMessage(message) {
-        try {
-            const response = await fetch(`/api/analyze_student/${studentId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: message })
-            });
-            const data = await response.json();
-            return data.response || "I'm having trouble connecting to my brain right now.";
-        } catch (error) {
-            console.error('Error:', error);
-            return "Sorry, I encountered an error while analyzing the data.";
-        }
-    }
-    
-    // Initial Analysis Load
-    setTimeout(async () => {
-        const indicator = addTypingIndicator();
-        const responseText = await sendMessage('initial');
-        indicator.remove();
-        addMessage(responseText, false);
-    }, 500);
-
-    // Handle Form Submit
-    chatForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const text = chatInput.value.trim();
-        if (!text) return;
-        
-        addMessage(text, true);
-        chatInput.value = '';
-        
-        const indicator = addTypingIndicator();
-        const responseText = await sendMessage(text);
-        indicator.remove();
-        
-        addMessage(responseText, false);
-    });
-});
-</script>
 
 {% endblock %}

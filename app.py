@@ -1087,6 +1087,22 @@ def dashboard():
     
     return render_template('dashboard.html', students=students, analytics=analytics)
 
+@app.route('/student/<student_id>/ai_mentor')
+def student_ai_mentor(student_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    
+    if session.get('role') == 'student' and session.get('user_id') != student_id:
+        flash('You can only access your own AI Mentor.')
+        return redirect(url_for('dashboard'))
+        
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('dashboard'))
+        
+    return render_template('student_ai_mentor.html', student=student)
+
 @app.route('/student/<student_id>')
 def student_profile(student_id):
     if not session.get('logged_in'):
