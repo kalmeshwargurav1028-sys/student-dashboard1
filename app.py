@@ -1454,6 +1454,13 @@ def assignments():
         else:
             action = request.form.get('action')
             if action == 'create':
+                file = request.files.get('assignment_file')
+                file_id = None
+                filename = None
+                if file and file.filename:
+                    filename = secure_filename(file.filename)
+                    file_id = str(fs.put(file, filename=filename, content_type=file.content_type))
+                    
                 db.assignments.insert_one({
                     'title': request.form.get('title'),
                     'subject': request.form.get('subject'),
@@ -1462,8 +1469,8 @@ def assignments():
                     'max_points': request.form.get('max_points'),
                     'due_date': request.form.get('due_date'),
                     'description': request.form.get('description'),
-                    'smart_alert_parents': request.form.get('smart_alert_parents') == 'on',
-                    'smart_pin_calendar': request.form.get('smart_pin_calendar') == 'on',
+                    'file_id': file_id,
+                    'filename': filename,
                     'created_by': session.get('username'),
                     'submissions': []
                 })
@@ -1967,27 +1974,69 @@ def attendance():
         # Trigger recalculation
         recalculate_students_attendance()
         
-        # Check for alerts
+        # --- Absent alerts: send SMS/email to parent for EVERY absent student ---
         updated_students = list(db.students.find({}, {'_id': 0}))
+        alerts_sent = 0
         for s in updated_students:
             status_today = new_records.get(s['id'], 'Present')
+            if status_today != 'Absent':
+                continue
+
             att_percentage = float(s.get('attendance', 100))
-            
-            if att_percentage < 75 and status_today == 'Absent':
-                name = s.get('name', 'Student')
-                msg = f"Alert: {name}'s attendance has dropped to {att_percentage}%. Please ensure they attend classes regularly."
-                
-                phone = s.get('parent_phone') or s.get('phone')
-                email = s.get('parent_email') or s.get('email')
-                
-                if phone:
+            name = s.get('name', 'Student')
+            school_name = (db.settings.find_one({}, {'school_name': 1}) or {}).get('school_name', 'School')
+
+            # Compose message
+            if att_percentage < 75:
+                msg = (
+                    f"Dear Parent, {name} was ABSENT today ({selected_date}). "
+                    f"Current attendance: {att_percentage}% (below the 75% minimum). "
+                    f"Please ensure regular attendance. — {school_name}"
+                )
+                subject = f"Absence Alert — {name} | {school_name}"
+            else:
+                msg = (
+                    f"Dear Parent, {name} was marked ABSENT today ({selected_date}). "
+                    f"Current attendance: {att_percentage}%. "
+                    f"Please inform the school if this is unexpected. — {school_name}"
+                )
+                subject = f"Absence Notice — {name} | {school_name}"
+
+            phone = s.get('parent_phone') or s.get('phone')
+            email_addr = s.get('parent_email') or s.get('email')
+
+            sent = False
+            if phone:
+                try:
                     send_twilio_sms(phone, msg)
-                elif email:
-                    send_sendgrid_email(email, "Low Attendance Alert", msg)
-        
-        flash(f'Attendance for {selected_date} has been saved successfully!')
-        
-        flash('Attendance updated successfully!')
+                    sent = True
+                except Exception:
+                    pass
+            if not sent and email_addr:
+                try:
+                    send_sendgrid_email(email_addr, subject, msg)
+                    sent = True
+                except Exception:
+                    pass
+            if sent:
+                alerts_sent += 1
+                # Log to parent_alerts collection for the Message Parents page
+                db.parent_alerts.insert_one({
+                    'student_id': s.get('id'),
+                    'student_name': name,
+                    'parent_phone': phone,
+                    'parent_email': email_addr,
+                    'message': msg,
+                    'date': selected_date,
+                    'sent_by': session.get('username', 'System'),
+                    'status': 'sent',
+                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                })
+
+        if alerts_sent:
+            flash(f'Attendance saved. {alerts_sent} parent alert(s) sent for absent students.')
+        else:
+            flash(f'Attendance for {selected_date} saved successfully.')
         return redirect(url_for('attendance', date=selected_date))
         
     # GET request
@@ -2780,8 +2829,159 @@ def admin_faculty_analytics():
 
 
 
-@app.route('/settings', methods=['GET', 'POST'])
-def settings():
+@app.route('/parent_alerts')
+def parent_alerts_page():
+    """
+    Teacher/Admin view: lists all parent alert messages sent, allows
+    composing a custom message to any student's parent.
+    """
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+
+    students = list(db.students.find({}, {'_id': 0, 'id': 1, 'name': 1,
+                                          'parent_name': 1, 'parent_phone': 1,
+                                          'parent_email': 1, 'student_class': 1,
+                                          'attendance': 1}))
+    # Recent alert log (last 100)
+    alerts = list(db.parent_alerts.find().sort('timestamp', -1).limit(100))
+    for a in alerts:
+        a['_id'] = str(a['_id'])
+
+    return render_template('parent_alerts.html', students=students, alerts=alerts)
+
+
+@app.route('/api/attendance/send_alert', methods=['POST'])
+def send_attendance_alert():
+    """
+    Manually send a parent alert for a specific student.
+    POST JSON: { student_id, message (optional), alert_type: 'absent'|'custom' }
+    """
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+
+    data = request.json or {}
+    student_id = data.get('student_id', '').strip()
+    alert_type = data.get('alert_type', 'absent')
+    custom_message = data.get('message', '').strip()
+
+    if not student_id:
+        return jsonify({'success': False, 'error': 'student_id is required'}), 400
+
+    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    if not student:
+        return jsonify({'success': False, 'error': 'Student not found'}), 404
+
+    name = student.get('name', 'Student')
+    att = float(student.get('attendance', 100))
+    school_name = (db.settings.find_one({}, {'school_name': 1}) or {}).get('school_name', 'School')
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    if custom_message:
+        msg = custom_message
+        subject = f"Message from {school_name} regarding {name}"
+    elif alert_type == 'present':
+        msg = (
+            f"Dear Parent, {name} is marked PRESENT today ({today}). "
+            f"Current attendance: {att}%. "
+            f"— {school_name}"
+        )
+        subject = f"Attendance Notice — {name}"
+    elif alert_type == 'absent':
+        msg = (
+            f"Dear Parent, {name} was marked ABSENT today ({today}). "
+            f"Current attendance: {att}%. "
+            f"Please contact the school if you have any concerns. — {school_name}"
+        )
+        subject = f"Absence Notice — {name}"
+    elif alert_type == 'homework':
+        msg = (
+            f"Dear Parent, please remind {name} to complete their pending homework/assignment. "
+            f"Regular completion of assignments is important for academic progress. — {school_name}"
+        )
+        subject = f"Homework Reminder — {name}"
+    elif alert_type == 'performance':
+        assignments = list(db.assignments.find({'submissions.student_id': student_id}))
+        graded = []
+        missing = db.assignments.count_documents({'submissions.student_id': {'$ne': student_id}, 'class_name': student.get('student_class')})
+        for a in assignments:
+            sub = next((s for s in a.get('submissions', []) if s['student_id'] == student_id), None)
+            if sub and sub.get('grade'):
+                graded.append(f"{a['subject']}: {sub['grade']}")
+                
+        grades_str = ", ".join(graded[:3]) if graded else "N/A"
+        if len(graded) > 3:
+            grades_str += "..."
+            
+        msg = (
+            f"Performance Update for {name}:\n"
+            f"Attendance: {att}%\n"
+            f"Recent Marks: {grades_str}\n"
+            f"Missing Assignments: {missing}\n"
+            f"— {school_name}"
+        )
+        subject = f"Performance Update — {name}"
+    else:
+        msg = f"Dear Parent, this is an update regarding {name} from {school_name}."
+        subject = f"School Notice — {name}"
+
+    phone = student.get('parent_phone') or student.get('phone')
+    email_addr = student.get('parent_email') or student.get('email')
+
+    sent_via = []
+    if phone:
+        try:
+            send_twilio_sms(phone, msg)
+            sent_via.append('SMS')
+        except Exception as e:
+            print(f"SMS failed: {e}")
+    if email_addr:
+        try:
+            send_sendgrid_email(email_addr, subject, msg)
+            sent_via.append('Email')
+        except Exception as e:
+            print(f"Email failed: {e}")
+
+    # Also try SMTP as fallback if no SendGrid key
+    if not sent_via and email_addr:
+        try:
+            refresh_mail_config()
+            flask_msg = Message(subject,
+                                sender=app.config.get('MAIL_USERNAME'),
+                                recipients=[email_addr])
+            flask_msg.body = msg
+            mail.send(flask_msg)
+            sent_via.append('Email (SMTP)')
+        except Exception as e:
+            print(f"SMTP fallback failed: {e}")
+
+    if not sent_via:
+        return jsonify({'success': False, 'error': 'No phone or email on record for this student\'s parent.'}), 400
+
+    # Log it
+    db.parent_alerts.insert_one({
+        'student_id': student_id,
+        'student_name': name,
+        'parent_phone': phone,
+        'parent_email': email_addr,
+        'message': msg,
+        'date': today,
+        'alert_type': alert_type,
+        'sent_by': session.get('username', 'Teacher'),
+        'sent_via': sent_via,
+        'status': 'sent',
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    })
+
+    log_notification(
+        f'Parent Alert Sent — {name}',
+        f'{session.get("username", "Teacher")} sent a {alert_type} alert to {name}\'s parent via {", ".join(sent_via)}.',
+        type='success', role_target='admin'
+    )
+
+    return jsonify({'success': True, 'sent_via': sent_via, 'student_name': name})
+
+
+
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     if session.get('role') == 'student':

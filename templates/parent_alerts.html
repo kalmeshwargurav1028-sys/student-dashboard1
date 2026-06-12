@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Parent Alerts & Messaging{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+    <!-- Page Header -->
+    <div class="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Parent Alerts & Messaging</h1>
+            <p class="text-sm text-gray-500 mt-1">Send absence notices, homework reminders, or custom messages to student parents via SMS or email.</p>
+        </div>
+        <button onclick="document.getElementById('composeModal').classList.remove('hidden')"
+                class="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm transition-colors">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+            Compose Message
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Quick Alert Panel — per-student buttons -->
+        <div class="lg:col-span-1 space-y-4">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5">
+                <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                    Quick Absent Alert
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">One click sends an absence SMS + email to the student's parent contact.</p>
+
+                <!-- Search filter -->
+                <input type="text" id="studentSearchAlert" placeholder="Search student…"
+                       class="w-full mb-3 px-3 py-2 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none">
+
+                <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1" id="studentAlertList">
+                    {% for s in students %}
+                    <div class="student-alert-row flex items-center justify-between p-3 rounded-xl border border-gray-100 hover:border-amber-200 hover:bg-amber-50/30 transition-all"
+                         data-name="{{ s.name | lower }}">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-900 truncate">{{ s.name }}</p>
+                            <p class="text-xs text-gray-400 truncate">
+                                {{ s.student_class or '—' }} &bull;
+                                {% if s.parent_phone %}📱 {{ s.parent_phone }}{% endif %}
+                                {% if s.parent_email %}✉️ {{ s.parent_email }}{% endif %}
+                                {% if not s.parent_phone and not s.parent_email %}<span class="text-red-400">No contact</span>{% endif %}
+                            </p>
+                            <span class="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded
+                                {% if s.attendance|float < 75 %}bg-red-100 text-red-700
+                                {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                Att: {{ s.attendance }}%
+                            </span>
+                        </div>
+                        <div class="flex flex-col gap-1 ml-3 shrink-0">
+                            <button onclick="sendQuickAlert('{{ s.id }}', 'present', this)"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors">
+                                Present
+                            </button>
+                            <button onclick="sendQuickAlert('{{ s.id }}', 'absent', this)"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-colors">
+                                Absent
+                            </button>
+                            <button onclick="sendQuickAlert('{{ s.id }}', 'homework', this)"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors">
+                                HW Reminder
+                            </button>
+                            <button onclick="sendQuickAlert('{{ s.id }}', 'performance', this)"
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors">
+                                Performance
+                            </button>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-sm text-gray-400 text-center py-8">No students found.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Log Table -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between">
+                    <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Alert History</h2>
+                    <span class="text-xs text-gray-400 bg-gray-200 px-2 py-1 rounded-full">{{ alerts|length }} records</span>
+                </div>
+
+                {% if alerts %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-white">
+                            <tr>
+                                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Student</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Message</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Sent Via</th>
+                                <th class="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">By / Date</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            {% for a in alerts %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <p class="text-sm font-semibold text-gray-900">{{ a.student_name }}</p>
+                                    <p class="text-xs text-gray-400">{{ a.date }}</p>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    {% set atype = a.get('alert_type', 'absent') %}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
+                                        {% if atype == 'absent' %}bg-rose-100 text-rose-700
+                                        {% elif atype == 'present' %}bg-emerald-50 text-emerald-600
+                                        {% elif atype == 'homework' %}bg-indigo-100 text-indigo-700
+                                        {% elif atype == 'performance' %}bg-emerald-100 text-emerald-700
+                                        {% else %}bg-gray-100 text-gray-600{% endif %}">
+                                        {{ atype | capitalize }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 max-w-xs">
+                                    <p class="text-xs text-gray-600 line-clamp-2">{{ a.message }}</p>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap text-xs text-gray-500">
+                                    {% for sv in (a.get('sent_via') or ['SMS/Email']) %}
+                                    <span class="inline-block bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded text-[10px] font-semibold mr-1">{{ sv }}</span>
+                                    {% endfor %}
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <p class="text-xs font-medium text-gray-700">{{ a.sent_by }}</p>
+                                    <p class="text-[10px] text-gray-400">{{ a.timestamp }}</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-16 px-4">
+                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                    </svg>
+                    <p class="mt-4 text-sm font-semibold text-gray-700">No alerts sent yet</p>
+                    <p class="text-xs text-gray-400 mt-1">Alerts appear here after marking attendance or using the Quick Alert panel.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Compose Custom Message Modal -->
+<div id="composeModal" class="hidden fixed inset-0 z-50 bg-gray-900/60 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-lg font-bold text-gray-900">Compose Parent Message</h2>
+            <button onclick="document.getElementById('composeModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Student</label>
+                <select id="composeStudent" class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none bg-white">
+                    <option value="">— Select student —</option>
+                    {% for s in students %}
+                    <option value="{{ s.id }}">{{ s.name }} ({{ s.student_class or '—' }})
+                        | {% if s.parent_phone %}📱 {{ s.parent_phone }}{% endif %} {% if s.parent_email %}✉️ {{ s.parent_email }}{% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Alert Type</label>
+                <div class="flex gap-3">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="composeType" value="present" class="accent-emerald-500"> <span class="text-sm text-gray-700">Present</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="composeType" value="absent" checked class="accent-rose-500"> <span class="text-sm text-gray-700">Absent</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="composeType" value="homework" class="accent-indigo-500"> <span class="text-sm text-gray-700">Homework</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="composeType" value="performance" class="accent-emerald-500"> <span class="text-sm text-gray-700">Performance</span>
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="radio" name="composeType" value="custom" class="accent-amber-500"> <span class="text-sm text-gray-700">Custom</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Custom Message <span class="font-normal text-gray-400">(optional — leave blank to use auto-template)</span></label>
+                <textarea id="composeMessage" rows="4" placeholder="Type a custom message to the parent…"
+                          class="w-full px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:ring-2 focus:ring-amber-400 focus:border-amber-400 focus:outline-none resize-none"></textarea>
+            </div>
+        </div>
+
+        <div id="composeError" class="hidden mt-3 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg"></div>
+        <div id="composeSuccess" class="hidden mt-3 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg font-medium"></div>
+
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
+            <button type="button" onclick="document.getElementById('composeModal').classList.add('hidden')"
+                    class="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-xl text-sm font-medium transition-colors">Cancel</button>
+            <button type="button" id="composeSendBtn" onclick="sendComposedMessage()"
+                    class="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-sm transition-colors flex items-center gap-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                Send Message
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Quick absent/homework alert
+async function sendQuickAlert(studentId, alertType, btn) {
+    const original = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '…';
+
+    try {
+        const res = await fetch('/api/attendance/send_alert', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({student_id: studentId, alert_type: alertType})
+        });
+        const data = await res.json();
+        if (data.success) {
+            btn.textContent = '✓ Sent';
+            btn.className = btn.className.replace(/bg-\w+-100 text-\w+-700 hover:bg-\w+-600/, 'bg-emerald-500 text-white');
+            setTimeout(() => {
+                btn.textContent = original;
+                btn.disabled = false;
+                btn.className = alertType === 'absent'
+                    ? 'px-2.5 py-1 text-[11px] font-bold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-colors'
+                    : alertType === 'present'
+                    ? 'px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors'
+                    : alertType === 'homework'
+                    ? 'px-2.5 py-1 text-[11px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors'
+                    : 'px-2.5 py-1 text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors';
+            }, 3000);
+        } else {
+            alert('Failed: ' + data.error);
+            btn.textContent = original;
+            btn.disabled = false;
+        }
+    } catch(e) {
+        alert('Network error. Please try again.');
+        btn.textContent = original;
+        btn.disabled = false;
+    }
+}
+
+// Compose & send custom message
+async function sendComposedMessage() {
+    const studentId = document.getElementById('composeStudent').value;
+    const alertType = document.querySelector('input[name="composeType"]:checked').value;
+    const message = document.getElementById('composeMessage').value.trim();
+    const errDiv = document.getElementById('composeError');
+    const okDiv = document.getElementById('composeSuccess');
+    const btn = document.getElementById('composeSendBtn');
+
+    errDiv.classList.add('hidden');
+    okDiv.classList.add('hidden');
+
+    if (!studentId) {
+        errDiv.textContent = 'Please select a student.';
+        errDiv.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Sending…';
+
+    try {
+        const res = await fetch('/api/attendance/send_alert', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({student_id: studentId, alert_type: alertType, message: message})
+        });
+        const data = await res.json();
+        if (data.success) {
+            okDiv.textContent = `✓ Message sent to ${data.student_name}'s parent via ${data.sent_via.join(', ')}.`;
+            okDiv.classList.remove('hidden');
+            document.getElementById('composeMessage').value = '';
+            document.getElementById('composeStudent').value = '';
+            setTimeout(() => window.location.reload(), 2000);
+        } else {
+            errDiv.textContent = 'Error: ' + data.error;
+            errDiv.classList.remove('hidden');
+        }
+    } catch(e) {
+        errDiv.textContent = 'Network error. Please try again.';
+        errDiv.classList.remove('hidden');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send Message';
+    }
+}
+
+// Live search filter
+document.getElementById('studentSearchAlert').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('.student-alert-row').forEach(row => {
+        row.style.display = row.dataset.name.includes(q) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

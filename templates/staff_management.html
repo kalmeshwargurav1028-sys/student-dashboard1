@@ -143,6 +143,21 @@ function closeAddStaffModal() {
     document.getElementById('addStaffModal').classList.add('hidden');
 }
 
+document.getElementById('staffFirstName').addEventListener('input', autoFillCredentials);
+document.getElementById('staffLastName').addEventListener('input', autoFillCredentials);
+
+function autoFillCredentials() {
+    const fn = document.getElementById('staffFirstName').value.trim().toLowerCase().replace(/[^a-z]/g, '');
+    
+    if (fn) {
+        document.getElementById('staffEmail').value = `${fn}.indusschool@gmail.com`;
+        document.getElementById('staffPassword').value = `${fn.charAt(0).toUpperCase() + fn.slice(1)}@123`;
+    } else {
+        document.getElementById('staffEmail').value = '';
+        document.getElementById('staffPassword').value = '';
+    }
+}
+
 async function submitAddStaff() {
     const fn = document.getElementById('staffFirstName').value.trim();
     const ln = document.getElementById('staffLastName').value.trim();
