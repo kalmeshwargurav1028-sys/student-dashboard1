@@ -1296,7 +1296,7 @@ def add_staff():
             'role': role,
             'assigned_class': assigned_class,
             'password': hashed_password,
-            'created_at': datetime.datetime.utcnow().isoformat()
+            'created_at': datetime.utcnow().isoformat()
         }
         
         db.users.insert_one(new_staff)
@@ -1309,7 +1309,7 @@ def add_staff():
         
         return jsonify({'success': True})
     except Exception as e:
-        return jsonify({'success': False, 'error': f"Database connection failed: {str(e)}"}), 500
+        return jsonify({'success': False, 'error': f"Error: {str(e)}"}), 500
 
 @app.route('/super_admin_profile')
 def super_admin_profile():
