@@ -2980,6 +2980,32 @@ def send_attendance_alert():
 
     return jsonify({'success': True, 'sent_via': sent_via, 'student_name': name})
 
+@app.route('/api/alerts/delete/<alert_id>', methods=['POST'])
+def delete_alert(alert_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        from bson.objectid import ObjectId
+        db.parent_alerts.delete_one({'_id': ObjectId(alert_id)})
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
+
+@app.route('/api/alerts/edit/<alert_id>', methods=['POST'])
+def edit_alert(alert_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    try:
+        from bson.objectid import ObjectId
+        data = request.get_json()
+        new_msg = data.get('message', '').strip()
+        if not new_msg:
+            return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
+            
+        db.parent_alerts.update_one({'_id': ObjectId(alert_id)}, {'$set': {'message': new_msg}})
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 400
 
 
     if not session.get('logged_in'):
