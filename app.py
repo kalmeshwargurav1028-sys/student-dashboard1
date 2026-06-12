@@ -117,6 +117,41 @@ if not _secret_key:
 app.secret_key = _secret_key
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
+import re
+
+def get_class_variations(cls_str):
+    if not cls_str:
+        return []
+    cls_str = str(cls_str).strip()
+    if cls_str.lower() == 'all':
+        return ['all']
+        
+    variations = {cls_str}
+    
+    # Extract the first numeric part
+    m = re.search(r'\d+', cls_str)
+    if m:
+        num = m.group()
+        variations.add(num)
+        variations.add(f"Grade {num}")
+        variations.add(f"Class {num}")
+        
+        # Add suffix version
+        if num == '1':
+            variations.add('1st')
+            variations.add('1st Standard')
+        elif num == '2':
+            variations.add('2nd')
+            variations.add('2nd Standard')
+        elif num == '3':
+            variations.add('3rd')
+            variations.add('3rd Standard')
+        else:
+            variations.add(f"{num}th")
+            variations.add(f"{num}th Standard")
+            
+    return list(variations)
+
 def get_student_query(base_query=None):
     if base_query is None:
         base_query = {}
@@ -124,7 +159,7 @@ def get_student_query(base_query=None):
     if session.get('role') == 'teacher':
         assigned_class = session.get('assigned_class')
         if assigned_class and assigned_class != 'all':
-            base_query['student_class'] = assigned_class
+            base_query['student_class'] = {'$in': get_class_variations(assigned_class)}
             
     return base_query
 
@@ -1469,7 +1504,7 @@ def timetable():
     if role == 'student':
         student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
         if student and student.get('student_class'):
-            query['class_name'] = student.get('student_class')
+            query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
         else:
             # No class assigned — return empty timetable rather than all entries
             query['class_name'] = '__no_class__'
@@ -1561,7 +1596,7 @@ def assignments():
     if role == 'student':
         student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
         if student and student.get('student_class'):
-            query['class_name'] = student.get('student_class')
+            query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
         else:
             query['class_name'] = '__no_class__'
     elif role == 'teacher':
@@ -1657,7 +1692,7 @@ def parent_portal():
     # Fetch recent assignments (last 5)
     query = {}
     if student.get('student_class'):
-        query['class_name'] = student.get('student_class')
+        query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
     
     assignments_data = list(db.assignments.find(query).sort('due_date', -1).limit(5))
     
@@ -1687,7 +1722,7 @@ def student_materials():
     student_class = student.get('student_class')
     materials = []
     if student_class:
-        materials = list(db.materials.find({'class': student_class}).sort('uploaded_at', -1))
+        materials = list(db.materials.find({'class': {'$in': get_class_variations(student_class)}}).sort('uploaded_at', -1))
         
     return render_template('student_materials.html', student=student, materials=materials)
 
