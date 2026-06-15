@@ -105,6 +105,7 @@
                     </a>
                 </li>
 
+                {% if session.get('role') == 'admin' %}
                 <li>
                     <a href="{{ url_for('daily_logs') }}"
                        class="flex items-center px-4 py-2.5 text-emerald-100 hover:bg-emerald-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/daily_logs' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -112,6 +113,7 @@
                         <span class="sidebar-text whitespace-nowrap text-sm">Daily Logs</span>
                     </a>
                 </li>
+                {% endif %}
 
                 {# ── ACADEMIC ──────────────────────────────────────────── #}
                 <li class="px-3 pt-4 pb-1">

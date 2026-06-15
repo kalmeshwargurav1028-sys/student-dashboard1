@@ -2531,6 +2531,15 @@ def teacher_daily_report():
     today_formatted = datetime.now().strftime('%m / %d / %Y')
     
     if request.method == 'POST':
+        action = request.form.get('action', 'create')
+        
+        if action == 'delete':
+            report_id = request.form.get('report_id')
+            if report_id:
+                db.teacher_reports.delete_one({'_id': ObjectId(report_id), 'username': session.get('username')})
+                flash('Daily report deleted.')
+            return redirect(url_for('teacher_daily_report'))
+            
         classes = request.form.getlist('class[]')
         subjects = request.form.getlist('subject[]')
         topics = request.form.getlist('topics[]')
@@ -2546,17 +2555,33 @@ def teacher_daily_report():
                     'remarks': r
                 })
                 
-        db.teacher_reports.insert_one({
-            'teacher': session.get('name'),
-            'username': session.get('username'),
-            'date': today_date,
-            'progress_logs': progress_logs,
-            'submitted_at': datetime.now()
-        })
-        flash('Daily report submitted successfully to HOD/Principal.')
+        if action == 'create':
+            db.teacher_reports.insert_one({
+                'teacher': session.get('name'),
+                'username': session.get('username'),
+                'date': today_date,
+                'progress_logs': progress_logs,
+                'submitted_at': datetime.now()
+            })
+            flash('Daily report submitted successfully to HOD/Principal.')
+        elif action == 'edit':
+            report_id = request.form.get('report_id')
+            if report_id:
+                db.teacher_reports.update_one(
+                    {'_id': ObjectId(report_id), 'username': session.get('username')},
+                    {'$set': {
+                        'progress_logs': progress_logs,
+                        'updated_at': datetime.now()
+                    }}
+                )
+                flash('Daily report updated successfully.')
+                
         return redirect(url_for('teacher_daily_report'))
         
-    # GET method - Calculate attendance snapshot
+    # GET method - Fetch Past Reports
+    past_reports = list(db.teacher_reports.find({'username': session.get('username')}).sort('submitted_at', -1))
+    
+    # Calculate attendance snapshot
     att_doc = db.attendance.find_one({'date': today_date})
     records = att_doc.get('records', {}) if att_doc else {}
     
@@ -2586,7 +2611,8 @@ def teacher_daily_report():
     # Basic sort to put grades in order
     attendance_snapshot.sort(key=lambda x: x['class_name'])
     
-    return render_template('teacher_daily_report.html', today_formatted=today_formatted, attendance_snapshot=attendance_snapshot)
+    return render_template('teacher_daily_report.html', today_formatted=today_formatted, attendance_snapshot=attendance_snapshot, past_reports=past_reports)
+
 
 
 @app.route('/ai_box')
