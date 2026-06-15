@@ -2053,32 +2053,48 @@ def attendance():
         return redirect(url_for('dashboard'))
         
     selected_date = request.args.get('date', datetime.now().strftime('%Y-%m-%d')) or datetime.now().strftime('%Y-%m-%d')
-    students = list(db.students.find(get_student_query(), {'_id': 0}))
+    mode = request.args.get('mode', 'homeroom')
+    target_class = request.args.get('target_class', '')
+    subject = request.args.get('subject', '')
+    
+    if mode == 'universal' and target_class:
+        students = list(db.students.find({'student_class': {'$in': get_class_variations(target_class)}}, {'_id': 0}))
+    else:
+        students = list(db.students.find(get_student_query(), {'_id': 0}))
     
     if request.method == 'POST':
-        new_records = {}
-        for s in students:
+        mode_post = request.form.get('mode', 'homeroom')
+        target_class_post = request.form.get('target_class', '')
+        
+        if mode_post == 'universal' and target_class_post:
+            post_students = list(db.students.find({'student_class': {'$in': get_class_variations(target_class_post)}}, {'_id': 0}))
+        else:
+            post_students = list(db.students.find(get_student_query(), {'_id': 0}))
+            
+        update_fields = {}
+        for s in post_students:
             s_id = s['id']
             status = request.form.get(f'status_{s_id}')
             if status in ['Present', 'Absent', 'Late']:
-                new_records[s_id] = status
+                update_fields[f'records.{s_id}'] = status
             else:
-                new_records[s_id] = 'Present'
+                update_fields[f'records.{s_id}'] = 'Present'
                 
-        db.attendance.update_one(
-            {'date': selected_date},
-            {'$set': {'records': new_records}},
-            upsert=True
-        )
+        if update_fields:
+            db.attendance.update_one(
+                {'date': selected_date},
+                {'$set': update_fields},
+                upsert=True
+            )
         
         # Trigger recalculation
         recalculate_students_attendance()
         
         # --- Absent alerts: send SMS/email to parent for EVERY absent student ---
-        updated_students = list(db.students.find(get_student_query(), {'_id': 0}))
         alerts_sent = 0
-        for s in updated_students:
-            status_today = new_records.get(s['id'], 'Present')
+        for s in post_students:
+            s_id = s['id']
+            status_today = request.form.get(f'status_{s_id}', 'Present')
             if status_today != 'Absent':
                 continue
 
@@ -2146,7 +2162,7 @@ def attendance():
             flash(f'Attendance saved. {alerts_sent} parent alert(s) sent for absent students.')
         else:
             flash(f'Attendance for {selected_date} saved successfully.')
-        return redirect(url_for('attendance', date=selected_date))
+        return redirect(url_for('attendance', date=selected_date, mode=mode_post, target_class=target_class_post, subject=request.form.get('subject', '')))
         
     # GET request
     daily_doc = db.attendance.find_one({'date': selected_date})
@@ -2183,7 +2199,10 @@ def attendance():
         selected_date=selected_date,
         daily_records=daily_records,
         all_dates=all_dates,
-        stats=stats
+        stats=stats,
+        mode=mode,
+        target_class=target_class,
+        subject=subject
     )
 
 @app.route('/gradebook', methods=['GET', 'POST'])
