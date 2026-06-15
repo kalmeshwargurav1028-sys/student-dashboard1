@@ -587,9 +587,12 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
+                        👨‍🏫
+                    </div>
                     <div>
-                        <h3 class="text-sm font-bold text-gray-900">Daily Report</h3>
-                        <p class="text-xs text-gray-500">{{ report.date }}</p>
+                        <h3 class="text-sm font-bold text-gray-900">{{ report.teacher_name or report.teacher or 'Teacher' }}</h3>
+                        <p class="text-xs text-gray-500">{{ report.teacher_email or report.username }} • {{ report.date }}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
@@ -604,7 +607,7 @@
                 </div>
             </div>
             <div class="p-6">
-                <div class="grid grid-cols-1 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Logs -->
                     <div>
                         <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Teaching Summary</h4>
@@ -622,6 +625,34 @@
                                 </div>
                             </div>
                             {% endfor %}
+                        </div>
+                    </div>
+                    <!-- Attendance -->
+                    <div>
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Attendance Snapshot</h4>
+                        <div class="border border-gray-200 rounded-lg overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-3 py-2 font-bold text-gray-600">Class</th>
+                                        <th class="px-3 py-2 font-bold text-gray-600 text-center">Present</th>
+                                        <th class="px-3 py-2 font-bold text-gray-600 text-center">Absent</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    {% for snap in report.attendance_snapshot %}
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2 font-medium">{{ snap.class_name }}</td>
+                                        <td class="px-3 py-2 text-center font-bold text-emerald-600">{{ snap.present }}</td>
+                                        <td class="px-3 py-2 text-center font-bold text-red-600">{{ snap.absent }}</td>
+                                    </tr>
+                                    {% else %}
+                                    <tr>
+                                        <td colspan="3" class="px-3 py-4 text-center text-gray-500 italic">No attendance data.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
