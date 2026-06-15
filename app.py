@@ -395,33 +395,14 @@ def create_announcement():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     try:
-        if request.content_type and request.content_type.startswith('multipart/form-data'):
-            audience = request.form.get('audience', 'all')
-            title = request.form.get('title', '')
-            body = request.form.get('body', '')
-            expiry_date = request.form.get('expiry_date', '')
-            attachment = request.files.get('attachment')
-        else:
-            data = request.json or {}
-            audience = data.get('audience', 'all')
-            title = data.get('title', '')
-            body = data.get('body', '')
-            expiry_date = data.get('expiry_date', '')
-            attachment = None
-            
+        data = request.json
+        audience = data.get('audience', 'all')
+        title = data.get('title', '')
+        body = data.get('body', '')
+        expiry_date = data.get('expiry_date', '')
+        
         if not title or not body or not expiry_date:
             return jsonify({'success': False, 'error': 'Missing fields'}), 400
-            
-        if attachment and attachment.filename:
-            file_id = fs.put(
-                attachment,
-                filename=attachment.filename,
-                content_type=attachment.content_type,
-                author_id=session.get('user_id'),
-                upload_date=datetime.utcnow()
-            )
-            attachment_url = url_for('get_file', file_id=str(file_id))
-            body += f'<br><br><a href="{attachment_url}" target="_blank" class="text-indigo-500 font-bold hover:underline inline-flex items-center"><svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>📎 Attachment: {attachment.filename}</a>'
             
         db.announcements.insert_one({
             'title': title,
@@ -1422,6 +1403,48 @@ def delete_staff(staff_id):
             return jsonify({'success': False, 'error': 'Staff member not found.'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': f"Database error: {str(e)}"}), 500
+
+@app.route('/admin/delete_report/<report_id>', methods=['POST'])
+def admin_delete_report(report_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    db.teacher_reports.delete_one({'_id': ObjectId(report_id)})
+    flash('Report deleted.')
+    return redirect(url_for('admin_dashboard') + '#reports')
+
+@app.route('/admin/print_report/<report_id>')
+def admin_print_report(report_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    report = db.teacher_reports.find_one({'_id': ObjectId(report_id)})
+    if not report:
+        return "Report not found", 404
+    from flask import render_template_string
+    return render_template_string('''
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Daily Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h2 { border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .log { margin-bottom: 15px; border-bottom: 1px solid #ccc; padding-bottom: 10px; }
+            @media print { button { display: none; } }
+        </style>
+    </head>
+    <body onload="window.print()">
+        <button onclick="window.print()">Print PDF</button>
+        <h2>Daily Report - {{ report.date }}</h2>
+        {% for log in report.progress_logs %}
+        <div class="log">
+            <p><strong>Class:</strong> {{ log.class }} | <strong>Subject:</strong> {{ log.subject }} ({{ log.periods }} periods)</p>
+            <p><strong>Topics:</strong> {{ log.topics }}</p>
+            <p><strong>Homework:</strong> {{ log.homework }} | <strong>Remarks:</strong> {{ log.remarks or 'None' }}</p>
+        </div>
+        {% endfor %}
+    </body>
+    </html>
+    ''', report=report)
 
 @app.route('/super_admin_profile')
 def super_admin_profile():

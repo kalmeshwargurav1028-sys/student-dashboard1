@@ -98,49 +98,7 @@
                     </div>
                 </div>
 
-                <!-- Section 2: Attendance Snapshot -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-8">
-                    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-                        <div>
-                            <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                                <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm font-bold shadow-sm">2</span>
-                                ATTENDANCE SNAPSHOT
-                            </h2>
-                            <p class="text-sm text-gray-500 mt-1 ml-9">Today's attendance summary across your classes.</p>
-                        </div>
-                        <a href="{{ url_for('export_attendance_snapshot') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800 shadow-sm text-sm">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                            Export to Excel
-                        </a>
-                    </div>
-                    
-                    <div class="p-6 overflow-x-auto">
-                        <table class="w-full text-left">
-                            <thead>
-                                <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
-                                    <th class="pb-3 font-bold">Class</th>
-                                    <th class="pb-3 font-bold text-center">Total Students</th>
-                                    <th class="pb-3 font-bold text-center">Present Students</th>
-                                    <th class="pb-3 font-bold text-center">Absent Students</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                                {% for snap in attendance_snapshot %}
-                                <tr>
-                                    <td class="py-4 font-bold text-gray-900 dark:text-white">{{ snap.class_name }}</td>
-                                    <td class="py-4 text-center text-gray-900 dark:text-white font-bold">{{ snap.total }}</td>
-                                    <td class="py-4 text-center text-emerald-500 font-bold">{{ snap.present }}</td>
-                                    <td class="py-4 text-center text-red-500 font-bold">{{ snap.absent }}</td>
-                                </tr>
-                                {% else %}
-                                <tr>
-                                    <td colspan="4" class="py-6 text-center text-gray-500 text-sm italic">No attendance records found for today.</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+
 
                 <!-- Submit Action -->
                 <div class="mt-8 flex flex-col sm:flex-row items-center justify-between bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800/50">
