@@ -2550,7 +2550,7 @@ def reports():
 
 @app.route('/teacher/daily_report', methods=['GET', 'POST'])
 def teacher_daily_report():
-    if not session.get('logged_in') or session.get('role') != 'teacher':
+    if not session.get('logged_in') or session.get('role') not in ['teacher', 'admin']:
         flash('Unauthorized access.')
         return redirect(url_for('login'))
         
@@ -2606,7 +2606,10 @@ def teacher_daily_report():
         return redirect(url_for('teacher_daily_report'))
         
     # GET method - Fetch Past Reports
-    past_reports = list(db.teacher_reports.find({'username': session.get('username')}).sort('submitted_at', -1))
+    if session.get('role') == 'admin':
+        past_reports = list(db.teacher_reports.find().sort('submitted_at', -1))
+    else:
+        past_reports = list(db.teacher_reports.find({'username': session.get('username')}).sort('submitted_at', -1))
     
     # Calculate attendance snapshot
     att_doc = db.attendance.find_one({'date': today_date})
