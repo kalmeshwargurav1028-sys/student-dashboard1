@@ -1650,7 +1650,6 @@ def daily_logs():
                 'class_name': request.form.get('class_name'),
                 'subject': request.form.get('subject'),
                 'topics': request.form.get('topics'),
-                'remarks': request.form.get('remarks'),
                 'teacher': session.get('username')
             })
             flash('Daily log added successfully!')
@@ -2637,20 +2636,67 @@ def export_students():
         
     students = list(db.students.find(get_student_query(query), {'_id': 0}))
         
-    output = io.StringIO()
+    import io
+    import zipfile
+    import openpyxl
+    from collections import defaultdict
+    
+    students_by_class = defaultdict(list)
+    for s in students:
+        c_name = s.get('student_class', 'Unknown')
+        students_by_class[c_name].append(s)
+        
     fieldnames = ['id', 'name', 'dob', 'gender', 'board', 'student_class', 'division', 'academic_year', 'roll_number', 'parent_name', 'relationship', 'parent_phone', 'parent_email', 'occupation']
     
-    writer = csv.DictWriter(output, fieldnames=fieldnames, extrasaction='ignore')
-    writer.writeheader()
-    for student in students:
-        writer.writerow(student)
+    if student_class or len(students_by_class) <= 1:
+        single_class = student_class if student_class else (list(students_by_class.keys())[0] if students_by_class else 'Unknown')
+        output = io.BytesIO()
+        wb = openpyxl.Workbook()
+        ws = wb.active
         
-    output.seek(0)
-    response = Response(output.getvalue(), mimetype='text/csv')
-    
-    filename = f"students_class_{student_class}.csv" if student_class else "all_students.csv"
-    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
-    return response
+        safe_c_name = str(single_class).replace('/', '_').replace('\\', '_')
+        ws.title = f"{safe_c_name[:30]}"
+        ws.append(fieldnames)
+        
+        target_students = students_by_class.get(single_class, [])
+        for student in target_students:
+            row = [student.get(f, '') for f in fieldnames]
+            ws.append(row)
+            
+        wb.save(output)
+        output.seek(0)
+        
+        filename = f"{safe_c_name}_Roster.xlsx"
+        return Response(
+            output.getvalue(),
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            headers={'Content-Disposition': f'attachment; filename={filename}'}
+        )
+    else:
+        memory_file = io.BytesIO()
+        with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+            for c_name, class_students in students_by_class.items():
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                safe_c_name = str(c_name).replace('/', '_').replace('\\', '_')
+                ws.title = f"{safe_c_name[:30]}"
+                ws.append(fieldnames)
+                
+                for student in class_students:
+                    row = [student.get(f, '') for f in fieldnames]
+                    ws.append(row)
+                    
+                xlsx_output = io.BytesIO()
+                wb.save(xlsx_output)
+                
+                zf.writestr(f"{safe_c_name}_Roster.xlsx", xlsx_output.getvalue())
+                
+        memory_file.seek(0)
+        return Response(
+            memory_file.getvalue(),
+            mimetype='application/zip',
+            headers={'Content-Disposition': 'attachment; filename=Class_Rosters.zip'}
+        )
 
 @app.route('/import_students', methods=['POST'])
 def import_students():

@@ -30,10 +30,7 @@
                 <p class="text-gray-700 dark:text-gray-300 bg-indigo-50/50 dark:bg-indigo-900/10 p-3 rounded-lg border border-indigo-100 dark:border-indigo-800/30">{{ log.topics }}</p>
             </div>
             
-            <div>
-                <h4 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-1">Remarks for Parents</h4>
-                <p class="text-gray-700 dark:text-gray-300 bg-emerald-50/50 dark:bg-emerald-900/10 p-3 rounded-lg border border-emerald-100 dark:border-emerald-800/30 italic">"{{ log.remarks }}"</p>
-            </div>
+
         </div>
         {% else %}
         <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
@@ -60,6 +57,7 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class/Grade</label>
                     <select name="class_name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                         <option value="">— Select Class —</option>
+                        <option value="1st">1st Standard</option>
                         <option value="2nd">2nd Standard</option>
                         <option value="3rd">3rd Standard</option>
                         <option value="4th">4th Standard</option>
@@ -85,14 +83,11 @@
                 <textarea name="topics" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g. Discussed Newton's laws of motion, chapter 3." required></textarea>
             </div>
             
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Remarks for Parents</label>
-                <textarea name="remarks" rows="3" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" placeholder="e.g. Students were very attentive. Please ensure they complete exercise 3.1." required></textarea>
-            </div>
+
             
             <div class="flex justify-end gap-3">
                 <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors">Cancel</button>
-                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">Save Log</button>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors">Save</button>
             </div>
         </form>
     </div>
