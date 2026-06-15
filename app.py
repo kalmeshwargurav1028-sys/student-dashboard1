@@ -2630,7 +2630,7 @@ def teacher_daily_report():
             
         class_stats[c_name]['total'] += 1
         
-        status = records.get(s['id'])
+        status = records.get(s.get('id'))
         if status in ['Present', 'Late']:
             class_stats[c_name]['present'] += 1
                 
@@ -2667,7 +2667,7 @@ def export_attendance_snapshot():
             class_stats[c_name] = {'total': 0, 'present': 0}
             
         class_stats[c_name]['total'] += 1
-        status = records.get(s['id'])
+        status = records.get(s.get('id'))
         if status in ['Present', 'Late']:
             class_stats[c_name]['present'] += 1
                 
