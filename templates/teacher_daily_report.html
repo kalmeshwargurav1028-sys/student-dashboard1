@@ -23,11 +23,11 @@
         </div>
     </div>
 
-    <!-- Main Layout: 2 Columns -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Main Layout -->
+    <div class="max-w-5xl mx-auto space-y-8">
         
-        <!-- Left Column: Form & Attendance -->
-        <div class="lg:col-span-2 space-y-8">
+        <!-- Form & Attendance -->
+        <div class="space-y-8">
             <form action="{{ url_for('teacher_daily_report') }}" method="POST" id="dailyReportForm">
                 <input type="hidden" name="action" value="create">
                 
@@ -191,75 +191,6 @@
 
         </div>
 
-        <!-- Right Column: Instructions & Preview Sidebar -->
-        <div class="space-y-8">
-            <!-- How It Works -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-6">How It Works (For Teachers)</h3>
-                
-                <div class="relative border-l-2 border-emerald-100 dark:border-emerald-900/30 ml-3 space-y-6">
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">1</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">Select Class, Subject and enter Periods Taken.</p>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">2</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">Write a short summary of what you taught.</p>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">3</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">Choose if homework was given and add any issue (if any).</p>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">4</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300">Attendance is auto-generated. No need to enter it.</p>
-                    </div>
-                    <div class="relative pl-6">
-                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">5</span>
-                        <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">Click "Submit Daily Report" and you're done!</p>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Preview Card -->
-            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">How Principal / HOD View It</h3>
-                
-                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/30">
-                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-3">
-                        <span class="text-xs font-bold text-gray-900 dark:text-white">Teacher: {{ session.get('name') or 'Kalmeshwar Gurav' }}</span>
-                        <span class="text-xs text-gray-500">Date: {{ today_formatted }}</span>
-                    </div>
-                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-2">10th A - Mathematics <span class="font-normal text-gray-500">(2 Periods)</span></h4>
-                    <p class="text-sm text-emerald-600 dark:text-emerald-400 mb-3 leading-relaxed">
-                        Completed Quadratic Equations Chapter.<br>
-                        Solved Exercise 4.1 and 4.2.<br>
-                        Given homework questions 1-10.
-                    </p>
-                    <div class="flex gap-4 text-xs font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
-                        <span>Homework Given: <span class="text-gray-500">Yes</span></span>
-                        <span>Issue: <span class="text-gray-500">None</span></span>
-                    </div>
-                    
-                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-2">Attendance Summary</h4>
-                    <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-2 flex justify-between text-center">
-                        <div>
-                            <div class="text-[10px] text-gray-500 uppercase">Total</div>
-                            <div class="font-bold text-gray-900 dark:text-white">48</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500 uppercase">Present</div>
-                            <div class="font-bold text-emerald-500">45</div>
-                        </div>
-                        <div>
-                            <div class="text-[10px] text-gray-500 uppercase">Absent</div>
-                            <div class="font-bold text-red-500">3</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-    </div>
 </div>
 {% endblock %}
