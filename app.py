@@ -1670,6 +1670,34 @@ def daily_logs():
     return render_template(template_name, logs=logs, current_date=datetime.now().strftime('%Y-%m-%d'))
 
 
+@app.route('/daily_logs/edit/<log_id>', methods=['POST'])
+def edit_daily_log(log_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    db.daily_logs.update_one(
+        {'_id': ObjectId(log_id), 'teacher': session.get('username')},
+        {'$set': {
+            'date': request.form.get('date'),
+            'class_name': request.form.get('class_name'),
+            'subject': request.form.get('subject'),
+            'topics': request.form.get('topics')
+        }}
+    )
+    flash('Daily log updated successfully!')
+    return redirect(url_for('daily_logs'))
+
+
+@app.route('/daily_logs/delete/<log_id>', methods=['POST'])
+def delete_daily_log(log_id):
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    db.daily_logs.delete_one({'_id': ObjectId(log_id), 'teacher': session.get('username')})
+    flash('Daily log deleted successfully!')
+    return redirect(url_for('daily_logs'))
+
+
 @app.route('/parent_portal', methods=['GET', 'POST'])
 def parent_portal():
     if not session.get('logged_in') or session.get('role') != 'student':
