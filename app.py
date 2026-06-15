@@ -395,14 +395,33 @@ def create_announcement():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     try:
-        data = request.json
-        audience = data.get('audience', 'all')
-        title = data.get('title', '')
-        body = data.get('body', '')
-        expiry_date = data.get('expiry_date', '')
-        
+        if request.content_type and request.content_type.startswith('multipart/form-data'):
+            audience = request.form.get('audience', 'all')
+            title = request.form.get('title', '')
+            body = request.form.get('body', '')
+            expiry_date = request.form.get('expiry_date', '')
+            attachment = request.files.get('attachment')
+        else:
+            data = request.json or {}
+            audience = data.get('audience', 'all')
+            title = data.get('title', '')
+            body = data.get('body', '')
+            expiry_date = data.get('expiry_date', '')
+            attachment = None
+            
         if not title or not body or not expiry_date:
             return jsonify({'success': False, 'error': 'Missing fields'}), 400
+            
+        if attachment and attachment.filename:
+            file_id = fs.put(
+                attachment,
+                filename=attachment.filename,
+                content_type=attachment.content_type,
+                author_id=session.get('user_id'),
+                upload_date=datetime.utcnow()
+            )
+            attachment_url = url_for('get_file', file_id=str(file_id))
+            body += f'<br><br><a href="{attachment_url}" target="_blank" class="text-indigo-500 font-bold hover:underline inline-flex items-center"><svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>📎 Attachment: {attachment.filename}</a>'
             
         db.announcements.insert_one({
             'title': title,

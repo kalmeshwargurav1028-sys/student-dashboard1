@@ -457,6 +457,11 @@
                     <textarea id="annBody" required rows="4" placeholder="Type your main notification text here..." class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 resize-none"></textarea>
                 </div>
                 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Optional PDF Attachment</label>
+                    <input type="file" id="annAttachment" accept=".pdf" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
+                
                 <div class="pt-2 flex justify-end">
                     <button type="submit" class="bg-blue-600 text-white font-bold py-2.5 px-6 rounded-lg shadow hover:bg-blue-700 transition-colors flex items-center">
                         Send Broadcast <i class="fa-solid fa-paper-plane ml-2"></i>
@@ -760,18 +765,22 @@
     // Announcements Logic
     async function publishAnnouncement(e) {
         e.preventDefault();
-        const payload = {
-            audience: document.getElementById('annAudience').value,
-            title: document.getElementById('annTitle').value,
-            body: document.getElementById('annBody').value,
-            expiry_date: document.getElementById('annExpiry').value
-        };
+        
+        const formData = new FormData();
+        formData.append('audience', document.getElementById('annAudience').value);
+        formData.append('title', document.getElementById('annTitle').value);
+        formData.append('body', document.getElementById('annBody').value);
+        formData.append('expiry_date', document.getElementById('annExpiry').value);
+        
+        const fileInput = document.getElementById('annAttachment');
+        if(fileInput && fileInput.files.length > 0) {
+            formData.append('attachment', fileInput.files[0]);
+        }
         
         try {
             const res = await fetch('/api/announcements', {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(payload)
+                body: formData
             });
             const data = await res.json();
             if(data.success) {
