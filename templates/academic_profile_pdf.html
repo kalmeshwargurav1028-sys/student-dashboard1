@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Profile - {{ student.name }}</title>
+    <style>
+        @page { size: auto;  margin: 0mm; }
+        body {
+            background-color: #111111;
+            color: #eeeeee;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 40px;
+            margin: 0;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        .close-btn {
+            color: #aaaaaa;
+            font-weight: normal;
+        }
+        .divider {
+            border: 0;
+            border-bottom: 1px dashed #666666;
+            margin: 15px 0;
+        }
+        .info-row {
+            margin-bottom: 5px;
+        }
+        .section-title {
+            margin-top: 25px;
+            text-transform: uppercase;
+        }
+        .marks {
+            font-size: 1.1rem;
+            margin-top: 5px;
+        }
+        .subject-row {
+            margin-top: 5px;
+        }
+        @media print {
+            body {
+                background-color: #111111 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            .close-btn {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print(); setTimeout(function(){window.close();}, 1000);">
+    <div class="container">
+        <div class="header">
+            <span>📊 ACADEMIC PROFILE</span>
+            <span class="close-btn">[&times; Close]</span>
+        </div>
+        <hr class="divider">
+        <div class="info-row">Name: {{ student.name }}</div>
+        <div class="info-row">Roll No: {{ student.id }}</div>
+        <div class="info-row">Grade: {{ student.student_class }} - Div {{ student.division }}</div>
+        <hr class="divider">
+        
+        <div class="section-title">TOTAL MARKS:</div>
+        <div class="marks">⭐ {{ total_marks }} / {{ max_marks }} Cumulative</div>
+        
+        <br>
+        
+        <div class="section-title">SUBJECT BREAKDOWN:</div>
+        {% for subj, breakdown in subjects_breakdown.items() %}
+            <div class="subject-row">
+                {% if subj.lower() == 'math' or subj.lower() == 'mathematics' %}
+                    🧮 
+                {% elif subj.lower() == 'physics' or subj.lower() == 'science' %}
+                    ⚛️ 
+                {% elif subj.lower() == 'english' or subj.lower() == 'history' %}
+                    📚 
+                {% else %}
+                    📝 
+                {% endif %}
+                {{ subj }}: {{ breakdown }}
+            </div>
+        {% endfor %}
+        
+        <hr class="divider">
+    </div>
+</body>
+</html>

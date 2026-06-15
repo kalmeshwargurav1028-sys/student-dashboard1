@@ -1739,6 +1739,45 @@ def student_id_card(student_id):
         
     return render_template('id_card.html', student=student)
 
+@app.route('/student/<student_id>/academic_profile_pdf')
+def academic_profile_pdf(student_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('dashboard'))
+        
+    # Calculate cumulative total marks
+    total_marks = 0
+    max_marks = 0
+    subjects_breakdown = {}
+    
+    if student.get('subjects'):
+        for subj, score in student.get('subjects').items():
+            total_marks += float(score)
+            max_marks += 100
+            subjects_breakdown[subj] = f"{score}/100"
+            
+    # Also look at grades collection if any
+    grades = list(db.grades.find({'student_id': student_id}, {'_id': 0}))
+    for g in grades:
+        subj = g.get('subject')
+        ca = float(g.get('ca_mark') or 0)
+        exam = float(g.get('exam_mark') or 0)
+        if subj not in subjects_breakdown:
+            total = ca + exam
+            total_marks += total
+            max_marks += 100
+            subjects_breakdown[subj] = f"{ca} + {exam} = {total}/100"
+
+    return render_template('academic_profile_pdf.html', 
+                          student=student, 
+                          total_marks=total_marks, 
+                          max_marks=max_marks, 
+                          subjects_breakdown=subjects_breakdown)
+
 @app.route('/admin_profile', methods=['GET', 'POST'])
 def admin_profile():
     if not session.get('logged_in'):
