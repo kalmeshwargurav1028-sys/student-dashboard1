@@ -224,13 +224,6 @@
                     <span class="text-[10px] font-bold uppercase tracking-widest text-emerald-300 dark:text-gray-500 sidebar-text">Academics</span>
                 </li>
                 <li>
-                    <a href="{{ url_for('student_academic_profile', student_id=session.get('user_id')) }}"
-                       class="flex items-center px-4 py-2.5 text-emerald-100 hover:bg-emerald-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/student/' in current_path and '/academic' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422M12 14v7m-3-7v7m6-7v7M9 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Academic Profile</span>
-                    </a>
-                </li>
-                <li>
                     <a href="{{ url_for('student_materials') }}"
                        class="flex items-center px-4 py-2.5 text-emerald-100 hover:bg-emerald-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/student/materials' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
                         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>

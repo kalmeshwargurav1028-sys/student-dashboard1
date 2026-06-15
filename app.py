@@ -1166,39 +1166,6 @@ def student_profile(student_id):
             {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
         ]
         
-    # Fetch teachers for the Contact Directory
-    teachers = list(db.users.find({'role': 'teacher'}, {'password': 0}))
-    for t in teachers:
-        t['_id'] = str(t['_id'])
-        if 'first_name' in t and 'last_name' in t:
-            t['display_name'] = f"{t['first_name']} {t['last_name']}"
-        else:
-            t['display_name'] = t.get('email', 'Teacher').split('@')[0].capitalize()
-        
-    return render_template('student_profile.html', student=student, teachers=teachers)
-
-@app.route('/student/<student_id>/academic')
-def student_academic_profile(student_id):
-    if not session.get('logged_in'):
-        return redirect(url_for('login'))
-        
-    if session.get('role') == 'student' and session.get('user_id') != student_id:
-        flash('You can only view your own academic profile.')
-        return redirect(url_for('dashboard'))
-        
-    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
-    if not student:
-        flash('Student not found.')
-        return redirect(url_for('dashboard'))
-        
-    if 'attendance_history' not in student:
-        student['attendance_history'] = [
-            {'month': 'Jan', 'days_present': random.randint(15, 22), 'total_days': 22},
-            {'month': 'Feb', 'days_present': random.randint(15, 20), 'total_days': 20},
-            {'month': 'Mar', 'days_present': random.randint(15, 22), 'total_days': 22},
-            {'month': 'Apr', 'days_present': random.randint(15, 21), 'total_days': 21}
-        ]
-        
     # Fetch real grades from the gradebook
     real_grades = list(db.grades.find({'student_id': student_id}))
     if real_grades:
@@ -1209,8 +1176,17 @@ def student_academic_profile(student_id):
             ca = float(g.get('ca_mark') or 0)
             exam = float(g.get('exam_mark') or 0)
             student['subjects'][subj] = ca + exam
-            
-    return render_template('student_academic_profile.html', student=student)
+        
+    # Fetch teachers for the Contact Directory
+    teachers = list(db.users.find({'role': 'teacher'}, {'password': 0}))
+    for t in teachers:
+        t['_id'] = str(t['_id'])
+        if 'first_name' in t and 'last_name' in t:
+            t['display_name'] = f"{t['first_name']} {t['last_name']}"
+        else:
+            t['display_name'] = t.get('email', 'Teacher').split('@')[0].capitalize()
+        
+    return render_template('student_profile.html', student=student, teachers=teachers)
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
