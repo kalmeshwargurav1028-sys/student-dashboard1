@@ -5,325 +5,261 @@
 {% block content %}
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
     
-    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-        <div>
-            <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                INDUS PORTAL | Daily Report
-            </h1>
-            <p class="text-sm text-gray-500 mt-2">Submit your daily summary directly to the Principal and Department Head.</p>
+    <!-- Top Header Card -->
+    <div class="mb-8 bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row md:items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="bg-indigo-50 dark:bg-indigo-900/30 p-3 rounded-lg text-indigo-600 dark:text-indigo-400">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white uppercase tracking-wide">INDUS PORTAL | Daily Report</h1>
+                <p class="text-sm text-gray-500 mt-1">Submit your daily teaching summary. It will be sent directly to the Principal & HOD.</p>
+            </div>
         </div>
-        <div class="mt-4 md:mt-0 text-right">
-            <span class="inline-block bg-indigo-50 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 py-1.5 px-4 rounded-full text-sm font-bold tracking-wide shadow-sm border border-indigo-100 dark:border-indigo-800">
+        <div class="mt-4 md:mt-0">
+            <span class="inline-block bg-indigo-50 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300 py-1.5 px-4 rounded-full text-sm font-bold tracking-wide shadow-sm">
                 DATE: {{ today_formatted }}
             </span>
         </div>
     </div>
 
-    <form action="{{ url_for('teacher_daily_report') }}" method="POST">
+    <!-- Main Layout: 2 Columns -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        <!-- Section 1: Subject Progress Logs -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">1</span>
-                    SUBJECT PROGRESS LOGS
-                </h2>
-                <button type="button" onclick="addRow()" class="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium flex items-center gap-1 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Add Row
-                </button>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse" id="logsTable">
-                    <thead>
-                        <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Class</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Subject</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/5">Topics Covered</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Teacher's Notes / Remarks</th>
-                            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12"></th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="logsBody">
-                        <!-- Initial Row -->
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group">
-                            <td class="py-3 px-4">
-                                <input type="text" name="class[]" placeholder="e.g. Grade 3 - A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                            </td>
-                            <td class="py-3 px-4">
-                                <input type="text" name="subject[]" placeholder="e.g. Math" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                            </td>
-                            <td class="py-3 px-4">
-                                <input type="text" name="topics[]" placeholder="e.g. Multiplications, Ch. 4" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                            </td>
-                            <td class="py-3 px-4">
-                                <input type="text" name="remarks[]" placeholder="e.g. Class was highly attentive." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                            </td>
-                            <td class="py-3 px-4 text-center">
-                                <button type="button" onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors" title="Remove Row">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Section 2: Attendance Snapshot -->
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">2</span>
-                    ATTENDANCE SNAPSHOT
-                </h2>
-                <p class="text-xs text-gray-500 mt-1 ml-8">Auto-generated summary based on today's attendance records across all classes.</p>
-            </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Class Section</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Total Students</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Present Students</th>
-                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Absent Students</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                        {% for snap in attendance_snapshot %}
-                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                            <td class="py-3 px-6 font-medium text-gray-900 dark:text-white">{{ snap.class_name }}</td>
-                            <td class="py-3 px-6 text-center text-gray-700 dark:text-gray-300 font-semibold">{{ snap.total }}</td>
-                            <td class="py-3 px-6 text-center text-emerald-600 dark:text-emerald-400 font-bold">{{ snap.present }}</td>
-                            <td class="py-3 px-6 text-center text-red-500 dark:text-red-400 font-bold">{{ snap.absent }}</td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="py-6 text-center text-gray-500 text-sm">No attendance records found for today.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Footer / Submit Action -->
-        <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3 text-indigo-800 dark:text-indigo-300">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                <span class="text-sm font-medium">Destination: Sent directly to Principal & Department Head Portal.</span>
-            </div>
-            
-            <button type="submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 tracking-wide">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                SEND DAILY REPORT TO ADMIN
-            </button>
-        </div>
-
-    </form>
-
-    <!-- Past Reports Section -->
-    {% if past_reports %}
-    <div class="mt-12 mb-8">
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-            <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            Previously Submitted Reports
-        </h2>
-        <div class="space-y-4">
-            {% for report in past_reports %}
-            <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                <div class="flex justify-between items-center mb-4 border-b border-gray-100 dark:border-gray-700 pb-3">
-                    <span class="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                        Date: {{ report.date }}
-                    </span>
-                    <div class="flex gap-4">
-                        <button type="button" onclick="openEditModal('{{ report._id }}')" class="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium text-sm flex items-center gap-1 transition-colors">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            Edit
-                        </button>
-                        <form action="{{ url_for('teacher_daily_report') }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this report?');" class="inline m-0 p-0">
-                            <input type="hidden" name="action" value="delete">
-                            <input type="hidden" name="report_id" value="{{ report._id }}">
-                            <button type="submit" class="text-red-500 hover:text-red-700 dark:text-red-400 font-medium text-sm flex items-center gap-1 transition-colors">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                Delete
-                            </button>
-                        </form>
+        <!-- Left Column: Form & Attendance -->
+        <div class="lg:col-span-2 space-y-8">
+            <form action="{{ url_for('teacher_daily_report') }}" method="POST" id="dailyReportForm">
+                <input type="hidden" name="action" value="create">
+                
+                <!-- Section 1: Daily Teaching Summary -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                            <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm font-bold shadow-sm">1</span>
+                            DAILY TEACHING SUMMARY
+                        </h2>
+                        <p class="text-sm text-gray-500 mt-1 ml-9">Please provide a quick summary of today's teaching.</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Class <span class="text-red-500">*</span></label>
+                                <select name="class[]" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">
+                                    <option value="">Select Class</option>
+                                    <option value="1st Standard">1st Standard</option>
+                                    <option value="2nd Standard">2nd Standard</option>
+                                    <option value="3rd Standard">3rd Standard</option>
+                                    <option value="4th Standard">4th Standard</option>
+                                    <option value="5th Standard">5th Standard</option>
+                                    <option value="6th Standard">6th Standard</option>
+                                    <option value="7th Standard">7th Standard</option>
+                                    <option value="8th Standard">8th Standard</option>
+                                    <option value="9th Standard">9th Standard</option>
+                                    <option value="10th Standard">10th Standard</option>
+                                    <option value="11th Standard">11th Standard</option>
+                                    <option value="12th Standard">12th Standard</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Subject <span class="text-red-500">*</span></label>
+                                <input type="text" name="subject[]" placeholder="e.g. Mathematics" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Periods Taken <span class="text-red-500">*</span></label>
+                                <input type="number" name="periods[]" min="1" max="10" value="1" required class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">What was taught today? <span class="text-red-500">*</span></label>
+                            <textarea name="topics[]" rows="4" placeholder="e.g. Completed Quadratic Equations Chapter. Solved Exercise 4.1." required class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm resize-y"></textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Homework Given?</label>
+                                <div class="flex items-center gap-6 mt-2">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="homework[]" value="Yes" class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700">
+                                        <span class="text-gray-900 dark:text-gray-300 font-medium">Yes</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="homework[]" value="No" checked class="w-5 h-5 text-indigo-600 focus:ring-indigo-500 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700">
+                                        <span class="text-gray-900 dark:text-gray-300 font-medium">No</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Any Issue / Remarks?</label>
+                                <input type="text" name="remarks[]" placeholder="e.g. None" class="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm">
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-sm border-collapse">
-                        <thead>
-                            <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                                <th class="py-2 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase w-1/5">Class</th>
-                                <th class="py-2 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase w-1/5">Subject</th>
-                                <th class="py-2 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase w-2/5">Topics</th>
-                                <th class="py-2 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase w-1/5">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            {% for log in report.progress_logs %}
-                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                <td class="py-3 px-4 text-gray-900 dark:text-gray-200">{{ log.class }}</td>
-                                <td class="py-3 px-4 text-gray-900 dark:text-gray-200">{{ log.subject }}</td>
-                                <td class="py-3 px-4 text-gray-900 dark:text-gray-200">{{ log.topics }}</td>
-                                <td class="py-3 px-4 text-gray-900 dark:text-gray-200">{{ log.remarks }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Hidden JSON for Edit -->
-                <script type="application/json" id="logs-{{ report._id }}">
-                    {{ report.progress_logs | tojson | safe }}
-                </script>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full border border-gray-200 dark:border-gray-700">
-            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50 rounded-t-xl">
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Edit Daily Report
-                </h3>
-                <button type="button" onclick="closeEditModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            
-            <form action="{{ url_for('teacher_daily_report') }}" method="POST" class="p-6">
-                <input type="hidden" name="action" value="edit">
-                <input type="hidden" name="report_id" id="editReportId">
-                
-                <div class="overflow-x-auto mb-4 max-h-[60vh] overflow-y-auto pr-2">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="sticky top-0 bg-white dark:bg-gray-800 shadow-sm z-10">
-                            <tr class="border-b border-gray-200 dark:border-gray-700">
-                                <th class="py-3 px-2 text-xs font-semibold uppercase text-gray-500 w-1/5">Class</th>
-                                <th class="py-3 px-2 text-xs font-semibold uppercase text-gray-500 w-1/5">Subject</th>
-                                <th class="py-3 px-2 text-xs font-semibold uppercase text-gray-500 w-2/5">Topics Covered</th>
-                                <th class="py-3 px-2 text-xs font-semibold uppercase text-gray-500 w-1/5">Remarks</th>
-                                <th class="py-3 px-2 w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="editLogsBody" class="divide-y divide-gray-100 dark:divide-gray-700">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
+                <!-- Section 2: Attendance Snapshot -->
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mt-8">
+                    <div class="px-6 py-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                                <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm font-bold shadow-sm">2</span>
+                                ATTENDANCE SNAPSHOT (AUTO-GENERATED)
+                            </h2>
+                            <p class="text-sm text-gray-500 mt-1 ml-9">Today's attendance summary across your classes.</p>
+                        </div>
+                        <a href="{{ url_for('export_attendance_snapshot') }}" class="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-semibold rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors border border-emerald-200 dark:border-emerald-800 shadow-sm text-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export to Excel
+                        </a>
+                    </div>
+                    
+                    <div class="p-6 overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead>
+                                <tr class="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-700">
+                                    <th class="pb-3 font-bold">Class</th>
+                                    <th class="pb-3 font-bold text-center">Total Students</th>
+                                    <th class="pb-3 font-bold text-center">Present Students</th>
+                                    <th class="pb-3 font-bold text-center">Absent Students</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                                {% for snap in attendance_snapshot %}
+                                <tr>
+                                    <td class="py-4 font-bold text-gray-900 dark:text-white">{{ snap.class_name }}</td>
+                                    <td class="py-4 text-center text-gray-900 dark:text-white font-bold">{{ snap.total }}</td>
+                                    <td class="py-4 text-center text-emerald-500 font-bold">{{ snap.present }}</td>
+                                    <td class="py-4 text-center text-red-500 font-bold">{{ snap.absent }}</td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="py-6 text-center text-gray-500 text-sm italic">No attendance records found for today.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-                
-                <button type="button" onclick="addEditRow()" class="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium mb-6 flex items-center gap-1 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                    Add Row
-                </button>
-                
-                <div class="flex justify-end gap-3 pt-5 border-t border-gray-100 dark:border-gray-700">
-                    <button type="button" onclick="closeEditModal()" class="px-5 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium transition-colors shadow-sm">Cancel</button>
-                    <button type="submit" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium shadow-md hover:shadow-lg transition-all">Save Changes</button>
+
+                <!-- Submit Action -->
+                <div class="mt-8 flex flex-col sm:flex-row items-center justify-between bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800/50">
+                    <div class="flex items-center gap-3 text-indigo-700 dark:text-indigo-300 mb-4 sm:mb-0">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        <span class="text-sm font-medium">Your report will be sent directly to the Principal & Department Head.</span>
+                    </div>
+                    <button type="submit" class="w-full sm:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 tracking-wide">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                        SUBMIT DAILY REPORT
+                    </button>
                 </div>
             </form>
+
+            <!-- Past Reports List (Simplified View) -->
+            {% if past_reports %}
+            <div class="mt-12">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-6 uppercase tracking-wide border-b border-gray-200 dark:border-gray-700 pb-2">Recent Reports</h3>
+                <div class="space-y-4">
+                    {% for report in past_reports %}
+                    <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-bold text-gray-500">{{ report.date }}</span>
+                            <form action="{{ url_for('teacher_daily_report') }}" method="POST" onsubmit="return confirm('Delete this report?');" class="inline">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="report_id" value="{{ report._id }}">
+                                <button type="submit" class="text-red-500 hover:text-red-700 text-sm font-medium">Delete</button>
+                            </form>
+                        </div>
+                        {% for log in report.progress_logs %}
+                        <div class="{% if not loop.first %}mt-4 pt-4 border-t border-gray-100 dark:border-gray-700{% endif %}">
+                            <div class="flex flex-wrap gap-2 mb-2">
+                                <span class="bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 px-2 py-1 rounded text-xs font-bold">{{ log.class }}</span>
+                                <span class="bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300 px-2 py-1 rounded text-xs font-bold">{{ log.subject }} ({{ log.periods }} Periods)</span>
+                            </div>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 mb-2">{{ log.topics }}</p>
+                            <div class="flex flex-wrap gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                <span><strong>HW:</strong> {{ log.homework }}</span>
+                                <span><strong>Remarks:</strong> {{ log.remarks or 'None' }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
         </div>
+
+        <!-- Right Column: Instructions & Preview Sidebar -->
+        <div class="space-y-8">
+            <!-- How It Works -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider mb-6">How It Works (For Teachers)</h3>
+                
+                <div class="relative border-l-2 border-emerald-100 dark:border-emerald-900/30 ml-3 space-y-6">
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">1</span>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">Select Class, Subject and enter Periods Taken.</p>
+                    </div>
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">2</span>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">Write a short summary of what you taught.</p>
+                    </div>
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">3</span>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">Choose if homework was given and add any issue (if any).</p>
+                    </div>
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">4</span>
+                        <p class="text-sm text-gray-700 dark:text-gray-300">Attendance is auto-generated. No need to enter it.</p>
+                    </div>
+                    <div class="relative pl-6">
+                        <span class="absolute -left-[13px] bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">5</span>
+                        <p class="text-sm text-gray-700 dark:text-gray-300 font-medium">Click "Submit Daily Report" and you're done!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+                <h3 class="text-sm font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-4">How Principal / HOD View It</h3>
+                
+                <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-gray-50 dark:bg-gray-900/30">
+                    <div class="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 pb-2 mb-3">
+                        <span class="text-xs font-bold text-gray-900 dark:text-white">Teacher: {{ session.get('name') or 'Kalmeshwar Gurav' }}</span>
+                        <span class="text-xs text-gray-500">Date: {{ today_formatted }}</span>
+                    </div>
+                    <h4 class="text-sm font-bold text-gray-900 dark:text-white mb-2">10th A - Mathematics <span class="font-normal text-gray-500">(2 Periods)</span></h4>
+                    <p class="text-sm text-emerald-600 dark:text-emerald-400 mb-3 leading-relaxed">
+                        Completed Quadratic Equations Chapter.<br>
+                        Solved Exercise 4.1 and 4.2.<br>
+                        Given homework questions 1-10.
+                    </p>
+                    <div class="flex gap-4 text-xs font-medium text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-4 mb-4">
+                        <span>Homework Given: <span class="text-gray-500">Yes</span></span>
+                        <span>Issue: <span class="text-gray-500">None</span></span>
+                    </div>
+                    
+                    <h4 class="text-xs font-bold text-gray-900 dark:text-white mb-2">Attendance Summary</h4>
+                    <div class="bg-white dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700 p-2 flex justify-between text-center">
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase">Total</div>
+                            <div class="font-bold text-gray-900 dark:text-white">48</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase">Present</div>
+                            <div class="font-bold text-emerald-500">45</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-gray-500 uppercase">Absent</div>
+                            <div class="font-bold text-red-500">3</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
     </div>
-
 </div>
-
-<script>
-    function addRow() {
-        const tbody = document.getElementById('logsBody');
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group';
-        tr.innerHTML = `
-            <td class="py-3 px-4">
-                <input type="text" name="class[]" placeholder="e.g. Grade X - Y" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-4">
-                <input type="text" name="subject[]" placeholder="e.g. Subject" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-4">
-                <input type="text" name="topics[]" placeholder="Topics Covered" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-4">
-                <input type="text" name="remarks[]" placeholder="Remarks" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-4 text-center">
-                <button type="button" onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors" title="Remove Row">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
-
-    // Edit Modal Logic
-    function openEditModal(reportId) {
-        document.getElementById('editModal').classList.remove('hidden');
-        document.getElementById('editReportId').value = reportId;
-        
-        const logsData = JSON.parse(document.getElementById('logs-' + reportId).textContent);
-        const tbody = document.getElementById('editLogsBody');
-        tbody.innerHTML = ''; // clear existing rows
-        
-        logsData.forEach(log => {
-            addEditRow(log.class, log.subject, log.topics, log.remarks);
-        });
-        
-        if(logsData.length === 0) {
-            addEditRow(); // Add empty row if none
-        }
-        
-        // Prevent body scrolling when modal is open
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').classList.add('hidden');
-        document.body.style.overflow = 'auto'; // Restore scroll
-    }
-
-    function escapeHtml(unsafe) {
-        return (unsafe || '').toString()
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
-    }
-
-    function addEditRow(cls='', subj='', tops='', rem='') {
-        const tbody = document.getElementById('editLogsBody');
-        const tr = document.createElement('tr');
-        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group';
-        tr.innerHTML = `
-            <td class="py-3 px-2">
-                <input type="text" name="class[]" value="${escapeHtml(cls)}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-2">
-                <input type="text" name="subject[]" value="${escapeHtml(subj)}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-2">
-                <input type="text" name="topics[]" value="${escapeHtml(tops)}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-2">
-                <input type="text" name="remarks[]" value="${escapeHtml(rem)}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-            </td>
-            <td class="py-3 px-2 text-center">
-                <button type="button" onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors" title="Remove Row">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    }
-</script>
 {% endblock %}
