@@ -1323,7 +1323,9 @@ def admin_dashboard():
         if key not in ('_id', 'admin', 'teacher', 'student'):
             available_roles.append(key)
     
-    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles)
+    teacher_reports = list(db.teacher_reports.find().sort('date_submitted', -1))
+    
+    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles, teacher_reports=teacher_reports)
 
 @app.route('/staff_management')
 def staff_management():
