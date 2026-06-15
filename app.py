@@ -2521,6 +2521,74 @@ def reports():
     
     return render_template('reports.html', students=students, analytics=analytics, all_subjects=all_subjects_sorted)
 
+@app.route('/teacher/daily_report', methods=['GET', 'POST'])
+def teacher_daily_report():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        flash('Unauthorized access.')
+        return redirect(url_for('login'))
+        
+    today_date = datetime.now().strftime('%Y-%m-%d')
+    today_formatted = datetime.now().strftime('%m / %d / %Y')
+    
+    if request.method == 'POST':
+        classes = request.form.getlist('class[]')
+        subjects = request.form.getlist('subject[]')
+        topics = request.form.getlist('topics[]')
+        remarks = request.form.getlist('remarks[]')
+        
+        progress_logs = []
+        for c, s, t, r in zip(classes, subjects, topics, remarks):
+            if c or s or t or r:
+                progress_logs.append({
+                    'class': c,
+                    'subject': s,
+                    'topics': t,
+                    'remarks': r
+                })
+                
+        db.teacher_reports.insert_one({
+            'teacher': session.get('name'),
+            'username': session.get('username'),
+            'date': today_date,
+            'progress_logs': progress_logs,
+            'submitted_at': datetime.now()
+        })
+        flash('Daily report submitted successfully to HOD/Principal.')
+        return redirect(url_for('teacher_daily_report'))
+        
+    # GET method - Calculate attendance snapshot
+    att_doc = db.attendance.find_one({'date': today_date})
+    records = att_doc.get('records', {}) if att_doc else {}
+    
+    students = list(db.students.find({}, {'id': 1, 'student_class': 1}))
+    class_stats = {}
+    for s in students:
+        c_name = s.get('student_class')
+        if not c_name: continue
+        
+        if c_name not in class_stats:
+            class_stats[c_name] = {'total': 0, 'present': 0}
+            
+        class_stats[c_name]['total'] += 1
+        
+        status = records.get(s['id'])
+        if status in ['Present', 'Late']:
+            class_stats[c_name]['present'] += 1
+                
+    attendance_snapshot = []
+    for c_name, stats in class_stats.items():
+        attendance_snapshot.append({
+            'class_name': c_name,
+            'total': stats['total'],
+            'present': stats['present'],
+            'absent': stats['total'] - stats['present']
+        })
+    # Basic sort to put grades in order
+    attendance_snapshot.sort(key=lambda x: x['class_name'])
+    
+    return render_template('teacher_daily_report.html', today_formatted=today_formatted, attendance_snapshot=attendance_snapshot)
+
+
 @app.route('/ai_box')
 def ai_box():
     if not session.get('logged_in'):

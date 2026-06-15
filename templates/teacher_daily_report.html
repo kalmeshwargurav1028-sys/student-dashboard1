@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block header_title %}Submit Daily Report to HOD/Principal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                INDUS PORTAL | Daily Report
+            </h1>
+            <p class="text-sm text-gray-500 mt-2">Submit your daily summary directly to the Principal and Department Head.</p>
+        </div>
+        <div class="mt-4 md:mt-0 text-right">
+            <span class="inline-block bg-indigo-50 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-300 py-1.5 px-4 rounded-full text-sm font-bold tracking-wide shadow-sm border border-indigo-100 dark:border-indigo-800">
+                DATE: {{ today_formatted }}
+            </span>
+        </div>
+    </div>
+
+    <form action="{{ url_for('teacher_daily_report') }}" method="POST">
+        
+        <!-- Section 1: Subject Progress Logs -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">1</span>
+                    SUBJECT PROGRESS LOGS
+                </h2>
+                <button type="button" onclick="addRow()" class="text-sm text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 font-medium flex items-center gap-1 transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Add Row
+                </button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse" id="logsTable">
+                    <thead>
+                        <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Class</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Subject</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-2/5">Topics Covered</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-1/5">Teacher's Notes / Remarks</th>
+                            <th class="py-3 px-4 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider w-12"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700" id="logsBody">
+                        <!-- Initial Row -->
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group">
+                            <td class="py-3 px-4">
+                                <input type="text" name="class[]" placeholder="e.g. Grade 3 - A" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            </td>
+                            <td class="py-3 px-4">
+                                <input type="text" name="subject[]" placeholder="e.g. Math" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            </td>
+                            <td class="py-3 px-4">
+                                <input type="text" name="topics[]" placeholder="e.g. Multiplications, Ch. 4" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            </td>
+                            <td class="py-3 px-4">
+                                <input type="text" name="remarks[]" placeholder="e.g. Class was highly attentive." class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+                            </td>
+                            <td class="py-3 px-4 text-center">
+                                <button type="button" onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors" title="Remove Row">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Section 2: Attendance Snapshot -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 mb-8 overflow-hidden">
+            <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
+                <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-sm">2</span>
+                    ATTENDANCE SNAPSHOT
+                </h2>
+                <p class="text-xs text-gray-500 mt-1 ml-8">Auto-generated summary based on today's attendance records across all classes.</p>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">Class Section</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Total Students</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Present Students</th>
+                            <th class="py-3 px-6 font-semibold text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider text-center">Absent Students</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
+                        {% for snap in attendance_snapshot %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
+                            <td class="py-3 px-6 font-medium text-gray-900 dark:text-white">{{ snap.class_name }}</td>
+                            <td class="py-3 px-6 text-center text-gray-700 dark:text-gray-300 font-semibold">{{ snap.total }}</td>
+                            <td class="py-3 px-6 text-center text-emerald-600 dark:text-emerald-400 font-bold">{{ snap.present }}</td>
+                            <td class="py-3 px-6 text-center text-red-500 dark:text-red-400 font-bold">{{ snap.absent }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="py-6 text-center text-gray-500 text-sm">No attendance records found for today.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer / Submit Action -->
+        <div class="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-6 border border-indigo-100 dark:border-indigo-800/50 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3 text-indigo-800 dark:text-indigo-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <span class="text-sm font-medium">Destination: Sent directly to Principal & Department Head Portal.</span>
+            </div>
+            
+            <button type="submit" class="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 tracking-wide">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                SEND DAILY REPORT TO ADMIN
+            </button>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    function addRow() {
+        const tbody = document.getElementById('logsBody');
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group';
+        tr.innerHTML = `
+            <td class="py-3 px-4">
+                <input type="text" name="class[]" placeholder="e.g. Grade X - Y" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+            </td>
+            <td class="py-3 px-4">
+                <input type="text" name="subject[]" placeholder="e.g. Subject" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+            </td>
+            <td class="py-3 px-4">
+                <input type="text" name="topics[]" placeholder="Topics Covered" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+            </td>
+            <td class="py-3 px-4">
+                <input type="text" name="remarks[]" placeholder="Remarks" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded text-sm focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
+            </td>
+            <td class="py-3 px-4 text-center">
+                <button type="button" onclick="this.closest('tr').remove()" class="text-gray-400 hover:text-red-500 transition-colors" title="Remove Row">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    }
+</script>
+{% endblock %}
