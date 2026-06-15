@@ -8,6 +8,8 @@ import io
 from datetime import datetime, timedelta
 import threading
 import traceback
+import openpyxl
+from openpyxl.styles import Font, PatternFill, Alignment
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file, jsonify
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from werkzeug.utils import secure_filename
@@ -2630,7 +2632,7 @@ def teacher_daily_report():
             
         class_stats[c_name]['total'] += 1
         
-        status = records.get(s.get('id'))
+        status = records.get(s.get('id')) or records.get(str(s.get('id')))
         if status in ['Present', 'Late']:
             class_stats[c_name]['present'] += 1
                 
@@ -2667,7 +2669,7 @@ def export_attendance_snapshot():
             class_stats[c_name] = {'total': 0, 'present': 0}
             
         class_stats[c_name]['total'] += 1
-        status = records.get(s.get('id'))
+        status = records.get(s.get('id')) or records.get(str(s.get('id')))
         if status in ['Present', 'Late']:
             class_stats[c_name]['present'] += 1
                 
@@ -2679,11 +2681,7 @@ def export_attendance_snapshot():
             'present': stats['present'],
             'absent': stats['total'] - stats['present']
         })
-    snapshot.sort(key=lambda x: x['class_name'])
-    
-    import openpyxl
-    from openpyxl.styles import Font, PatternFill, Alignment
-    import io
+    snapshot.sort(key=lambda x: str(x['class_name']))
     
     wb = openpyxl.Workbook()
     ws = wb.active
