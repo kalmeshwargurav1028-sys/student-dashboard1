@@ -3780,11 +3780,8 @@ def create_online_test():
         pdf_url = None
         if pdf_file and pdf_file.filename:
             filename = secure_filename(pdf_file.filename)
-            upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'tests')
-            os.makedirs(upload_dir, exist_ok=True)
-            pdf_path = os.path.join(upload_dir, filename)
-            pdf_file.save(pdf_path)
-            pdf_url = url_for('static', filename=f'uploads/tests/{filename}')
+            file_id = str(fs.put(pdf_file, filename=filename, content_type=pdf_file.content_type))
+            pdf_url = url_for('get_file', file_id=file_id)
         
         test_data = {
             'title': title,
