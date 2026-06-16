@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Promotion Certificate - {{ student.name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+        }
+        .certificate-container {
+            width: 1000px;
+            height: 700px;
+            background: white;
+            padding: 40px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            border: 2px solid #d4af37;
+            box-sizing: border-box;
+            background-image: radial-gradient(circle, #ffffff 40%, #f9f6e6 100%);
+            margin: 20px auto;
+        }
+        .certificate-border {
+            width: 100%;
+            height: 100%;
+            border: 10px double #d4af37;
+            padding: 30px;
+            box-sizing: border-box;
+            text-align: center;
+            position: relative;
+        }
+        .school-name {
+            font-family: 'Cinzel', serif;
+            font-size: 32px;
+            color: #1a365d;
+            margin-bottom: 5px;
+            letter-spacing: 2px;
+        }
+        .cert-title {
+            font-family: 'Cinzel', serif;
+            font-size: 42px;
+            color: #d4af37;
+            margin: 25px 0;
+            letter-spacing: 4px;
+        }
+        .subtitle {
+            font-size: 20px;
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        .student-name {
+            font-family: 'Great Vibes', cursive;
+            font-size: 64px;
+            color: #1a365d;
+            margin: 20px 0;
+            border-bottom: 2px solid #e2e8f0;
+            display: inline-block;
+            padding: 0 50px;
+        }
+        .details {
+            font-size: 22px;
+            color: #2d3748;
+            line-height: 1.8;
+            margin: 30px 60px;
+        }
+        .highlight {
+            font-weight: bold;
+            color: #1a365d;
+        }
+        .footer-section {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 80px;
+            padding: 0 40px;
+            position: relative;
+            z-index: 10;
+        }
+        .signature-block {
+            text-align: center;
+            width: 250px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #1a365d;
+            margin-bottom: 10px;
+            height: 40px;
+        }
+        .signature-text {
+            font-size: 16px;
+            color: #4a5568;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+        .seal {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 140px;
+            background: #d4af37;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px dashed #fff;
+            box-shadow: 0 0 0 4px #d4af37, 0 4px 10px rgba(0,0,0,0.2);
+            color: white;
+            font-family: 'Cinzel', serif;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            z-index: 1;
+        }
+        @media print {
+            body {
+                background: none;
+                margin: 0;
+                height: auto;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            .certificate-container {
+                box-shadow: none;
+                border: none;
+                margin: 0;
+                width: 100%;
+                height: 100%;
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="certificate-container">
+        <div class="certificate-border">
+            <div class="school-name">INDUS INTERNATIONAL SCHOOL</div>
+            <div class="cert-title">CERTIFICATE OF PROMOTION</div>
+            
+            <div class="subtitle">This is to proudly certify that</div>
+            
+            <div class="student-name">{{ student.name }}</div>
+            
+            <div class="details">
+                having successfully completed the prescribed course of study and final examinations for <span class="highlight">Grade {{ student.student_class }}</span>, achieving a total score of <span class="highlight">{{ total_marks|round(1) }}</span> out of <span class="highlight">{{ max_marks }}</span> ({{ percentage }}%), is hereby promoted to the next academic class.
+            </div>
+            
+            <div class="footer-section">
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <div class="signature-text">Class Teacher</div>
+                </div>
+                
+                <div class="seal">
+                    OFFICIAL<br>SEAL
+                </div>
+                
+                <div class="signature-block">
+                    <div class="signature-line"></div>
+                    <div class="signature-text">Principal</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

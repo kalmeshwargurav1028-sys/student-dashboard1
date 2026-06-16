@@ -1875,6 +1875,46 @@ def academic_profile_pdf(student_id):
                           max_marks=max_marks, 
                           subjects_breakdown=subjects_breakdown)
 
+@app.route('/student/<student_id>/promotion_certificate')
+def promotion_certificate(student_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('dashboard'))
+        
+    total_marks = 0
+    max_marks = 0
+    
+    if student.get('subjects'):
+        for subj, score in student.get('subjects').items():
+            total_marks += float(score)
+            max_marks += 100
+            
+    grades = list(db.grades.find({'student_id': student_id}, {'_id': 0}))
+    processed_subjects = set(student.get('subjects', {}).keys())
+    
+    for g in grades:
+        subj = g.get('subject')
+        ca = float(g.get('ca_mark') or 0)
+        exam = float(g.get('exam_mark') or 0)
+        if subj not in processed_subjects:
+            total = ca + exam
+            total_marks += total
+            max_marks += 100
+            processed_subjects.add(subj)
+
+    percentage = round((total_marks / max_marks) * 100, 1) if max_marks > 0 else 0
+
+    return render_template('promotion_certificate.html', 
+                          student=student, 
+                          total_marks=total_marks, 
+                          max_marks=max_marks, 
+                          percentage=percentage)
+
+
 @app.route('/admin_profile', methods=['GET', 'POST'])
 def admin_profile():
     if not session.get('logged_in'):
