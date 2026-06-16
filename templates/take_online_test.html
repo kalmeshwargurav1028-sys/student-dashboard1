@@ -31,8 +31,11 @@
                 </a>
             </div>
             
-            <div class="w-full h-[600px] border border-indigo-200 rounded-lg overflow-hidden bg-white">
-                <embed src="{{ test.pdf_url }}#toolbar=0&navpanes=0&scrollbar=0" type="application/pdf" width="100%" height="100%" class="border-0"></embed>
+            <div class="w-full h-[600px] border border-indigo-200 rounded-lg overflow-hidden bg-gray-100 relative shadow-inner">
+                <!-- CSS Hack: Shift the embed up by 60px to push the Chrome/Edge native PDF toolbar outside the visible overflow-hidden container -->
+                <div class="absolute top-[-60px] left-0 w-full h-[calc(100%+60px)]">
+                    <embed src="{{ test.pdf_url }}#toolbar=0&navpanes=0" type="application/pdf" width="100%" height="100%" class="border-0"></embed>
+                </div>
             </div>
         </div>
         {% endif %}
