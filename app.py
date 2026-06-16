@@ -3849,6 +3849,28 @@ def teacher_test_submissions(test_id):
         flash(f'Error loading submissions: {str(e)}')
         return redirect(url_for('teacher_online_tests'))
 
+@app.route('/teacher/update_submission_score/<sub_id>', methods=['POST'])
+def update_submission_score(sub_id):
+    if not session.get('logged_in') or session.get('role') not in ['admin', 'teacher']:
+        return redirect(url_for('login'))
+        
+    from bson.objectid import ObjectId
+    try:
+        new_score = int(request.form.get('score', 0))
+        db.test_submissions.update_one(
+            {'_id': ObjectId(sub_id)},
+            {'$set': {'final_score': new_score, 'auto_score': new_score, 'status': 'graded'}}
+        )
+        flash('Score updated successfully!')
+        
+        sub = db.test_submissions.find_one({'_id': ObjectId(sub_id)})
+        if sub:
+            return redirect(url_for('teacher_test_submissions', test_id=str(sub.get('test_id'))))
+    except Exception as e:
+        flash(f'Error updating score: {str(e)}')
+        
+    return redirect(url_for('teacher_online_tests'))
+
 @app.route('/student/online_tests')
 def student_online_tests():
     if not session.get('logged_in') or session.get('role') != 'student':

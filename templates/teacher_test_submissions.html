@@ -23,7 +23,7 @@
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll/ID</th>
                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Time</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auto-Grade Score</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score / Final Grade</th>
                         <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
                     </tr>
                 </thead>
@@ -34,9 +34,11 @@
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ sub.student_roll }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ sub.submitted_at }}</td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                {{ sub.auto_score }} / {{ test.total_marks }}
-                            </span>
+                            <form action="{{ url_for('update_submission_score', sub_id=sub._id) }}" method="POST" class="flex items-center space-x-2">
+                                <input type="number" name="score" value="{{ sub.final_score if sub.final_score is not none else sub.auto_score }}" min="0" max="{{ test.total_marks }}" class="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
+                                <span class="text-sm font-semibold text-gray-500 dark:text-gray-400">/ {{ test.total_marks }}</span>
+                                <button type="submit" class="text-xs bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded hover:bg-emerald-200 transition-colors font-bold shadow-sm border border-emerald-200">Save</button>
+                            </form>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <button onclick="toggleDetails('{{ sub._id }}')" class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold">
