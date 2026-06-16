@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block header_title %}Create Online Test{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+        <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">Create a New Online Test</h2>
+        
+        <form method="POST" action="{{ url_for('create_online_test') }}" onsubmit="return prepareQuestions()">
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Test Title</label>
+                    <input type="text" name="title" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
+                    <input type="text" name="subject" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Grade</label>
+                    <select name="target_class" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                        <option value="1st">1st Standard</option>
+                        <option value="10th">10th Standard</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Duration (Minutes)</label>
+                    <input type="number" name="duration" value="60" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+            </div>
+
+            <hr class="mb-6">
+            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Questions</h3>
+            
+            <div id="questions-container" class="space-y-4 mb-6"></div>
+            
+            <button type="button" onclick="addQuestion()" class="mb-6 px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                + Add Question
+            </button>
+
+            <input type="hidden" name="questions_json" id="questions_json">
+
+            <div class="flex justify-end pt-4 border-t border-gray-200">
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+                    Publish Test (100 Marks)
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let questionCount = 0;
+
+function addQuestion() {
+    const container = document.getElementById('questions-container');
+    const qDiv = document.createElement('div');
+    qDiv.className = 'p-4 border border-gray-200 rounded-md question-block';
+    qDiv.innerHTML = `
+        <label class="block text-sm font-medium mb-1">Question Text</label>
+        <input type="text" class="q-text block w-full border border-gray-300 rounded-md py-2 px-3 mb-3">
+        <div class="flex gap-4">
+            <div class="flex-1">
+                <label class="block text-sm font-medium mb-1">Correct Answer</label>
+                <input type="text" class="q-ans block w-full border border-gray-300 rounded-md py-2 px-3">
+            </div>
+            <div class="w-24">
+                <label class="block text-sm font-medium mb-1">Marks</label>
+                <input type="number" class="q-marks block w-full border border-gray-300 rounded-md py-2 px-3" value="10">
+            </div>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="mt-2 text-sm text-red-600">Remove</button>
+    `;
+    container.appendChild(qDiv);
+    questionCount++;
+}
+
+function prepareQuestions() {
+    const questions = [];
+    document.querySelectorAll('.question-block').forEach(block => {
+        questions.push({
+            question_text: block.querySelector('.q-text').value,
+            correct_answer: block.querySelector('.q-ans').value,
+            marks: parseInt(block.querySelector('.q-marks').value) || 0
+        });
+    });
+    document.getElementById('questions_json').value = JSON.stringify(questions);
+    
+    const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
+    if (totalMarks !== 100) {
+        alert('Total marks must be exactly 100. Current total: ' + totalMarks);
+        return false;
+    }
+    return true;
+}
+
+// Add one default question
+addQuestion();
+</script>
+{% endblock %}

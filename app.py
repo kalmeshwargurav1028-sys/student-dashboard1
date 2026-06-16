@@ -3721,6 +3721,114 @@ def handle_exception(e):
         return "<h1>500 Internal Server Error</h1><p>Oops, something went wrong. The system administrator has been notified.</p>", 500
     return e
 
+# ---------------------------------------------------------------------------
+# Online Tests Module
+# ---------------------------------------------------------------------------
+@app.route('/teacher/online_tests')
+def teacher_online_tests():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    tests = list(db.online_tests.find({'teacher_id': session.get('user_id')}).sort('_id', -1))
+    return render_template('teacher_online_tests.html', tests=tests)
+
+@app.route('/teacher/create_test', methods=['GET', 'POST'])
+def create_online_test():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    if request.method == 'POST':
+        title = request.form.get('title')
+        target_class = request.form.get('target_class')
+        subject = request.form.get('subject')
+        duration = int(request.form.get('duration', 60))
+        
+        questions_raw = request.form.get('questions_json', '[]')
+        questions = json.loads(questions_raw)
+        
+        test_data = {
+            'title': title,
+            'target_class': target_class,
+            'subject': subject,
+            'duration_minutes': duration,
+            'total_marks': 100,
+            'questions': questions,
+            'teacher_id': session.get('user_id'),
+            'status': 'published',
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        db.online_tests.insert_one(test_data)
+        
+        broadcast_notification("New Online Test", f"A new test '{title}' has been published for Grade {target_class}.", role_target='student')
+        flash('Online Test created successfully!')
+        return redirect(url_for('teacher_online_tests'))
+        
+    return render_template('create_online_test.html')
+
+@app.route('/student/online_tests')
+def student_online_tests():
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
+    if not student:
+        return redirect(url_for('dashboard'))
+        
+    student_class = student.get('student_class')
+    tests = list(db.online_tests.find({'target_class': student_class, 'status': 'published'}))
+    
+    submissions = list(db.test_submissions.find({'student_id': session.get('user_id')}))
+    submitted_test_ids = [str(sub['test_id']) for sub in submissions]
+    
+    return render_template('student_online_tests.html', tests=tests, submitted_test_ids=submitted_test_ids)
+
+@app.route('/student/take_test/<test_id>', methods=['GET', 'POST'])
+def take_online_test(test_id):
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    from bson.objectid import ObjectId
+    test = db.online_tests.find_one({'_id': ObjectId(test_id)})
+    if not test:
+        flash('Test not found.')
+        return redirect(url_for('student_online_tests'))
+        
+    existing = db.test_submissions.find_one({'test_id': ObjectId(test_id), 'student_id': session.get('user_id')})
+    if existing:
+        flash('You have already submitted this test.')
+        return redirect(url_for('student_online_tests'))
+        
+    if request.method == 'POST':
+        answers = []
+        auto_score = 0
+        for i, q in enumerate(test.get('questions', [])):
+            ans = request.form.get(f'q_{i}', '')
+            correct = q.get('correct_answer', '')
+            marks = int(q.get('marks', 0))
+            awarded = marks if str(ans).strip().lower() == str(correct).strip().lower() else 0
+            auto_score += awarded
+            
+            answers.append({
+                'question_index': i,
+                'student_answer': ans,
+                'marks_awarded': awarded
+            })
+            
+        submission = {
+            'test_id': ObjectId(test_id),
+            'student_id': session.get('user_id'),
+            'answers': answers,
+            'auto_grade_score': auto_score,
+            'final_score': auto_score,
+            'status': 'graded',
+            'submitted_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        db.test_submissions.insert_one(submission)
+        
+        flash(f'Test submitted! Your score: {auto_score} / 100')
+        return redirect(url_for('student_online_tests'))
+        
+    return render_template('take_online_test.html', test=test)
+
 @app.route('/dev/test_error')
 def dev_test_error():
     if not session.get('logged_in') or session.get('role') != 'admin':

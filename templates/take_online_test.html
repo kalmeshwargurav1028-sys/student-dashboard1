@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+
+{% block header_title %}Taking Test: {{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 sticky top-0 z-10 border-b-4 border-emerald-500">
+        <div class="px-4 py-4 sm:px-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">{{ test.title }}</h2>
+            <div class="text-2xl font-mono text-red-600 font-bold" id="timer">
+                {{ test.duration_minutes }}:00
+            </div>
+        </div>
+    </div>
+
+    <form id="test-form" method="POST" action="{{ url_for('take_online_test', test_id=test._id) }}">
+        <div class="space-y-6">
+            {% for q in test.questions %}
+            <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
+                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                    Q{{ loop.index }}. {{ q.question_text }}
+                    <span class="float-right text-sm text-gray-500">[{{ q.marks }} Marks]</span>
+                </h3>
+                <input type="text" name="q_{{ loop.index0 }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Type your answer here...">
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-8 flex justify-center">
+            <button type="submit" class="inline-flex justify-center py-3 px-8 border border-transparent shadow-sm text-lg font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+                Submit Test
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Simple countdown timer
+    let timeLeft = {{ test.duration_minutes }} * 60;
+    const timerEl = document.getElementById('timer');
+    
+    const interval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerEl.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            alert("Time is up! Submitting your test automatically.");
+            document.getElementById('test-form').submit();
+        }
+    }, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block header_title %}My Online Tests{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">Available Online Tests</h1>
+    
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {% for test in tests %}
+        <div class="bg-white dark:bg-gray-800 overflow-hidden shadow rounded-lg border border-gray-100 dark:border-gray-700">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">{{ test.title }}</h3>
+                <div class="mt-2 max-w-xl text-sm text-gray-500 dark:text-gray-400">
+                    <p>Subject: {{ test.subject }}</p>
+                    <p>Duration: {{ test.duration_minutes }} Minutes</p>
+                    <p>Total Marks: 100</p>
+                </div>
+                <div class="mt-5">
+                    {% if test._id|string in submitted_test_ids %}
+                    <span class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100">
+                        Submitted & Graded
+                    </span>
+                    {% else %}
+                    <a href="{{ url_for('take_online_test', test_id=test._id) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+                        Take Test
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-full text-center text-gray-500 py-12">
+            No active tests available for your class.
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
