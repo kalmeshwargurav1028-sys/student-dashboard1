@@ -48,10 +48,17 @@
             <hr class="mb-6">
             <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">Questions</h3>
             
+            <div class="flex items-center space-x-2 mb-4 bg-gray-50 dark:bg-gray-700 p-3 rounded-lg border border-gray-200 dark:border-gray-600">
+                <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Quick Setup:</label>
+                <input type="number" id="bulk-q-count" placeholder="No. of questions (e.g. 25)" class="border border-gray-300 dark:border-gray-600 rounded-md py-1 px-3 w-48 text-sm dark:bg-gray-800 dark:text-white" min="1" max="100">
+                <button type="button" onclick="generateBulkQuestions()" class="px-3 py-1 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 rounded-md text-sm font-bold shadow-sm transition-colors">Generate Blank Blocks</button>
+                <span class="text-xs text-gray-500 ml-2">(Automatically divides 100 marks)</span>
+            </div>
+            
             <div id="questions-container" class="space-y-4 mb-6"></div>
             
             <button type="button" onclick="addQuestion()" class="mb-6 px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                + Add Question
+                + Add Single Question
             </button>
 
             <input type="hidden" name="questions_json" id="questions_json">
@@ -68,27 +75,48 @@
 <script>
 let questionCount = 0;
 
-function addQuestion() {
+function addQuestion(defaultMarks = 10, defaultText = '') {
     const container = document.getElementById('questions-container');
     const qDiv = document.createElement('div');
-    qDiv.className = 'p-4 border border-gray-200 rounded-md question-block';
+    qDiv.className = 'p-4 border border-gray-200 dark:border-gray-700 rounded-md question-block bg-gray-50 dark:bg-gray-800/50';
     qDiv.innerHTML = `
-        <label class="block text-sm font-medium mb-1">Question Text</label>
-        <input type="text" class="q-text block w-full border border-gray-300 rounded-md py-2 px-3 mb-3">
+        <label class="block text-sm font-medium mb-1 dark:text-gray-300">Question Text</label>
+        <input type="text" class="q-text block w-full border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 mb-3 dark:bg-gray-700 dark:text-white" value="${defaultText}">
         <div class="flex gap-4">
             <div class="flex-1">
-                <label class="block text-sm font-medium mb-1">Correct Answer</label>
-                <input type="text" class="q-ans block w-full border border-gray-300 rounded-md py-2 px-3">
+                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Correct Answer</label>
+                <input type="text" class="q-ans block w-full border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 dark:bg-gray-700 dark:text-white">
             </div>
             <div class="w-24">
-                <label class="block text-sm font-medium mb-1">Marks</label>
-                <input type="number" class="q-marks block w-full border border-gray-300 rounded-md py-2 px-3" value="10">
+                <label class="block text-sm font-medium mb-1 dark:text-gray-300">Marks</label>
+                <input type="number" class="q-marks block w-full border border-gray-300 dark:border-gray-600 rounded-md py-2 px-3 dark:bg-gray-700 dark:text-white" value="${defaultMarks}">
             </div>
         </div>
-        <button type="button" onclick="this.parentElement.remove()" class="mt-2 text-sm text-red-600">Remove</button>
+        <button type="button" onclick="this.parentElement.remove()" class="mt-2 text-sm font-bold text-red-600 hover:text-red-800">Remove</button>
     `;
     container.appendChild(qDiv);
     questionCount++;
+}
+
+function generateBulkQuestions() {
+    const count = parseInt(document.getElementById('bulk-q-count').value);
+    if (!count || count <= 0) return;
+    
+    if(!confirm(`This will clear any existing questions and generate ${count} new blank blocks. Continue?`)) return;
+    
+    document.getElementById('questions-container').innerHTML = '';
+    questionCount = 0;
+    
+    const marksPerQ = Math.floor(100 / count);
+    const remainder = 100 % count;
+    
+    for (let i = 0; i < count; i++) {
+        let marks = marksPerQ;
+        // Add the remainder to the very first question so it all adds up to 100
+        if (i === 0) marks += remainder; 
+        
+        addQuestion(marks, `Question ${i+1}`);
+    }
 }
 
 function prepareQuestions() {
