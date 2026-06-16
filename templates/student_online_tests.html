@@ -17,12 +17,16 @@
                     <p>Total Marks: 100</p>
                 </div>
                 <div class="mt-5">
-                    {% if test._id|string in submitted_test_ids %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-green-700 bg-green-100">
-                        Submitted & Graded
-                    </span>
+                    {% set sub = submissions_map.get(test._id|string) %}
+                    {% if sub %}
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-emerald-700 bg-emerald-100">
+                            Score: {{ sub.final_score }} / {{ test.total_marks | default(100) }}
+                        </span>
+                        <span class="text-xs text-gray-500 italic">Graded</span>
+                    </div>
                     {% else %}
-                    <a href="{{ url_for('take_online_test', test_id=test._id) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+                    <a href="{{ url_for('take_online_test', test_id=test._id) }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                         Take Test
                     </a>
                     {% endif %}

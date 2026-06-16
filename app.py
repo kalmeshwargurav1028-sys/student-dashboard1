@@ -3886,9 +3886,9 @@ def student_online_tests():
     tests = list(db.online_tests.find({'target_class': student_class, 'status': 'published'}))
     
     submissions = list(db.test_submissions.find({'student_id': session.get('user_id')}))
-    submitted_test_ids = [str(sub['test_id']) for sub in submissions]
+    submissions_map = {str(sub['test_id']): sub for sub in submissions}
     
-    return render_template('student_online_tests.html', tests=tests, submitted_test_ids=submitted_test_ids)
+    return render_template('student_online_tests.html', tests=tests, submissions_map=submissions_map)
 
 @app.route('/student/take_test/<test_id>', methods=['GET', 'POST'])
 def take_online_test(test_id):
