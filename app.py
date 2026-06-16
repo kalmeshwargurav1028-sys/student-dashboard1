@@ -104,7 +104,7 @@ def configure_gemini():
         print(f"Warning: Failed to configure Gemini during startup. Error: {e}")
     return None, None
 
-configure_gemini()
+
 
 app = Flask(__name__)
 _secret_key = os.environ.get('SECRET_KEY', '')
@@ -721,9 +721,20 @@ def send_otp_email(email, otp, is_reset=False):
 @app.before_request
 def update_last_active():
     if session.get('logged_in'):
+        # Throttle DB writes to once every 5 minutes per session to improve page load times
+        last_update = session.get('last_active_update')
+        now = datetime.utcnow()
+        if last_update:
+            try:
+                last_update_time = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+                if (now - last_update_time).total_seconds() < 300:
+                    return # Skip DB update to save time
+            except ValueError:
+                pass
+
         role = session.get('role')
         user_id = session.get('user_id')
-        now_str = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
         try:
             if role == 'teacher':
                 db.users.update_one({'_id': ObjectId(user_id)}, {'$set': {'last_active': now_str}})
@@ -731,6 +742,8 @@ def update_last_active():
                 db.student_users.update_one({'student_id': user_id}, {'$set': {'last_active': now_str}})
             elif role == 'admin':
                 db.admins.update_one({'_id': ObjectId(user_id)}, {'$set': {'last_active': now_str}})
+            
+            session['last_active_update'] = now_str
         except Exception as e:
             pass # Ignore malformed ObjectIds or DB errors
 
