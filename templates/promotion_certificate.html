@@ -166,10 +166,13 @@
                 <div class="qr-code">
                     <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ student.id }}" alt="QR Code">
                 </div>
-                <h3>GOVERNMENT OF KARNATAKA</h3>
-                <h1>Karnataka Secondary Education Examination Board</h1>
+                <h1>INDUS INTERNATIONAL SCHOOL BANGALORE</h1>
                 <h2>Marks Statement cum Certificate</h2>
+                {% if student.get('student_class') == '10th' %}
                 <h3>This is to certify that the below mentioned candidate has passed S.S.L.C. Examination.</h3>
+                {% else %}
+                <h3>This is to certify that the below mentioned candidate has passed Examination.</h3>
+                {% endif %}
                 
                 <div class="photo-box">
                     {% if student.photo_url %}
@@ -318,8 +321,8 @@
                 </div>
                 <div class="signature">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Fake_signature.svg" alt="Signature"><br>
-                    SECRETARY<br>
-                    KARNATAKA SECONDARY EDUCATION EXAMINATION BOARD,<br>
+                    PRINCIPAL<br>
+                    INDUS INTERNATIONAL SCHOOL,<br>
                     BENGALURU
                 </div>
             </div>
