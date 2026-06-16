@@ -30,13 +30,24 @@
     <div class="bg-white shadow overflow-hidden sm:rounded-xl border border-gray-100 mb-8">
         <div class="px-4 py-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between">
             <div class="flex items-center gap-6">
-                {% if student.get('photo_url') %}
-                    <img src="{{ student.get('photo_url') }}" alt="Student Photo" class="h-24 w-24 rounded-full object-cover border-4 border-emerald-100">
-                {% else %}
-                    <div class="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-50">
-                        <span class="text-3xl font-bold text-emerald-600">{{ student.name[0] }}</span>
-                    </div>
-                {% endif %}
+                <div class="flex flex-col items-center gap-2">
+                    {% if student.get('photo_url') %}
+                        <img src="{{ student.get('photo_url') }}" alt="Student Photo" class="h-24 w-24 rounded-full object-cover border-4 border-emerald-100">
+                    {% else %}
+                        <div class="h-24 w-24 rounded-full bg-emerald-100 flex items-center justify-center border-4 border-emerald-50">
+                            <span class="text-3xl font-bold text-emerald-600">{{ student.name[0] }}</span>
+                        </div>
+                    {% endif %}
+                    
+                    {% if session.get('role') == 'student' and student.id == session.get('user_id') %}
+                    <form action="{{ url_for('student_profile', student_id=student.id) }}" method="POST" enctype="multipart/form-data" id="photoForm">
+                        <label class="cursor-pointer text-[10px] uppercase tracking-wider font-bold text-emerald-600 hover:text-emerald-800 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-200 transition-colors">
+                            Change Photo
+                            <input type="file" name="photo" class="hidden" accept="image/*" onchange="document.getElementById('photoForm').submit();">
+                        </label>
+                    </form>
+                    {% endif %}
+                </div>
                 <div>
                     <h3 class="text-2xl leading-6 font-bold text-gray-900">{{ student.name }}</h3>
                     <p class="mt-1 max-w-2xl text-sm text-gray-500">Class {{ student.get('student_class', 'N/A') }} &bull; {{ student.get('board', 'N/A') }}</p>

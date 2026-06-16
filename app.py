@@ -1153,7 +1153,7 @@ def student_ai_mentor(student_id):
         
     return render_template('student_ai_mentor.html', student=student)
 
-@app.route('/student/<student_id>')
+@app.route('/student/<student_id>', methods=['GET', 'POST'])
 def student_profile(student_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
@@ -1163,6 +1163,22 @@ def student_profile(student_id):
     if not student:
         flash('Student not found.')
         return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        if session.get('role') == 'student' and session.get('user_id') != student_id:
+            flash('Permission denied.')
+            return redirect(url_for('student_profile', student_id=student_id))
+            
+        photo = request.files.get('photo')
+        if photo and photo.filename != '':
+            filename = secure_filename(photo.filename)
+            unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+            file_id = fs.put(photo, filename=unique_filename, content_type=photo.content_type)
+            photo_url = url_for('get_file', file_id=str(file_id))
+            
+            db.students.update_one({'id': student_id}, {'$set': {'photo_url': photo_url}})
+            flash('Profile photo updated successfully! It will now appear on your ID card.')
+            return redirect(url_for('student_profile', student_id=student_id))
         
     # Generate mock data for arrays if missing
     if 'marks' not in student:
