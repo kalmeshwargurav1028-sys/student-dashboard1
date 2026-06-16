@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block header_title %}Edit Certificate Details: {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg mb-6 border-t-4 border-indigo-500">
+        <div class="px-4 py-5 sm:p-6">
+            <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">Certificate Overrides for {{ student.name }} ({{ student.id }})</h2>
+            
+            <form method="POST" action="{{ url_for('edit_certificate', student_id=student.id) }}">
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 mb-8">
+                    <div class="sm:col-span-2">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">Basic Information</h3>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Month - Year</label>
+                        <input type="text" name="month_year" value="{{ cert_data.get('month_year', 'JUNE/JULY-' ~ student.get('academic_year', '2026')) }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Candidate Type</label>
+                        <input type="text" name="candidate_type" value="{{ cert_data.get('candidate_type', 'CCE REGULAR FRESH') }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Medium of Instruction</label>
+                        <input type="text" name="medium" value="{{ cert_data.get('medium', 'ENGLISH') }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Mother's Name</label>
+                        <input type="text" name="mother_name" value="{{ cert_data.get('mother_name', '---') }}" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 mb-8">
+                    <div class="sm:col-span-2">
+                        <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2 mb-4">Part-B: Co-Scholastic Grades</h3>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Physical & Health Education</label>
+                        <select name="grade_pe" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for grade in ['A+', 'A', 'B+', 'B', 'C+', 'C', 'F'] %}
+                            <option value="{{ grade }}" {% if cert_data.get('grade_pe', 'A') == grade %}selected{% endif %}>{{ grade }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Attitude & Values</label>
+                        <select name="grade_attitude" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for grade in ['A+', 'A', 'B+', 'B', 'C+', 'C', 'F'] %}
+                            <option value="{{ grade }}" {% if cert_data.get('grade_attitude', 'A') == grade %}selected{% endif %}>{{ grade }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Work Experience</label>
+                        <select name="grade_work" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for grade in ['A+', 'A', 'B+', 'B', 'C+', 'C', 'F'] %}
+                            <option value="{{ grade }}" {% if cert_data.get('grade_work', 'A') == grade %}selected{% endif %}>{{ grade }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Art Education</label>
+                        <select name="grade_art" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500">
+                            {% for grade in ['A+', 'A', 'B+', 'B', 'C+', 'C', 'F'] %}
+                            <option value="{{ grade }}" {% if cert_data.get('grade_art', 'A') == grade %}selected{% endif %}>{{ grade }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end pt-4 border-t border-gray-200">
+                    <a href="{{ url_for('student_gradebook', student_id=student.id) }}" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3">
+                        Cancel
+                    </a>
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                        Save Certificate Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -186,11 +186,11 @@
             <table class="info-table">
                 <tr>
                     <td width="50%"><span class="label">Register No. :</span> <strong>{{ student.id }}</strong></td>
-                    <td width="50%"><span class="label">Month - Year :</span> <strong>JUNE/JULY-{{ student.get('academic_year', '2026') }}</strong></td>
+                    <td width="50%"><span class="label">Month - Year :</span> <strong>{{ cert_data.get('month_year', 'JUNE/JULY-' ~ student.get('academic_year', '2026')) }}</strong></td>
                 </tr>
                 <tr>
-                    <td><span class="label">Medium of Instruction :</span> <strong>ENGLISH</strong></td>
-                    <td><span class="label">Candidate Type :</span> <strong>CCE REGULAR FRESH</strong></td>
+                    <td><span class="label">Medium of Instruction :</span> <strong>{{ cert_data.get('medium', 'ENGLISH') | upper }}</strong></td>
+                    <td><span class="label">Candidate Type :</span> <strong>{{ cert_data.get('candidate_type', 'CCE REGULAR FRESH') | upper }}</strong></td>
                 </tr>
                 <tr>
                     <td colspan="2"><span class="label">Name :</span> <strong>{{ student.name | upper }}</strong></td>
@@ -199,7 +199,7 @@
                     <td colspan="2"><span class="label">Father's Name :</span> <strong>{{ student.get('parent_name', '---') | upper }}</strong></td>
                 </tr>
                 <tr>
-                    <td colspan="2"><span class="label">Mother's Name :</span> <strong>---</strong></td>
+                    <td colspan="2"><span class="label">Mother's Name :</span> <strong>{{ cert_data.get('mother_name', '---') | upper }}</strong></td>
                 </tr>
                 <tr>
                     <td><span class="label">Date of Birth :</span> <strong>{{ student.get('dob', '---') }}</strong></td>
@@ -294,18 +294,18 @@
                 <tr>
                     <td style="text-align: center;">1.</td>
                     <td>PHYSICAL & HEALTH EDUCATION</td>
-                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_pe', 'A') }}</strong></td>
                     <td style="text-align: center;">2.</td>
                     <td>ATTITUDE & VALUES</td>
-                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_attitude', 'A') }}</strong></td>
                 </tr>
                 <tr>
                     <td style="text-align: center;">3.</td>
                     <td>WORK EXPERIENCE</td>
-                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_work', 'A') }}</strong></td>
                     <td style="text-align: center;">4.</td>
                     <td>ART EDUCATION</td>
-                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_art', 'A') }}</strong></td>
                 </tr>
             </table>
             

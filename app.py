@@ -1924,7 +1924,38 @@ def promotion_certificate(student_id):
                           max_marks=max_marks, 
                           percentage=percentage,
                           grades_display=grades_display,
+                          cert_data=cert_data,
                           now=datetime.now())
+
+@app.route('/admin/certificate/edit/<student_id>', methods=['GET', 'POST'])
+def edit_certificate(student_id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+        
+    student = db.students.find_one(get_student_query({'id': student_id}))
+    if not student:
+        flash('Student not found')
+        return redirect(url_for('dashboard'))
+        
+    cert_data = student.get('certificate_data', {})
+        
+    if request.method == 'POST':
+        cert_data = {
+            'month_year': request.form.get('month_year', ''),
+            'candidate_type': request.form.get('candidate_type', ''),
+            'medium': request.form.get('medium', ''),
+            'mother_name': request.form.get('mother_name', ''),
+            'grade_pe': request.form.get('grade_pe', 'A'),
+            'grade_attitude': request.form.get('grade_attitude', 'A'),
+            'grade_work': request.form.get('grade_work', 'A'),
+            'grade_art': request.form.get('grade_art', 'A')
+        }
+        db.students.update_one({'id': student_id}, {'$set': {'certificate_data': cert_data}})
+        flash('Certificate overrides saved successfully.')
+        return redirect(url_for('student_gradebook', student_id=student_id))
+        
+    cert_data = student.get('certificate_data', {})
+    return render_template('admin_edit_certificate.html', student=student, cert_data=cert_data)
 
 
 @app.route('/admin_profile', methods=['GET', 'POST'])
