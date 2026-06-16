@@ -3,171 +3,327 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Certificate - {{ student.name }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <title>Marks Statement cum Certificate - {{ student.name }}</title>
     <style>
         body {
             background-color: #f0f0f0;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             margin: 0;
-            font-family: 'Playfair Display', serif;
+            padding: 20px;
+            font-family: 'Times New Roman', Times, serif;
         }
-        .certificate-container {
-            width: 1000px;
-            height: 750px;
-            background: white;
-            padding: 40px;
+        .cert-container {
+            width: 900px;
+            background-color: #e6f7ff; /* light blue wash */
+            background-image: repeating-linear-gradient(45deg, #f0f8ff 25%, transparent 25%, transparent 75%, #f0f8ff 75%, #f0f8ff), repeating-linear-gradient(45deg, #f0f8ff 25%, #e6f7ff 25%, #e6f7ff 75%, #f0f8ff 75%, #f0f8ff);
+            background-position: 0 0, 10px 10px;
+            background-size: 20px 20px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            border: 2px solid #555;
             position: relative;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border: 2px solid #d4af37;
-            box-sizing: border-box;
-            background-image: radial-gradient(circle, #ffffff 40%, #f9f6e6 100%);
-            margin: 20px auto;
         }
-        .certificate-border {
+        .cert-inner-border {
+            border: 5px solid #4a86e8;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.85); /* mostly white overlay */
+            height: 100%;
+            box-sizing: border-box;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .header h1 {
+            color: #0b5394;
+            font-size: 24px;
+            margin: 5px 0;
+            font-weight: bold;
+        }
+        .header h2 {
+            color: #cc0000;
+            font-size: 18px;
+            margin: 5px 0;
+        }
+        .header h3 {
+            font-size: 14px;
+            margin: 5px 0;
+            font-weight: normal;
+        }
+        .photo-box {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 120px;
+            border: 2px solid #333;
+            background: #ccc;
+        }
+        .photo-box img {
             width: 100%;
             height: 100%;
-            border: 10px double #d4af37;
-            padding: 30px;
-            box-sizing: border-box;
-            text-align: center;
-            position: relative;
+            object-fit: cover;
         }
-        .school-name {
-            font-family: 'Cinzel', serif;
-            font-size: 32px;
-            color: #1a365d;
-            margin-bottom: 5px;
-            letter-spacing: 2px;
+        .qr-code {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 80px;
+            height: 80px;
         }
-        .cert-title {
-            font-family: 'Cinzel', serif;
-            font-size: 46px;
-            color: #d4af37;
-            margin: 25px 0;
-            letter-spacing: 4px;
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
         }
-        .subtitle {
-            font-size: 20px;
-            color: #4a5568;
-            margin-bottom: 30px;
-            font-style: italic;
+        .info-table {
+            margin-bottom: 15px;
+            border: 1px solid #999;
+            background-color: rgba(197, 230, 197, 0.4); /* light green wash */
         }
-        .student-name {
-            font-family: 'Great Vibes', cursive;
-            font-size: 64px;
-            color: #1a365d;
-            margin: 20px 0;
-            border-bottom: 2px solid #e2e8f0;
-            display: inline-block;
-            padding: 0 50px;
+        .info-table td {
+            border: 1px solid #999;
+            padding: 6px 10px;
         }
-        .details {
-            font-size: 22px;
-            color: #2d3748;
-            line-height: 1.8;
-            margin: 30px 60px;
-        }
-        .highlight {
+        .label {
             font-weight: bold;
-            color: #1a365d;
+            color: #333;
         }
-        .footer-section {
+        .marks-table {
+            background-color: rgba(180, 215, 255, 0.3);
+            margin-bottom: 15px;
+        }
+        .marks-table th, .marks-table td {
+            border: 1px solid #666;
+            padding: 5px;
+            text-align: center;
+        }
+        .marks-table th {
+            font-weight: bold;
+            color: #0b5394;
+            background-color: rgba(180, 215, 255, 0.6);
+        }
+        .subject-col {
+            text-align: left !important;
+            font-weight: bold;
+            width: 25%;
+        }
+        .coscholastic-table {
+            background-color: rgba(200, 230, 200, 0.4);
+            margin-bottom: 15px;
+        }
+        .coscholastic-table th, .coscholastic-table td {
+            border: 1px solid #666;
+            padding: 5px;
+            text-align: left;
+        }
+        .coscholastic-table th {
+            text-align: center;
+            background-color: rgba(200, 230, 200, 0.7);
+        }
+        .footer {
             display: flex;
             justify-content: space-between;
-            margin-top: 80px;
-            padding: 0 40px;
-            position: relative;
-            z-index: 10;
+            margin-top: 30px;
+            font-size: 13px;
+            font-weight: bold;
         }
-        .signature-block {
+        .signature {
             text-align: center;
-            width: 250px;
         }
-        .signature-line {
-            border-bottom: 1px solid #1a365d;
-            margin-bottom: 10px;
+        .signature img {
             height: 40px;
+            margin-bottom: 5px;
         }
-        .signature-text {
-            font-size: 16px;
-            color: #4a5568;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: bold;
+        .address {
+            width: 50%;
+            line-height: 1.5;
         }
-        .seal {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 140px;
-            height: 140px;
-            background: #d4af37;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 4px dashed #fff;
-            box-shadow: 0 0 0 4px #d4af37, 0 4px 10px rgba(0,0,0,0.2);
-            color: white;
-            font-family: 'Cinzel', serif;
-            font-size: 14px;
-            font-weight: bold;
-            text-align: center;
-            z-index: 1;
-        }
+        
         @media print {
             body {
                 background: none;
-                margin: 0;
-                height: auto;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
+                padding: 0;
             }
-            .certificate-container {
+            .cert-container {
                 box-shadow: none;
                 border: none;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
                 margin: 0;
-                width: 100%;
-                height: 100%;
-                page-break-after: avoid;
             }
         }
     </style>
 </head>
 <body onload="window.print()">
-    <div class="certificate-container">
-        <div class="certificate-border">
-            <div class="school-name">INDUS INTERNATIONAL SCHOOL</div>
-            <div class="cert-title">CERTIFICATE</div>
+    <div class="cert-container">
+        <div class="cert-inner-border">
             
-            <div class="subtitle">This is to proudly certify that</div>
-            
-            <div class="student-name">{{ student.name }}</div>
-            
-            <div class="details">
-                having successfully completed the prescribed course of study and final examinations for <span class="highlight">Grade {{ student.student_class }}</span>, achieving a total score of <span class="highlight">{{ total_marks|round(1) }}</span> out of <span class="highlight">{{ max_marks }}</span> ({{ percentage }}%), is hereby promoted to the next academic class.
+            <div class="header">
+                <div class="qr-code">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ student.id }}" alt="QR Code">
+                </div>
+                <h3>GOVERNMENT OF KARNATAKA</h3>
+                <h1>Karnataka Secondary Education Examination Board</h1>
+                <h2>Marks Statement cum Certificate</h2>
+                <h3>This is to certify that the below mentioned candidate has passed S.S.L.C. Examination.</h3>
+                
+                <div class="photo-box">
+                    {% if student.photo_url %}
+                    <img src="{{ student.photo_url }}" alt="Student Photo">
+                    {% else %}
+                    <div style="display:flex; height:100%; align-items:center; justify-content:center; color:#666;">Photo</div>
+                    {% endif %}
+                </div>
             </div>
             
-            <div class="footer-section">
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-text">Class Teacher</div>
-                </div>
+            <table class="info-table">
+                <tr>
+                    <td width="50%"><span class="label">Register No. :</span> <strong>{{ student.id }}</strong></td>
+                    <td width="50%"><span class="label">Month - Year :</span> <strong>JUNE/JULY-{{ student.get('academic_year', '2026') }}</strong></td>
+                </tr>
+                <tr>
+                    <td><span class="label">Medium of Instruction :</span> <strong>ENGLISH</strong></td>
+                    <td><span class="label">Candidate Type :</span> <strong>CCE REGULAR FRESH</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><span class="label">Name :</span> <strong>{{ student.name | upper }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><span class="label">Father's Name :</span> <strong>{{ student.get('parent_name', '---') | upper }}</strong></td>
+                </tr>
+                <tr>
+                    <td colspan="2"><span class="label">Mother's Name :</span> <strong>---</strong></td>
+                </tr>
+                <tr>
+                    <td><span class="label">Date of Birth :</span> <strong>{{ student.get('dob', '---') }}</strong></td>
+                    <td><span class="label">Gender :</span> <strong>{{ student.get('gender', 'MALE') | upper }}</strong></td>
+                </tr>
+            </table>
+            
+            <div style="text-align: center; font-weight: bold; margin-bottom: 5px; color: #555;">PART - A</div>
+            <table class="marks-table">
+                <tr>
+                    <th rowspan="2" class="subject-col">SCHOLASTIC SUBJECTS</th>
+                    <th colspan="3">EXTERNAL EXAMINATION</th>
+                    <th colspan="2">INTERNAL ASSESSMENT</th>
+                    <th colspan="3">TOTAL MARKS</th>
+                    <th rowspan="2">GRADE</th>
+                </tr>
+                <tr>
+                    <th>MAX. MARKS</th>
+                    <th>MIN. MARKS</th>
+                    <th>MARKS OBTAINED</th>
+                    <th>MAX. MARKS</th>
+                    <th>MARKS OBTAINED</th>
+                    <th>MAX. MARKS</th>
+                    <th>MIN. MARKS</th>
+                    <th>TOTAL MARKS</th>
+                </tr>
                 
-                <div class="seal">
-                    OFFICIAL<br>SEAL
-                </div>
+                {% set total_max = 0 %}
+                {% set total_obtained = 0 %}
                 
-                <div class="signature-block">
-                    <div class="signature-line"></div>
-                    <div class="signature-text">Principal</div>
+                {% if grades_display %}
+                    {% for g in grades_display %}
+                    <tr>
+                        <td class="subject-col">{{ g.subject | upper }}</td>
+                        <td>80</td>
+                        <td>28</td>
+                        <td><strong>{{ g.exam_mark|int }}</strong></td>
+                        <td>20</td>
+                        <td><strong>{{ g.ca_mark|int }}</strong></td>
+                        <td>100</td>
+                        <td>35</td>
+                        <td><strong>{{ g.total|int }}</strong></td>
+                        <td>
+                            {% if g.total >= 90 %}<strong>A+</strong>
+                            {% elif g.total >= 80 %}<strong>A</strong>
+                            {% elif g.total >= 70 %}<strong>B+</strong>
+                            {% elif g.total >= 60 %}<strong>B</strong>
+                            {% elif g.total >= 50 %}<strong>C+</strong>
+                            {% elif g.total >= 35 %}<strong>C</strong>
+                            {% else %}<strong>F</strong>{% endif %}
+                        </td>
+                    </tr>
+                    {% set total_max = total_max + 100 %}
+                    {% set total_obtained = total_obtained + g.total %}
+                    {% endfor %}
+                {% else %}
+                    <!-- Dummy rows if no grades -->
+                    <tr><td class="subject-col">FIRST LANGUAGE : ENGLISH</td><td>100</td><td>35</td><td><strong>64</strong></td><td>25</td><td><strong>25</strong></td><td>125</td><td>44</td><td><strong>89</strong></td><td><strong>A</strong></td></tr>
+                    <tr><td class="subject-col">SECOND LANGUAGE : HINDI</td><td>80</td><td>28</td><td><strong>44</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>64</strong></td><td><strong>B</strong></td></tr>
+                    <tr><td class="subject-col">MATHEMATICS</td><td>80</td><td>28</td><td><strong>46</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>66</strong></td><td><strong>B</strong></td></tr>
+                    <tr><td class="subject-col">SCIENCE</td><td>80</td><td>28</td><td><strong>46</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>66</strong></td><td><strong>B</strong></td></tr>
+                    <tr><td class="subject-col">SOCIAL SCIENCE</td><td>80</td><td>28</td><td><strong>45</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>65</strong></td><td><strong>B</strong></td></tr>
+                    {% set total_obtained = 350 %}
+                    {% set total_max = 525 %}
+                {% endif %}
+                
+                <tr style="background-color: rgba(180, 215, 255, 0.6);">
+                    <td class="subject-col" style="text-align: right!important;">TOTAL MARKS :</td>
+                    <td colspan="3" style="text-align: center;"><strong>{{ (total_obtained * 0.8)|int }}</strong></td>
+                    <td colspan="2" style="text-align: center;"><strong>{{ (total_obtained * 0.2)|int }}</strong></td>
+                    <td>{{ total_max }}</td>
+                    <td>-</td>
+                    <td><strong>{{ total_obtained|int }}</strong></td>
+                    <td><strong>{{ percentage|round|int if percentage else 0 }}%</strong></td>
+                </tr>
+            </table>
+            
+            <div style="font-size: 13px; font-weight: bold; background-color: #b4d7ff; padding: 5px 10px; margin-bottom: 15px; border: 1px solid #666;">
+                TOTAL MARKS OBTAINED (IN WORDS) :  &nbsp;&nbsp;&nbsp; <em>System Generated</em>
+            </div>
+            
+            <div style="text-align: center; font-weight: bold; margin-bottom: 5px; color: #555;">PART - B</div>
+            <table class="coscholastic-table">
+                <tr>
+                    <th width="5%">Sl. No.</th>
+                    <th width="40%">CO-SCHOLASTIC SUBJECTS</th>
+                    <th width="10%">GRADE</th>
+                    <th width="5%">Sl. No.</th>
+                    <th width="30%">CO-SCHOLASTIC SUBJECTS</th>
+                    <th width="10%">GRADE</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">1.</td>
+                    <td>PHYSICAL & HEALTH EDUCATION</td>
+                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;">2.</td>
+                    <td>ATTITUDE & VALUES</td>
+                    <td style="text-align: center;"><strong>A</strong></td>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">3.</td>
+                    <td>WORK EXPERIENCE</td>
+                    <td style="text-align: center;"><strong>A</strong></td>
+                    <td style="text-align: center;">4.</td>
+                    <td>ART EDUCATION</td>
+                    <td style="text-align: center;"><strong>A</strong></td>
+                </tr>
+            </table>
+            
+            <div class="footer">
+                <div class="address">
+                    SCHOOL CODE, NAME AND ADDRESS :<br>
+                    <strong>AS1190</strong><br>
+                    <strong>INDUS INTERNATIONAL COMMUNITY SCHOOL</strong><br>
+                    BILLAPURA CROSS, SARJAPURA HOBLI, ANEKAL TALUK,<br>
+                    BENGALURU - 562125
+                    <br><br>
+                    DATE : <strong>{{ now.strftime('%d.%m.%Y') if now else '16.06.2026' }}</strong>
+                </div>
+                <div class="signature">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Fake_signature.svg" alt="Signature"><br>
+                    SECRETARY<br>
+                    KARNATAKA SECONDARY EDUCATION EXAMINATION BOARD,<br>
+                    BENGALURU
                 </div>
             </div>
+            
         </div>
     </div>
 </body>

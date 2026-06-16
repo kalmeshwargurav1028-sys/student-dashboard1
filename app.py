@@ -1896,12 +1896,22 @@ def promotion_certificate(student_id):
     grades = list(db.grades.find({'student_id': student_id}, {'_id': 0}))
     processed_subjects = set(student.get('subjects', {}).keys())
     
+    grades_display = []
+    
     for g in grades:
         subj = g.get('subject')
         ca = float(g.get('ca_mark') or 0)
         exam = float(g.get('exam_mark') or 0)
+        total = ca + exam
+        
+        grades_display.append({
+            'subject': subj,
+            'ca_mark': ca,
+            'exam_mark': exam,
+            'total': total
+        })
+        
         if subj not in processed_subjects:
-            total = ca + exam
             total_marks += total
             max_marks += 100
             processed_subjects.add(subj)
@@ -1912,7 +1922,9 @@ def promotion_certificate(student_id):
                           student=student, 
                           total_marks=total_marks, 
                           max_marks=max_marks, 
-                          percentage=percentage)
+                          percentage=percentage,
+                          grades_display=grades_display,
+                          now=datetime.now())
 
 
 @app.route('/admin_profile', methods=['GET', 'POST'])
