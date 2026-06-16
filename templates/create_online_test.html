@@ -131,10 +131,16 @@ function prepareQuestions() {
     document.getElementById('questions_json').value = JSON.stringify(questions);
     
     const totalMarks = questions.reduce((sum, q) => sum + q.marks, 0);
-    if (totalMarks !== 100) {
-        alert('Total marks must be exactly 100. Current total: ' + totalMarks);
+    const hasPdf = document.querySelector('input[name="pdf_file"]').files.length > 0;
+    
+    if (questions.length > 0 && totalMarks !== 100) {
+        alert('Total marks must be exactly 100 across your question blocks. Current total: ' + totalMarks);
+        return false;
+    } else if (questions.length === 0 && !hasPdf) {
+        alert('Please either generate question blocks or attach a PDF question paper.');
         return false;
     }
+    
     return true;
 }
 
