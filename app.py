@@ -3836,7 +3836,7 @@ def teacher_test_submissions(test_id):
         
         # Hydrate student details for each submission
         for sub in submissions:
-            student = db.students.find_one(get_student_query({'id': sub.get('student_id')}))
+            student = db.students.find_one({'id': sub.get('student_id')})
             if student:
                 sub['student_name'] = student.get('name', 'Unknown')
                 sub['student_roll'] = student.get('id', '')
