@@ -7,7 +7,7 @@
     <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg p-6">
         <h2 class="text-xl font-bold mb-6 text-gray-900 dark:text-white">Create a New Online Test</h2>
         
-        <form method="POST" action="{{ url_for('create_online_test') }}" onsubmit="return prepareQuestions()">
+        <form method="POST" action="{{ url_for('create_online_test') }}" enctype="multipart/form-data" onsubmit="return prepareQuestions()">
             <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Test Title</label>
@@ -21,12 +21,27 @@
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Grade</label>
                     <select name="target_class" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
                         <option value="1st">1st Standard</option>
+                        <option value="2nd">2nd Standard</option>
+                        <option value="3rd">3rd Standard</option>
+                        <option value="4th">4th Standard</option>
+                        <option value="5th">5th Standard</option>
+                        <option value="6th">6th Standard</option>
+                        <option value="7th">7th Standard</option>
+                        <option value="8th">8th Standard</option>
+                        <option value="9th">9th Standard</option>
                         <option value="10th">10th Standard</option>
+                        <option value="11th">11th Standard</option>
+                        <option value="12th">12th Standard</option>
                     </select>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Duration (Minutes)</label>
                     <input type="number" name="duration" value="60" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                </div>
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Attach Question Paper (Optional PDF)</label>
+                    <input type="file" name="pdf_file" accept=".pdf" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500">
+                    <p class="mt-1 text-xs text-gray-500">Upload a PDF question paper if you want students to refer to a document while taking the test.</p>
                 </div>
             </div>
 

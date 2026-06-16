@@ -3745,6 +3745,16 @@ def create_online_test():
         questions_raw = request.form.get('questions_json', '[]')
         questions = json.loads(questions_raw)
         
+        pdf_file = request.files.get('pdf_file')
+        pdf_url = None
+        if pdf_file and pdf_file.filename:
+            filename = secure_filename(pdf_file.filename)
+            upload_dir = os.path.join(app.root_path, 'static', 'uploads', 'tests')
+            os.makedirs(upload_dir, exist_ok=True)
+            pdf_path = os.path.join(upload_dir, filename)
+            pdf_file.save(pdf_path)
+            pdf_url = url_for('static', filename=f'uploads/tests/{filename}')
+        
         test_data = {
             'title': title,
             'target_class': target_class,
@@ -3752,6 +3762,7 @@ def create_online_test():
             'duration_minutes': duration,
             'total_marks': 100,
             'questions': questions,
+            'pdf_url': pdf_url,
             'teacher_id': session.get('user_id'),
             'status': 'published',
             'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
