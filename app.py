@@ -3902,6 +3902,7 @@ def take_online_test(test_id):
             'test_id': ObjectId(test_id),
             'student_id': session.get('user_id'),
             'answers': answers,
+            'pdf_answers': request.form.get('pdf_answers', ''),
             'auto_grade_score': auto_score,
             'final_score': auto_score,
             'status': 'graded',

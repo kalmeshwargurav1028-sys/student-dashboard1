@@ -72,6 +72,11 @@
                                         </div>
                                         {% endfor %}
                                     </div>
+                                {% elif sub.pdf_answers %}
+                                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
+                                        <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Student's Typed Answers:</h5>
+                                        <pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">{{ sub.pdf_answers }}</pre>
+                                    </div>
                                 {% else %}
                                     <p class="text-sm text-gray-500 italic">No digital answers provided (Likely a PDF-only submission).</p>
                                 {% endif %}
