@@ -263,6 +263,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                                <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -280,6 +281,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ s.last_active }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                                <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
                             </td>
                         </tr>
                         {% endfor %}
