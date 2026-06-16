@@ -1918,6 +1918,8 @@ def promotion_certificate(student_id):
 
     percentage = round((total_marks / max_marks) * 100, 1) if max_marks > 0 else 0
 
+    cert_data = student.get('certificate_data', {})
+
     return render_template('promotion_certificate.html', 
                           student=student, 
                           total_marks=total_marks, 
