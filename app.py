@@ -3920,11 +3920,17 @@ def take_online_test(test_id):
                 'marks_awarded': awarded
             })
             
+        pdf_answers_dict = {}
+        for i in range(1, 101):
+            val = request.form.get(f'pdf_ans_{i}')
+            if val and str(val).strip():
+                pdf_answers_dict[str(i)] = str(val).strip()
+            
         submission = {
             'test_id': ObjectId(test_id),
             'student_id': session.get('user_id'),
             'answers': answers,
-            'pdf_answers': request.form.get('pdf_answers', ''),
+            'pdf_answers_dict': pdf_answers_dict,
             'auto_grade_score': auto_score,
             'final_score': auto_score,
             'status': 'graded',

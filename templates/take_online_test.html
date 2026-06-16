@@ -54,8 +54,16 @@
                         <svg class="w-5 h-5 mr-2 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                         Submit Your Answers Here
                     </h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Since your teacher provided a PDF question paper without individual input blocks, please type all your answers in the box below.</p>
-                    <textarea name="pdf_answers" rows="10" class="mt-1 block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white font-mono text-sm" placeholder="e.g.&#10;1. 42&#10;2. x = 5&#10;3. True"></textarea>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">Type your answer in the box corresponding to the question number on the PDF. You only need to fill in the boxes for the questions that exist on your paper; leave the rest blank.</p>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {% for i in range(1, 101) %}
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Answer {{ i }}</label>
+                            <input type="text" name="pdf_ans_{{ i }}" class="block w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-1.5 px-3 focus:ring-emerald-500 focus:border-emerald-500 dark:bg-gray-700 dark:text-white text-sm" placeholder="...">
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% endif %}
         </div>

@@ -74,10 +74,17 @@
                                         </div>
                                         {% endfor %}
                                     </div>
-                                {% elif sub.pdf_answers %}
-                                    <div class="p-4 bg-gray-50 dark:bg-gray-700/50 rounded border border-gray-200 dark:border-gray-600">
-                                        <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Student's Typed Answers:</h5>
-                                        <pre class="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">{{ sub.pdf_answers }}</pre>
+                                {% elif sub.pdf_answers_dict %}
+                                    <div class="bg-gray-50 dark:bg-gray-700/50 p-4 rounded border border-gray-200 dark:border-gray-600">
+                                        <h5 class="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4">Student's Typed Answers:</h5>
+                                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                            {% for q_num, ans in sub.pdf_answers_dict.items() %}
+                                            <div class="bg-white dark:bg-gray-800 p-2 rounded shadow-sm border border-gray-200 dark:border-gray-600">
+                                                <span class="text-xs font-bold text-indigo-600 dark:text-indigo-400">Ans {{ q_num }}:</span>
+                                                <p class="mt-1 font-mono text-sm text-gray-900 dark:text-gray-100 break-all">{{ ans }}</p>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
                                     </div>
                                 {% else %}
                                     <p class="text-sm text-gray-500 italic">No digital answers provided (Likely a PDF-only submission).</p>
