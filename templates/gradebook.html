@@ -61,6 +61,12 @@
                                     <div class="ml-4">
                                         <div class="text-sm font-semibold text-gray-900 dark:text-white student-name">{{ s.name }}</div>
                                         <div class="text-sm text-gray-500 dark:text-gray-400">{{ s.id }}</div>
+                                        <div class="mt-2 flex space-x-2">
+                                            <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-[10px] bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded shadow-sm hover:bg-amber-200">Certificate</a>
+                                            {% if session.get('role') == 'admin' %}
+                                            <a href="{{ url_for('edit_certificate', student_id=s.id) }}" target="_blank" class="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-1 rounded shadow-sm hover:bg-indigo-200">Edit</a>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
