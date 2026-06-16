@@ -3803,6 +3803,52 @@ def create_online_test():
         
     return render_template('create_online_test.html')
 
+@app.route('/teacher/delete_test/<test_id>', methods=['POST'])
+def delete_online_test(test_id):
+    if not session.get('logged_in') or session.get('role') not in ['admin', 'teacher']:
+        return redirect(url_for('login'))
+        
+    from bson.objectid import ObjectId
+    try:
+        # Delete the test
+        db.online_tests.delete_one({'_id': ObjectId(test_id)})
+        # Delete associated submissions
+        db.test_submissions.delete_many({'test_id': ObjectId(test_id)})
+        flash('Online Test and its submissions deleted successfully!')
+    except Exception as e:
+        flash(f'Error deleting test: {str(e)}')
+        
+    return redirect(url_for('teacher_online_tests'))
+
+@app.route('/teacher/test_submissions/<test_id>')
+def teacher_test_submissions(test_id):
+    if not session.get('logged_in') or session.get('role') not in ['admin', 'teacher']:
+        return redirect(url_for('login'))
+        
+    from bson.objectid import ObjectId
+    try:
+        test = db.online_tests.find_one({'_id': ObjectId(test_id)})
+        if not test:
+            flash('Test not found.')
+            return redirect(url_for('teacher_online_tests'))
+            
+        submissions = list(db.test_submissions.find({'test_id': ObjectId(test_id)}))
+        
+        # Hydrate student details for each submission
+        for sub in submissions:
+            student = db.students.find_one(get_student_query({'id': sub.get('student_id')}))
+            if student:
+                sub['student_name'] = student.get('name', 'Unknown')
+                sub['student_roll'] = student.get('id', '')
+            else:
+                sub['student_name'] = 'Unknown Student'
+                sub['student_roll'] = sub.get('student_id')
+                
+        return render_template('teacher_test_submissions.html', test=test, submissions=submissions)
+    except Exception as e:
+        flash(f'Error loading submissions: {str(e)}')
+        return redirect(url_for('teacher_online_tests'))
+
 @app.route('/student/online_tests')
 def student_online_tests():
     if not session.get('logged_in') or session.get('role') != 'student':

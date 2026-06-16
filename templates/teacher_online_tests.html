@@ -24,14 +24,24 @@
                             </p>
                         </div>
                     </div>
-                    <div class="mt-2 sm:flex sm:justify-between">
+                    <div class="mt-4 flex sm:flex-row flex-col justify-between items-center bg-gray-50 dark:bg-gray-700/50 p-3 rounded-lg border border-gray-100 dark:border-gray-600">
                         <div class="sm:flex">
-                            <p class="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                            <p class="flex items-center text-sm text-gray-500 dark:text-gray-400 font-medium">
                                 Grade: {{ test.target_class }} | Subject: {{ test.subject }}
                             </p>
                         </div>
-                        <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 sm:mt-0">
-                            <p>Created: {{ test.created_at }}</p>
+                        <div class="mt-2 flex items-center justify-end space-x-3 sm:mt-0 w-full sm:w-auto">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mr-4">Created: {{ test.created_at }}</p>
+                            
+                            <a href="{{ url_for('teacher_test_submissions', test_id=test._id) }}" class="inline-flex items-center px-3 py-1.5 border border-emerald-600 text-xs font-medium rounded text-emerald-600 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-sm">
+                                View Submissions
+                            </a>
+                            
+                            <form action="{{ url_for('delete_online_test', test_id=test._id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to completely delete this test and ALL student submissions? This cannot be undone.');">
+                                <button type="submit" class="inline-flex items-center px-3 py-1.5 border border-red-600 text-xs font-medium rounded text-red-600 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors shadow-sm">
+                                    Delete Test
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

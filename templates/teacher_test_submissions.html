@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block header_title %}Test Submissions: {{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Submissions: {{ test.title }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Grade: {{ test.target_class }} | Subject: {{ test.subject }}</p>
+        </div>
+        <a href="{{ url_for('teacher_online_tests') }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600 dark:hover:bg-gray-600">
+            &larr; Back to Tests
+        </a>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 shadow sm:rounded-lg overflow-hidden">
+        {% if submissions %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead class="bg-gray-50 dark:bg-gray-900/50">
+                    <tr>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Roll/ID</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Submission Time</th>
+                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Auto-Grade Score</th>
+                        <th scope="col" class="relative px-6 py-3"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                    {% for sub in submissions %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{{ sub.student_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ sub.student_roll }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{{ sub.submitted_at }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                {{ sub.auto_score }} / {{ test.total_marks }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button onclick="toggleDetails('{{ sub._id }}')" class="text-emerald-600 hover:text-emerald-900 dark:text-emerald-400 dark:hover:text-emerald-300 font-bold">
+                                View Answers &darr;
+                            </button>
+                        </td>
+                    </tr>
+                    <!-- Hidden row for details -->
+                    <tr id="details-{{ sub._id }}" class="hidden bg-gray-50 dark:bg-gray-900/30">
+                        <td colspan="5" class="px-6 py-4">
+                            <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-inner">
+                                <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-4 border-b pb-2">Student's Answer Sheet</h4>
+                                {% if sub.answers and sub.answers|length > 0 %}
+                                    <div class="space-y-4">
+                                        {% for ans in sub.answers %}
+                                        <div class="p-3 {% if ans.awarded_marks > 0 %}bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500{% else %}bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500{% endif %} rounded shadow-sm">
+                                            <p class="font-medium text-sm text-gray-900 dark:text-gray-100 mb-2">Q{{ loop.index }}: {{ ans.question_text }}</p>
+                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                                <div>
+                                                    <span class="text-gray-500 text-xs uppercase tracking-wider font-bold">Student Answer:</span>
+                                                    <p class="mt-1 font-mono text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 p-1.5 rounded border border-gray-200 dark:border-gray-600">{{ ans.student_answer or '(Blank)' }}</p>
+                                                </div>
+                                                <div>
+                                                    <span class="text-gray-500 text-xs uppercase tracking-wider font-bold">Correct Answer:</span>
+                                                    <p class="mt-1 font-mono text-gray-800 dark:text-gray-200 bg-white dark:bg-gray-700 p-1.5 rounded border border-gray-200 dark:border-gray-600">{{ ans.correct_answer }}</p>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2 text-right">
+                                                <span class="text-xs font-bold {% if ans.awarded_marks > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                                    Awarded: {{ ans.awarded_marks }} / {{ ans.possible_marks }} marks
+                                                </span>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-sm text-gray-500 italic">No digital answers provided (Likely a PDF-only submission).</p>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center text-gray-500 dark:text-gray-400">
+            No students have submitted this test yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleDetails(subId) {
+    const el = document.getElementById('details-' + subId);
+    if (el.classList.contains('hidden')) {
+        el.classList.remove('hidden');
+    } else {
+        el.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}
