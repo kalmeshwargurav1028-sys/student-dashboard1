@@ -6,12 +6,11 @@ import string
 import csv
 import io
 from datetime import datetime, timedelta
-import threading
 import traceback
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment
-from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, make_response, send_file, jsonify
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, send_file, jsonify
+from flask_socketio import SocketIO, emit, join_room
 from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_mail import Mail, Message
@@ -744,7 +743,7 @@ def update_last_active():
                 db.admins.update_one({'_id': ObjectId(user_id)}, {'$set': {'last_active': now_str}})
             
             session['last_active_update'] = now_str
-        except Exception as e:
+        except Exception:
             pass # Ignore malformed ObjectIds or DB errors
 
 @app.route('/file/<file_id>')
@@ -2233,8 +2232,6 @@ def dashboard_ai():
     message = data.get('message', '').strip()
     
     total = len(students)
-    present = sum(1 for s in students if float(s.get('attendance', 0)) >= 75)
-    absent = total - present
     avg_perf = round(sum(float(s.get('performance', 0)) for s in students) / total, 1) if total > 0 else 0
     
     client, api_key = configure_gemini()
