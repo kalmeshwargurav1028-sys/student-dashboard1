@@ -7,8 +7,6 @@ import csv
 import io
 from datetime import datetime, timedelta
 import traceback
-import openpyxl
-from openpyxl.styles import Font, PatternFill, Alignment
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, send_file, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.utils import secure_filename
@@ -2772,111 +2770,8 @@ def teacher_daily_report():
     else:
         past_reports = list(db.teacher_reports.find({'username': session.get('username')}).sort('submitted_at', -1))
     
-    # Calculate attendance snapshot
-    att_doc = db.attendance.find_one({'date': today_date})
-    records = att_doc.get('records', {}) if att_doc else {}
-    
-    students = list(db.students.find({}, {'id': 1, 'student_class': 1}))
-    class_stats = {}
-    for s in students:
-        c_name = s.get('student_class')
-        if not c_name: continue
-        
-        if c_name not in class_stats:
-            class_stats[c_name] = {'total': 0, 'present': 0}
-            
-        class_stats[c_name]['total'] += 1
-        
-        status = records.get(s.get('id')) or records.get(str(s.get('id')))
-        if status in ['Present', 'Late']:
-            class_stats[c_name]['present'] += 1
-                
-    attendance_snapshot = []
-    for c_name, stats in class_stats.items():
-        attendance_snapshot.append({
-            'class_name': c_name,
-            'total': stats['total'],
-            'present': stats['present'],
-            'absent': stats['total'] - stats['present']
-        })
-    # Basic sort to put grades in order
-    attendance_snapshot.sort(key=lambda x: x['class_name'])
-    
-    return render_template('teacher_daily_report.html', today_formatted=today_formatted, attendance_snapshot=attendance_snapshot, past_reports=past_reports)
+    return render_template('teacher_daily_report.html', today_formatted=today_formatted, past_reports=past_reports)
 
-
-@app.route('/teacher/daily_report/export')
-def export_attendance_snapshot():
-    if not session.get('logged_in') or session.get('role') not in ['teacher', 'admin']:
-        return redirect(url_for('login'))
-        
-    today_date = datetime.now().strftime('%Y-%m-%d')
-    att_doc = db.attendance.find_one({'date': today_date})
-    records = att_doc.get('records', {}) if att_doc else {}
-    
-    students = list(db.students.find({}, {'id': 1, 'student_class': 1}))
-    class_stats = {}
-    for s in students:
-        c_name = s.get('student_class')
-        if not c_name: continue
-        
-        if c_name not in class_stats:
-            class_stats[c_name] = {'total': 0, 'present': 0}
-            
-        class_stats[c_name]['total'] += 1
-        status = records.get(s.get('id')) or records.get(str(s.get('id')))
-        if status in ['Present', 'Late']:
-            class_stats[c_name]['present'] += 1
-                
-    snapshot = []
-    for c_name, stats in class_stats.items():
-        snapshot.append({
-            'class_name': c_name,
-            'total': stats['total'],
-            'present': stats['present'],
-            'absent': stats['total'] - stats['present']
-        })
-    snapshot.sort(key=lambda x: str(x['class_name']))
-    
-    wb = openpyxl.Workbook()
-    ws = wb.active
-    ws.title = "Attendance Snapshot"
-    
-    # Headers
-    headers = ["Class", "Total Students", "Present", "Absent"]
-    ws.append(headers)
-    
-    # Styling headers
-    header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
-    header_font = Font(color="FFFFFF", bold=True)
-    for col_num, header in enumerate(headers, 1):
-        cell = ws.cell(row=1, column=col_num)
-        cell.fill = header_fill
-        cell.font = header_font
-        cell.alignment = Alignment(horizontal="center")
-        ws.column_dimensions[openpyxl.utils.get_column_letter(col_num)].width = 20
-        
-    # Data rows
-    for row_num, item in enumerate(snapshot, 2):
-        ws.cell(row=row_num, column=1, value=item['class_name'])
-        ws.cell(row=row_num, column=2, value=item['total']).alignment = Alignment(horizontal="center")
-        ws.cell(row=row_num, column=3, value=item['present']).alignment = Alignment(horizontal="center")
-        ws.cell(row=row_num, column=4, value=item['absent']).alignment = Alignment(horizontal="center")
-        
-        # Color code present/absent
-        ws.cell(row=row_num, column=3).font = Font(color="059669", bold=True) # Green
-        ws.cell(row=row_num, column=4).font = Font(color="DC2626", bold=True) # Red
-        
-    excel_stream = io.BytesIO()
-    wb.save(excel_stream)
-    excel_stream.seek(0)
-    
-    return send_file(
-        excel_stream,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f"Attendance_Snapshot_{today_date}.xlsx"
-    )
 
 
 @app.route('/ai_box')
@@ -3957,13 +3852,6 @@ def take_online_test(test_id):
         return redirect(url_for('student_online_tests'))
         
     return render_template('take_online_test.html', test=test)
-
-@app.route('/dev/test_error')
-def dev_test_error():
-    if not session.get('logged_in') or session.get('role') != 'admin':
-        return "Unauthorized", 403
-    # Artificially trigger an exception
-    raise ValueError("This is a simulated system crash to test automated email notifications!")
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True, port=5000)
