@@ -720,7 +720,7 @@ def update_last_active():
     if session.get('logged_in'):
         # Throttle DB writes to once every 5 minutes per session to improve page load times
         last_update = session.get('last_active_update')
-        now = datetime.utcnow()
+        now = datetime.now()
         if last_update:
             try:
                 last_update_time = datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
@@ -1221,7 +1221,7 @@ def admin_dashboard():
     if not session.get('logged_in') or session.get('role') != 'admin':
         return redirect(url_for('login'))
         
-    now = datetime.utcnow()
+    now = datetime.now()
     active_threshold = now - timedelta(minutes=15)
     
     # Process admins
