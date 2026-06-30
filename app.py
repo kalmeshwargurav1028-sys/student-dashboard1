@@ -156,9 +156,36 @@ def get_student_query(base_query=None):
         base_query = {}
     
     if session.get('role') == 'teacher':
-        assigned_class = session.get('assigned_class')
-        if assigned_class and assigned_class != 'all':
-            base_query['student_class'] = {'$in': get_class_variations(assigned_class)}
+        teacher_id = session.get('user_id')
+        
+        # Get all mappings for this teacher
+        mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id}))
+        
+        if not mappings:
+            # If no mappings, return a query that matches no students
+            base_query['id'] = 'NO_MAPPING_FALLBACK'
+            return base_query
+            
+        or_conditions = []
+        for m in mappings:
+            grade = m.get('grade')
+            section = m.get('section')
+            if grade and section:
+                or_conditions.append({
+                    'student_class': {'$in': get_class_variations(grade)},
+                    'division': section
+                })
+        
+        if or_conditions:
+            # If there's an existing $or, we need to combine them with $and, 
+            # but usually get_student_query is passed a simple base_query
+            if '$or' in base_query:
+                if '$and' not in base_query:
+                    base_query['$and'] = []
+                base_query['$and'].append({'$or': base_query.pop('$or')})
+                base_query['$and'].append({'$or': or_conditions})
+            else:
+                base_query['$or'] = or_conditions
             
     return base_query
 
@@ -187,7 +214,12 @@ def has_permission(permission_name):
 
 @app.context_processor
 def inject_global_context():
-    context = {'active_announcements': [], 'role_permissions': {}}
+    context = {
+        'active_announcements': [], 
+        'role_permissions': {},
+        'teacher_homerooms': [],
+        'teacher_subjects': []
+    }
     if not session.get('logged_in'):
         return context
     
@@ -207,6 +239,15 @@ def inject_global_context():
         context['active_announcements'] = announcements
     except Exception as e:
         print(f"Error fetching announcements: {e}")
+        
+    # Inject Teacher Mappings if role is teacher
+    if role == 'teacher':
+        teacher_id = session.get('user_id')
+        mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id}))
+        homerooms = [m for m in mappings if m.get('type') == 'homeroom']
+        subjects = [m for m in mappings if m.get('type') == 'subject']
+        context['teacher_homerooms'] = homerooms
+        context['teacher_subjects'] = subjects
         
     try:
         if role == 'admin':
@@ -1830,9 +1871,27 @@ def student_materials():
         return redirect(url_for('login'))
         
     student_class = student.get('student_class')
+    division = student.get('division', 'All')
     materials = []
+    
     if student_class:
-        materials = list(db.materials.find({'class': {'$in': get_class_variations(student_class)}}).sort('uploaded_at', -1))
+        # Match class, and either section matches or section is 'All' or not present, and share_with_students is True
+        # also include legacy materials without share_with_students flag
+        query = {
+            'class': {'$in': get_class_variations(student_class)},
+            '$or': [
+                {'share_with_students': True},
+                {'share_with_students': {'$exists': False}}
+            ]
+        }
+        
+        # Fetch materials and filter section in Python for simplicity, or complex mongo query
+        all_class_mats = list(db.materials.find(query).sort('uploaded_at', -1))
+        
+        for mat in all_class_mats:
+            mat_section = mat.get('section', 'All')
+            if mat_section == 'All' or not mat_section or mat_section == division:
+                materials.append(mat)
         
     return render_template('student_materials.html', student=student, materials=materials)
 
@@ -2508,6 +2567,88 @@ def student_gradebook(student_id):
         grades_display.append(g)
 
     return render_template('student_gradebook.html', student=student, grades=grades_display)
+
+@app.route('/share-resource', methods=['GET'])
+def share_resource():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+    
+    subjects = [
+        'Mathematics', 'English', 'Science', 'Social Studies',
+        'Hindi', 'Physics', 'Chemistry', 'Biology',
+        'Computer Science', 'Physical Education', 'Art', 'Music'
+    ]
+    return render_template('share_resource.html', subjects=subjects)
+
+@app.route('/api/share-resource', methods=['POST'])
+def share_resource_post():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    title = request.form.get('title')
+    grade = request.form.get('grade')
+    subject = request.form.get('subject')
+    section = request.form.get('section')
+    category = request.form.get('category')
+    format_type = request.form.get('format')
+    description = request.form.get('description')
+    learning_objectives = request.form.get('learning_objectives')
+    status = request.form.get('status', 'published') # draft or published
+    
+    share_students = request.form.get('share_students') == 'true'
+    share_colleagues = request.form.get('share_colleagues') == 'true'
+    
+    file = request.files.get('file')
+    file_url = None
+    
+    if file and file.filename != '':
+        filename = secure_filename(file.filename)
+        unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+        file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
+        file_url = url_for('get_file', file_id=str(file_id))
+        
+    db.materials.insert_one({
+        'title': title,
+        'class': grade,
+        'subject': subject,
+        'section': section,
+        'category': category,
+        'format': format_type,
+        'description': description,
+        'learning_objectives': learning_objectives,
+        'share_with_students': share_students,
+        'share_with_colleagues': share_colleagues,
+        'status': status,
+        'file_url': file_url,
+        'uploaded_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'teacher_id': session.get('user_id'),
+        'teacher_name': session.get('username')
+    })
+    
+    flash('Resource successfully created and shared!')
+    return redirect(url_for('dashboard'))
+
+@app.route('/teacher/shared-resources', methods=['GET'])
+def colleague_resources():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+        
+    # Get subjects this teacher teaches
+    teacher_id = session.get('user_id')
+    mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id, 'type': 'subject'}))
+    my_subjects = list(set([m.get('subject') for m in mappings]))
+    
+    if my_subjects:
+        resources = list(db.materials.find({
+            'share_with_colleagues': True,
+            'subject': {'$in': my_subjects},
+            'teacher_id': {'$ne': teacher_id},
+            'status': 'published'
+        }).sort('uploaded_at', -1))
+    else:
+        resources = []
+        
+    return render_template('colleague_resources.html', resources=resources, my_subjects=my_subjects)
 
 @app.route('/materials', methods=['GET', 'POST'])
 def materials():

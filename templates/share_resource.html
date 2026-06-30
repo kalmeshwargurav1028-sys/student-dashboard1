@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block header_title %}Create & Share Resource{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-6 flex items-center gap-3">
+        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900">Create & share resource</h1>
+    </div>
+
+    <!-- Wizard Form -->
+    <form action="{{ url_for('share_resource_post') }}" method="POST" enctype="multipart/form-data" id="resourceForm">
+        
+        <!-- Step Indicator -->
+        <div class="bg-white rounded-full shadow-sm border border-gray-100 flex p-1 mb-8 max-w-3xl mx-auto text-sm font-semibold">
+            <button type="button" onclick="goToStep(1)" id="step1-btn" class="flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all">
+                ① Details
+            </button>
+            <button type="button" onclick="goToStep(2)" id="step2-btn" class="flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all">
+                ② Share & Attach
+            </button>
+        </div>
+
+        <!-- ── STEP 1: DETAILS ── -->
+        <div id="step1" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6 transition-all duration-300">
+            <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                Resource Details
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+                    <input type="text" name="title" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="e.g. Chapter 5 Notes">
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Grade *</label>
+                    <select name="grade" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                        <option value="">-- Grade --</option>
+                        {% for g in range(1, 13) %}
+                        <option value="{{ g }}">{{ g }} Standard</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Subject *</label>
+                    <select name="subject" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                        <option value="">-- Subject --</option>
+                        {% for sub in subjects %}
+                        <option value="{{ sub }}">{{ sub }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="md:col-span-1">
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Section (Optional)</label>
+                    <select name="section" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                        <option value="All">-- All Sections --</option>
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
+                    <select name="category" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                        <option value="Note">Notes</option>
+                        <option value="Assignment">Assignment</option>
+                        <option value="Reading">Reading Material</option>
+                        <option value="Syllabus">Syllabus</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Format</label>
+                    <select name="format" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                        <option value="Text">Text</option>
+                        <option value="PDF">PDF</option>
+                        <option value="Video">Video</option>
+                        <option value="Link">Web Link</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+                    <textarea name="description" rows="3" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="Briefly describe this resource — what it covers, how to use it..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Learning Objectives</label>
+                    <textarea name="learning_objectives" rows="3" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="What should students or colleagues take away from this?"></textarea>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex justify-end">
+                <button type="button" onclick="goToStep(2)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition">
+                    Next Step →
+                </button>
+            </div>
+        </div>
+
+        <!-- ── STEP 2: SHARE & ATTACH ── -->
+        <div id="step2" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6 transition-all duration-300">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                
+                <!-- Share Options -->
+                <div>
+                    <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                        Share With
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <label class="flex items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" name="share_students" value="true" checked class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <span class="font-bold text-gray-900 block">My Students</span>
+                                <span class="text-gray-500">Share this with students in the selected Grade & Section.</span>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition">
+                            <div class="flex items-center h-5">
+                                <input type="checkbox" name="share_colleagues" value="true" class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            </div>
+                            <div class="ml-3 text-sm">
+                                <span class="font-bold text-gray-900 block">Subject Colleagues</span>
+                                <span class="text-gray-500">Share this with other teachers teaching the same subject.</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Attach File -->
+                <div>
+                    <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-6 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        Attach File
+                    </h2>
+                    
+                    <div class="w-full flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-blue-500 hover:bg-blue-50 transition bg-gray-50 group">
+                        <div class="space-y-1 text-center">
+                            <svg class="mx-auto h-12 w-12 text-blue-300 group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <div class="flex text-sm text-gray-600 justify-center">
+                                <label for="file-upload" class="relative cursor-pointer bg-transparent rounded-md font-bold text-blue-600 hover:text-blue-500 focus-within:outline-none">
+                                    <span>Click to upload or drag & drop</span>
+                                    <input id="file-upload" name="file" type="file" class="sr-only" required>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500">PDF, DOCX, PPTX, JPG, PNG — max 25 MB</p>
+                            <p id="file-name" class="text-xs font-semibold text-blue-600 mt-2 hidden"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
+                <button type="button" onclick="goToStep(1)" class="px-5 py-2 text-gray-500 hover:text-gray-700 text-sm font-semibold transition">
+                    ← Back
+                </button>
+                <div class="flex gap-3">
+                    <button type="submit" name="status" value="draft" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        Save draft
+                    </button>
+                    <button type="submit" name="status" value="published" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        Continue to Share
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+<script>
+    function goToStep(step) {
+        document.getElementById('step1').classList.add('hidden');
+        document.getElementById('step2').classList.add('hidden');
+        
+        document.getElementById(`step${step}`).classList.remove('hidden');
+        
+        const btn1 = document.getElementById('step1-btn');
+        const btn2 = document.getElementById('step2-btn');
+        
+        if(step === 1) {
+            btn1.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
+            btn2.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
+        } else {
+            btn2.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
+            btn1.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
+        }
+    }
+
+    document.getElementById('file-upload').addEventListener('change', function(e) {
+        const nameEl = document.getElementById('file-name');
+        if(e.target.files.length > 0) {
+            nameEl.textContent = 'Selected: ' + e.target.files[0].name;
+            nameEl.classList.remove('hidden');
+        } else {
+            nameEl.classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

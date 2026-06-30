@@ -5,6 +5,47 @@
 {% block content %}
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
 
+    <!-- Teacher Mappings Summary Banner -->
+    {% if session.get('role') == 'teacher' %}
+    <div class="mb-8 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-md overflow-hidden">
+        <div class="px-6 py-5 sm:px-8 sm:flex sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-xl font-bold text-white mb-2">Welcome, {{ session.get('username', 'Teacher') }}!</h2>
+                <div class="flex flex-wrap gap-2">
+                    {% if teacher_homerooms %}
+                        {% for hr in teacher_homerooms %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 backdrop-blur-sm">
+                                🏠 Homeroom Gr {{ hr.grade }}-{{ hr.section }}
+                            </span>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if teacher_subjects %}
+                        {% for sub in teacher_subjects %}
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/10 text-white border border-white/20 backdrop-blur-sm">
+                                📚 {{ sub.subject }} (Gr {{ sub.grade }}-{{ sub.section }})
+                            </span>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if not teacher_homerooms and not teacher_subjects %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/30 text-white border border-red-500/50 backdrop-blur-sm">
+                            ⚠️ No assigned classes
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="mt-4 sm:mt-0 opacity-80 hidden sm:block">
+                <svg class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                </svg>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Analytics Overview -->
     {% if analytics %}
     <div class="mb-8">

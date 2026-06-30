@@ -83,6 +83,43 @@
                     </a>
                 {% endif %}
 
+                {# ── MY CLASSES (MAPPINGS) ─────────────────────────────── #}
+                {% if session.get('role') == 'teacher' %}
+                <li class="px-3 pt-4 pb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">My Classes</span>
+                </li>
+                
+                {% if teacher_homerooms %}
+                    {% for hr in teacher_homerooms %}
+                    <li>
+                        <a href="{{ url_for('attendance', target_class=hr.grade, mode='universal') }}"
+                           class="flex items-center px-4 py-2 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 text-sm">
+                            <span class="mr-3 text-lg">🏠</span>
+                            <span class="sidebar-text whitespace-nowrap">Homeroom Gr {{ hr.grade }}-{{ hr.section }}</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                {% endif %}
+
+                {% if teacher_subjects %}
+                    {% for sub in teacher_subjects %}
+                    <li>
+                        <a href="{{ url_for('gradebook') }}?class={{ sub.grade }}&section={{ sub.section }}"
+                           class="flex items-center px-4 py-2 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 text-sm">
+                            <span class="mr-3 text-lg">📚</span>
+                            <span class="sidebar-text whitespace-nowrap truncate w-40" title="{{ sub.subject }} (Gr {{ sub.grade }}-{{ sub.section }})">{{ sub.subject }} (Gr {{ sub.grade }}-{{ sub.section }})</span>
+                        </a>
+                    </li>
+                    {% endfor %}
+                {% endif %}
+                
+                {% if not teacher_homerooms and not teacher_subjects %}
+                    <li>
+                        <div class="px-6 py-2 text-xs text-blue-300 dark:text-gray-500 italic sidebar-text">No assigned classes</div>
+                    </li>
+                {% endif %}
+                {% endif %}
+
                 {# ── CLASSROOM ─────────────────────────────────────────── #}
                 <li class="px-3 pt-4 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Classroom</span>
@@ -169,10 +206,28 @@
 
                 {% if role_permissions.get('edit_materials') %}
                 <li>
+                    {% if session.get('role') == 'teacher' %}
+                    <a href="{{ url_for('share_resource') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/share-resource' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Share Resource</span>
+                    </a>
+                    {% else %}
                     <a href="{{ url_for('materials') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/materials' in current_path and '/student' not in current_path %}bg-white/20 text-white font-semibold{% endif %}">
                         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                         <span class="sidebar-text whitespace-nowrap text-sm">Study Materials</span>
+                    </a>
+                    {% endif %}
+                </li>
+                {% endif %}
+
+                {% if session.get('role') == 'teacher' %}
+                <li>
+                    <a href="{{ url_for('colleague_resources') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/shared-resources' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Colleague Resources</span>
                     </a>
                 </li>
                 {% endif %}
