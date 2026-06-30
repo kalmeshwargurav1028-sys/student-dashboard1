@@ -3853,5 +3853,158 @@ def take_online_test(test_id):
         
     return render_template('take_online_test.html', test=test)
 
+# ===========================================================================
+# TEACHER MAPPING — Admin page for homeroom & subject classroom assignments
+# Covers Grade 1–12, Sections A–D
+# Collection: db.teacher_mappings
+# Document schema:
+#   { type: 'homeroom', grade: '1', section: 'A', teacher_id: <str>, teacher_name: <str> }
+#   { type: 'subject',  grade: '1', section: 'A', subject: 'Mathematics', teacher_id: <str>, teacher_name: <str> }
+# ===========================================================================
+
+@app.route('/admin/teacher-mapping')
+def teacher_mapping():
+    """Admin page: assign homeroom and subject teachers to every grade/section."""
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+
+    teachers = list(db.users.find({}, {'_id': 1, 'first_name': 1, 'last_name': 1, 'email': 1, 'department': 1}))
+    for t in teachers:
+        t['_id'] = str(t['_id'])
+        t['full_name'] = f"{t.get('first_name', '')} {t.get('last_name', '')}".strip() or t.get('email', 'Unknown')
+
+    # Pull all existing mappings
+    homeroom_maps = list(db.teacher_mappings.find({'type': 'homeroom'}, {'_id': 0}))
+    subject_maps  = list(db.teacher_mappings.find({'type': 'subject'},  {'_id': 0}))
+
+    # Build lookup: homeroom_lookup[grade][section] = mapping_doc
+    homeroom_lookup = {}
+    for m in homeroom_maps:
+        homeroom_lookup.setdefault(m['grade'], {})[m['section']] = m
+
+    # Build lookup: subject_lookup[grade][section][subject] = mapping_doc
+    subject_lookup = {}
+    for m in subject_maps:
+        subject_lookup.setdefault(m['grade'], {}).setdefault(m['section'], {})[m['subject']] = m
+
+    grades   = [str(g) for g in range(1, 13)]
+    sections = ['A', 'B', 'C', 'D']
+    subjects = [
+        'Mathematics', 'English', 'Science', 'Social Studies',
+        'Hindi', 'Physics', 'Chemistry', 'Biology',
+        'Computer Science', 'Physical Education', 'Art', 'Music'
+    ]
+
+    return render_template(
+        'teacher_mapping.html',
+        teachers=teachers,
+        grades=grades,
+        sections=sections,
+        subjects=subjects,
+        homeroom_lookup=homeroom_lookup,
+        subject_lookup=subject_lookup,
+    )
+
+
+# -- API: save a homeroom mapping --
+@app.route('/api/teacher-mapping/homeroom', methods=['POST'])
+def api_set_homeroom():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    grade   = str(data.get('grade', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    teacher_id   = str(data.get('teacher_id', '')).strip()
+    teacher_name = str(data.get('teacher_name', '')).strip()
+
+    if not grade or not section:
+        return jsonify({'success': False, 'error': 'grade and section are required'}), 400
+
+    if teacher_id:
+        db.teacher_mappings.update_one(
+            {'type': 'homeroom', 'grade': grade, 'section': section},
+            {'$set': {
+                'type': 'homeroom',
+                'grade': grade, 'section': section,
+                'teacher_id': teacher_id, 'teacher_name': teacher_name,
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_by': session.get('username', 'Admin')
+            }},
+            upsert=True
+        )
+        log_notification(
+            'Homeroom Mapping Updated',
+            f"Grade {grade}-{section} homeroom assigned to {teacher_name} by {session.get('username','Admin')}.",
+            type='success', role_target='admin'
+        )
+    else:
+        # Clear mapping
+        db.teacher_mappings.delete_one({'type': 'homeroom', 'grade': grade, 'section': section})
+
+    return jsonify({'success': True})
+
+
+# -- API: save a subject classroom mapping --
+@app.route('/api/teacher-mapping/subject', methods=['POST'])
+def api_set_subject_mapping():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    grade   = str(data.get('grade', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    subject = str(data.get('subject', '')).strip()
+    teacher_id   = str(data.get('teacher_id', '')).strip()
+    teacher_name = str(data.get('teacher_name', '')).strip()
+
+    if not grade or not section or not subject:
+        return jsonify({'success': False, 'error': 'grade, section, and subject are required'}), 400
+
+    if teacher_id:
+        db.teacher_mappings.update_one(
+            {'type': 'subject', 'grade': grade, 'section': section, 'subject': subject},
+            {'$set': {
+                'type': 'subject',
+                'grade': grade, 'section': section, 'subject': subject,
+                'teacher_id': teacher_id, 'teacher_name': teacher_name,
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'updated_by': session.get('username', 'Admin')
+            }},
+            upsert=True
+        )
+    else:
+        db.teacher_mappings.delete_one(
+            {'type': 'subject', 'grade': grade, 'section': section, 'subject': subject}
+        )
+
+    return jsonify({'success': True})
+
+
+# -- API: get all mappings (JSON) --
+@app.route('/api/teacher-mapping', methods=['GET'])
+def api_get_teacher_mappings():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    maps = list(db.teacher_mappings.find({}, {'_id': 0}))
+    return jsonify(maps)
+
+
+# -- API: bulk-clear all mappings for a grade/section --
+@app.route('/api/teacher-mapping/clear', methods=['POST'])
+def api_clear_mappings():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    grade   = str(data.get('grade', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    mapping_type = str(data.get('type', 'all')).strip()
+
+    query = {'grade': grade, 'section': section}
+    if mapping_type != 'all':
+        query['type'] = mapping_type
+
+    result = db.teacher_mappings.delete_many(query)
+    return jsonify({'success': True, 'deleted': result.deleted_count})
+
+
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True, port=5000)
