@@ -105,12 +105,12 @@
                 {% if mat.category == 'Assignment' %}
                     {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
                     {% if my_sub %}
-                        <div class="mt-3 text-xs text-green-700 bg-green-50 rounded-lg p-2 text-center border border-green-200 font-semibold">
-                            ✅ Submitted
+                        <div class="mt-3 text-xs text-green-700 bg-green-50 rounded-lg p-2 flex items-center justify-center gap-2 border border-green-200 font-semibold">
+                            <span>✅ Submitted</span>
                             {% if my_sub.grade %}
-                            <span class="block text-green-800 font-bold mt-0.5">Grade: {{ my_sub.grade }}</span>
+                            <span class="text-green-800 font-bold border-l border-green-300 pl-2">Grade: {{ my_sub.grade }}</span>
                             {% else %}
-                            <span class="block text-green-500 font-normal">Awaiting grade</span>
+                            <span class="text-green-500 font-normal border-l border-green-300 pl-2">Awaiting grade</span>
                             {% endif %}
                         </div>
                     {% else %}

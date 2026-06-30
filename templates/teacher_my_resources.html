@@ -113,28 +113,30 @@
                 <div class="space-y-2 max-h-48 overflow-y-auto">
                     {% for sub in res.submissions %}
                     <div class="bg-white rounded-lg border border-gray-200 p-2.5">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <div>
-                                <p class="text-xs font-bold text-gray-800">{{ sub.student_name }}</p>
-                                <p class="text-[10px] text-gray-400">{{ sub.submitted_at.split(' ')[0] }}</p>
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex-1 truncate">
+                                <p class="text-xs font-bold text-gray-800 truncate">{{ sub.student_name }} <span class="text-[9px] text-gray-400 font-normal ml-1">{{ sub.submitted_at.split(' ')[0] }}</span></p>
                                 {% if sub.student_response %}
-                                <p class="text-[11px] text-gray-600 mt-1 p-1.5 bg-gray-100 rounded italic border-l-2 border-blue-400">{{ sub.student_response }}</p>
+                                <p class="text-[10px] text-gray-600 mt-0.5 italic line-clamp-1" title="{{ sub.student_response }}">{{ sub.student_response }}</p>
                                 {% endif %}
                             </div>
-                            <a href="{{ sub.file_url }}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-gray-800 text-blue-400 hover:bg-gray-700 transition border border-gray-700">
-                                <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                Download
-                            </a>
+                            
+                            <div class="flex items-center gap-1.5 flex-shrink-0">
+                                <a href="{{ sub.file_url }}" target="_blank" class="inline-flex items-center justify-center p-1.5 rounded text-blue-600 bg-white hover:bg-blue-50 transition border border-blue-200" title="Download">
+                                    <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                </a>
+
+                                <form action="/api/grade-resource-work/{{ res._id }}" method="POST" class="flex items-center gap-1">
+                                    <input type="hidden" name="student_id" value="{{ sub.student_id }}">
+                                    <input type="text" name="grade" value="{{ sub.grade or '' }}"
+                                           class="w-14 text-xs px-1.5 py-1 border border-gray-200 rounded focus:ring-blue-400 focus:border-blue-400 text-center"
+                                           placeholder="Grade">
+                                    <button type="submit" class="text-[10px] bg-blue-600 text-white hover:bg-blue-700 font-bold px-2 py-1 rounded transition">
+                                        Save
+                                    </button>
+                                </form>
+                            </div>
                         </div>
-                        <form action="/api/grade-resource-work/{{ res._id }}" method="POST" class="flex items-center gap-2">
-                            <input type="hidden" name="student_id" value="{{ sub.student_id }}">
-                            <input type="text" name="grade" value="{{ sub.grade or '' }}"
-                                   class="flex-1 text-xs px-2 py-1 border border-gray-200 rounded focus:ring-blue-400 focus:border-blue-400"
-                                   placeholder="Grade (e.g. 92/100)">
-                            <button type="submit" class="text-[10px] bg-blue-600 text-white hover:bg-blue-700 font-bold px-2 py-1 rounded transition">
-                                Save
-                            </button>
-                        </form>
                     </div>
                     {% endfor %}
                 </div>
