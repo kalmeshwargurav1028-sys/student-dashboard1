@@ -157,15 +157,15 @@
                             </div>
                         </div>
 
-                        <!-- Division -->
+                        <!-- Section -->
                         <div class="sm:col-span-2">
-                            <label for="division" class="block text-sm font-medium text-gray-700">Division *</label>
+                            <label for="division" class="block text-sm font-medium text-gray-700">Section *</label>
                             <div class="mt-1">
                                 <select id="division" name="division" required class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-3 px-4 border bg-white">
-                                    <option value="A" {% if student and student.division == 'A' or not student %}selected{% endif %}>Division A</option>
-                                    <option value="B" {% if student and student.division == 'B' %}selected{% endif %}>Division B</option>
-                                    <option value="C" {% if student and student.division == 'C' %}selected{% endif %}>Division C</option>
-                                    <option value="D" {% if student and student.division == 'D' %}selected{% endif %}>Division D</option>
+                                    <option value="A" {% if student and student.division == 'A' or not student %}selected{% endif %}>Section A</option>
+                                    <option value="B" {% if student and student.division == 'B' %}selected{% endif %}>Section B</option>
+                                    <option value="C" {% if student and student.division == 'C' %}selected{% endif %}>Section C</option>
+                                    <option value="D" {% if student and student.division == 'D' %}selected{% endif %}>Section D</option>
                                 </select>
                             </div>
                         </div>
