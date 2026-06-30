@@ -2603,33 +2603,56 @@ def student_gradebook(student_id):
 def share_resource():
     if not session.get('logged_in') or session.get('role') == 'student':
         return redirect(url_for('login'))
-    
-    subjects = [
-        'Mathematics', 'English', 'Science', 'Social Studies',
-        'Hindi', 'Physics', 'Chemistry', 'Biology',
-        'Computer Science', 'Physical Education', 'Art', 'Music'
-    ]
 
-    # Build a dict: { subject -> [list of colleague names] }
     teacher_id = session.get('user_id')
-    # Find all subjects this teacher teaches
-    my_mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id, 'type': 'subject'}))
-    my_subjects = list(set(m.get('subject') for m in my_mappings if m.get('subject')))
 
-    # For each subject, find other teachers mapped to the same subject
+    # --- All subject mappings for this teacher ---
+    my_mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id, 'type': 'subject'}))
+
+    # Unique subjects this teacher teaches (sorted)
+    teacher_subjects = sorted(set(m.get('subject') for m in my_mappings if m.get('subject')))
+
+    # assignments_by_subject: { subject -> [ {grade, section} ] }
+    assignments_by_subject = {}
+    for m in my_mappings:
+        sub = m.get('subject')
+        if not sub:
+            continue
+        assignments_by_subject.setdefault(sub, [])
+        entry = {'grade': str(m.get('grade', '')), 'section': m.get('section', '')}
+        if entry not in assignments_by_subject[sub]:
+            assignments_by_subject[sub].append(entry)
+
+    # Sort each subject's assignments by grade then section
+    for sub in assignments_by_subject:
+        assignments_by_subject[sub].sort(key=lambda x: (int(x['grade']) if x['grade'].isdigit() else 99, x['section']))
+
+    # colleagues_by_subject: { subject -> [ teacher_name, ... ] }
     colleagues_by_subject = {}
-    for sub in my_subjects:
+    for sub in teacher_subjects:
         maps = list(db.teacher_mappings.find({
             'type': 'subject',
             'subject': sub,
             'teacher_id': {'$ne': teacher_id}
         }))
-        names = list(set(m.get('teacher_name', 'Unknown') for m in maps if m.get('teacher_name')))
+        names = sorted(set(m.get('teacher_name', '') for m in maps if m.get('teacher_name')))
         if names:
             colleagues_by_subject[sub] = names
 
-    return render_template('share_resource.html', subjects=subjects,
-                           colleagues_by_subject=colleagues_by_subject)
+    # Fallback full subject list for admins/teachers with no mappings
+    all_subjects = [
+        'Mathematics', 'English', 'Science', 'Social Studies',
+        'Hindi', 'Physics', 'Chemistry', 'Biology',
+        'Computer Science', 'Physical Education', 'Art', 'Music'
+    ]
+
+    return render_template(
+        'share_resource.html',
+        teacher_subjects=teacher_subjects,
+        all_subjects=all_subjects,
+        assignments_by_subject=assignments_by_subject,
+        colleagues_by_subject=colleagues_by_subject
+    )
 
 @app.route('/api/share-resource', methods=['POST'])
 def share_resource_post():

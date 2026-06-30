@@ -7,68 +7,77 @@
         <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
-        <h1 class="text-2xl font-bold text-gray-900">Create & share resource</h1>
+        <h1 class="text-2xl font-bold text-gray-900">Create & Share Resource</h1>
     </div>
 
-    <!-- Wizard Form -->
     <form action="{{ url_for('share_resource_post') }}" method="POST" enctype="multipart/form-data" id="resourceForm">
-        
+
         <!-- Step Indicator -->
         <div class="bg-white rounded-full shadow-sm border border-gray-100 flex p-1 mb-8 max-w-3xl mx-auto text-sm font-semibold">
-            <button type="button" onclick="goToStep(1)" id="step1-btn" class="flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all">
-                ① Details
-            </button>
-            <button type="button" onclick="goToStep(2)" id="step2-btn" class="flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all">
-                ② Share & Attach
-            </button>
+            <button type="button" onclick="goToStep(1)" id="step1-btn" class="flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all">① Details</button>
+            <button type="button" onclick="goToStep(2)" id="step2-btn" class="flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all">② Share & Attach</button>
         </div>
 
-        <!-- ── STEP 1: DETAILS ── -->
-        <div id="step1" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6 transition-all duration-300">
+        <!-- ── STEP 1 ── -->
+        <div id="step1" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
             <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Resource Details
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                <div class="md:col-span-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
-                    <input type="text" name="title" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="e.g. Chapter 5 Notes">
-                </div>
-                <div class="md:col-span-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Grade *</label>
-                    <select name="grade" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
-                        <option value="">-- Grade --</option>
-                        {% for g in range(1, 13) %}
-                        <option value="{{ g }}">{{ g }} Standard</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="md:col-span-1">
+            <!-- Title -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Title *</label>
+                <input type="text" name="title" required class="w-full border border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 text-sm" placeholder="e.g. Chapter 5 Notes">
+            </div>
+
+            <!-- Subject → Grade → Section (smart chain) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <!-- Subject -->
+                <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Subject *</label>
-                    <select name="subject" id="subject-select" required onchange="updateColleagues(this.value)" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
-                        <option value="">-- Subject --</option>
-                        {% for sub in subjects %}
-                        <option value="{{ sub }}">{{ sub }}</option>
-                        {% endfor %}
+                    <select name="subject" id="subject-select" required onchange="onSubjectChange(this.value)"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm text-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Subject --</option>
+                        {% if teacher_subjects %}
+                            {% for sub in teacher_subjects %}
+                            <option value="{{ sub }}">{{ sub }}</option>
+                            {% endfor %}
+                        {% else %}
+                            {% for sub in all_subjects %}
+                            <option value="{{ sub }}">{{ sub }}</option>
+                            {% endfor %}
+                        {% endif %}
+                    </select>
+                    {% if teacher_subjects %}
+                    <p class="text-[10px] text-blue-500 mt-1">Showing your assigned subjects only.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Grade (populated by JS) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Grade *</label>
+                    <select name="grade" id="grade-select" required onchange="onGradeChange()"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm text-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Subject First --</option>
                     </select>
                 </div>
-                <div class="md:col-span-1">
-                    <label class="block text-sm font-semibold text-gray-700 mb-1">Section (Optional)</label>
-                    <select name="section" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
-                        <option value="All">-- All Sections --</option>
-                        <option value="A">Section A</option>
-                        <option value="B">Section B</option>
-                        <option value="C">Section C</option>
-                        <option value="D">Section D</option>
+
+                <!-- Section (populated by JS) -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Section</label>
+                    <select name="section" id="section-select"
+                            class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm text-gray-600 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">-- Select Grade First --</option>
                     </select>
                 </div>
             </div>
 
+            <!-- Category & Format -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Category</label>
-                    <select name="category" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                    <select name="category" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm text-gray-600 focus:ring-blue-500 focus:border-blue-500">
                         <option value="Note">Notes</option>
                         <option value="Assignment">Assignment</option>
                         <option value="Reading">Reading Material</option>
@@ -78,7 +87,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Format</label>
-                    <select name="format" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                    <select name="format" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm text-gray-600 focus:ring-blue-500 focus:border-blue-500">
                         <option value="Text">Text</option>
                         <option value="PDF">PDF</option>
                         <option value="Video">Video</option>
@@ -87,25 +96,24 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Description & Learning Objectives -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Description</label>
-                    <textarea name="description" rows="3" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="Briefly describe this resource — what it covers, how to use it..."></textarea>
+                    <textarea name="description" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Briefly describe this resource..."></textarea>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Learning Objectives</label>
-                    <textarea name="learning_objectives" rows="3" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm" placeholder="What should students or colleagues take away from this?"></textarea>
+                    <textarea name="learning_objectives" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm focus:ring-blue-500 focus:border-blue-500" placeholder="What should students take away from this?"></textarea>
                 </div>
             </div>
 
-            <!-- ── ATTACH FILE (inside Step 1) ── -->
-            <div class="mt-6">
+            <!-- Attach File -->
+            <div class="mt-2">
                 <p class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                     Attach File
                 </p>
-
-                <!-- Drop Zone: input INSIDE label with sr-only so label click works across all browsers -->
                 <label id="drop-zone"
                        class="w-full flex justify-center px-6 pt-8 pb-8 border-2 border-blue-300 border-dashed rounded-xl hover:border-blue-500 hover:bg-blue-50 transition bg-gray-50 cursor-pointer group block"
                        ondragover="event.preventDefault(); this.classList.add('border-blue-500','bg-blue-50');"
@@ -113,13 +121,12 @@
                        ondrop="handleDrop(event)">
                     <div class="space-y-2 text-center w-full">
                         <svg id="upload-icon" class="mx-auto h-12 w-12 text-blue-300 group-hover:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                         </svg>
                         <p class="text-sm font-bold text-blue-600 group-hover:text-blue-700">Click to upload or drag &amp; drop</p>
                         <p class="text-xs text-gray-400">PDF, DOCX, PPTX, JPG, PNG &mdash; max <strong>10 MB</strong></p>
                         <p id="file-name" class="text-xs font-semibold text-blue-700 mt-1 hidden"></p>
                         <p id="file-error" class="text-xs font-semibold text-red-500 mt-1 hidden"></p>
-                        <!-- Input inside label: sr-only keeps it hidden but clickable via label -->
                         <input id="file-upload" name="file" type="file"
                                accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.webp"
                                style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"
@@ -128,8 +135,6 @@
                 </label>
             </div>
 
-
-            
             <div class="mt-8 flex justify-end">
                 <button type="button" onclick="goToStep(2)" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition">
                     Next Step →
@@ -137,28 +142,34 @@
             </div>
         </div>
 
-        <!-- ── STEP 2: SHARE & ATTACH ── -->
-        <div id="step2" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6 transition-all duration-300">
+        <!-- ── STEP 2 ── -->
+        <div id="step2" class="hidden bg-white rounded-2xl shadow-sm border border-gray-100 p-8 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                
+
                 <!-- Share Options -->
                 <div>
                     <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-6 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         Share With
                     </h2>
-                    
                     <div class="space-y-4">
+
+                        <!-- My Students card -->
                         <label class="flex items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition">
                             <div class="flex items-center h-5">
                                 <input type="checkbox" name="share_students" value="true" checked class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             </div>
-                            <div class="ml-3 text-sm">
+                            <div class="ml-3 text-sm w-full">
                                 <span class="font-bold text-gray-900 block">My Students</span>
-                                <span class="text-gray-500">Share this with students in the selected Grade & Section.</span>
+                                <span class="text-gray-500 text-xs">Share with students in the selected Grade &amp; Section.</span>
+                                <!-- Live summary of who will receive -->
+                                <div id="student-target-summary" class="mt-2 hidden">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200" id="student-target-pill"></span>
+                                </div>
                             </div>
                         </label>
 
+                        <!-- Subject Colleagues card -->
                         <label class="flex items-start p-4 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer transition">
                             <div class="flex items-center h-5">
                                 <input type="checkbox" name="share_colleagues" value="true" class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
@@ -166,22 +177,21 @@
                             <div class="ml-3 text-sm w-full">
                                 <span class="font-bold text-gray-900 block">Subject Colleagues</span>
                                 <span class="text-gray-500 text-xs">Share with other teachers teaching the same subject.</span>
-                                <!-- Colleague name pills, shown when a matching subject is selected -->
                                 <div id="colleague-pills" class="mt-2 flex flex-wrap gap-1.5"></div>
-                                <p id="colleague-none" class="mt-1.5 text-xs text-gray-400 hidden">No colleagues found for the selected subject.</p>
+                                <p id="colleague-none" class="mt-1.5 text-xs text-gray-400 hidden">No colleagues found for this subject.</p>
                             </div>
                         </label>
                     </div>
                 </div>
 
-                <!-- File attached in Step 1 — show preview here -->
+                <!-- File preview -->
                 <div>
                     <h2 class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
                         Attached File
                     </h2>
                     <div class="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                        <svg class="h-8 w-8 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <svg class="h-8 w-8 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                         <div>
                             <p class="text-sm font-bold text-blue-700">File selected in Step 1</p>
                             <p id="step2-file-preview" class="text-xs text-blue-500 mt-0.5">No file selected yet — go back to Step 1 to attach.</p>
@@ -190,19 +200,16 @@
                 </div>
             </div>
 
-
             <!-- Action Buttons -->
             <div class="mt-8 pt-6 border-t border-gray-100 flex justify-between items-center">
-                <button type="button" onclick="goToStep(1)" class="px-5 py-2 text-gray-500 hover:text-gray-700 text-sm font-semibold transition">
-                    ← Back
-                </button>
+                <button type="button" onclick="goToStep(1)" class="px-5 py-2 text-gray-500 hover:text-gray-700 text-sm font-semibold transition">← Back</button>
                 <div class="flex gap-3">
                     <button type="button" onclick="submitForm('draft')" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                        Save draft
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+                        Save Draft
                     </button>
                     <button type="button" onclick="submitForm('published')" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold shadow-sm transition flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                         Continue to Share
                     </button>
                 </div>
@@ -213,135 +220,205 @@
 </div>
 
 <script>
-    function goToStep(step) {
-        document.getElementById('step1').classList.add('hidden');
-        document.getElementById('step2').classList.add('hidden');
-        
-        document.getElementById(`step${step}`).classList.remove('hidden');
-        
-        const btn1 = document.getElementById('step1-btn');
-        const btn2 = document.getElementById('step2-btn');
-        
-        if(step === 1) {
-            btn1.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
-            btn2.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
-        } else {
-            btn2.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
-            btn1.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
-        }
+// ── Data from Flask ──────────────────────────────────────────────
+const assignmentsBySubject = {{ assignments_by_subject | tojson }};
+const colleaguesBySubject  = {{ colleagues_by_subject  | tojson }};
 
-        // Sync attached file name to step 2 preview
-        if (step === 2) {
-            const input = document.getElementById('file-upload');
-            const previewEl = document.getElementById('step2-file-preview');
-            if (input && (input.files.length > 0 || input._droppedFile) && previewEl) {
-                const f = input.files.length > 0 ? input.files[0] : input._droppedFile;
-                previewEl.textContent = f.name;
-            }
-            // Sync colleague pills based on currently selected subject
-            const subjectSel = document.getElementById('subject-select');
-            if (subjectSel) updateColleagues(subjectSel.value);
+// ── Subject change: rebuild Grade dropdown ───────────────────────
+function onSubjectChange(subject) {
+    const gradeEl   = document.getElementById('grade-select');
+    const sectionEl = document.getElementById('section-select');
+
+    gradeEl.innerHTML   = '<option value="">-- Select Grade --</option>';
+    sectionEl.innerHTML = '<option value="">-- Select Grade First --</option>';
+
+    const assignments = assignmentsBySubject[subject] || [];
+    const grades = [...new Set(assignments.map(a => a.grade))].sort((a,b) => parseInt(a)-parseInt(b));
+
+    if (grades.length > 0) {
+        grades.forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = 'Grade ' + g;
+            gradeEl.appendChild(opt);
+        });
+    } else {
+        // No mappings — show all grades 1–12 as fallback
+        for (let g = 1; g <= 12; g++) {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = 'Grade ' + g;
+            gradeEl.appendChild(opt);
         }
     }
 
-    function validateFile(input) {
-        const maxSize = 10 * 1024 * 1024; // 10 MB
-        const nameEl = document.getElementById('file-name');
-        const errEl = document.getElementById('file-error');
+    updateStudentTargetSummary();
+}
+
+// ── Grade change: rebuild Section dropdown ───────────────────────
+function onGradeChange() {
+    const subjectEl = document.getElementById('subject-select');
+    const gradeEl   = document.getElementById('grade-select');
+    const sectionEl = document.getElementById('section-select');
+
+    const subject = subjectEl.value;
+    const grade   = gradeEl.value;
+
+    sectionEl.innerHTML = '<option value="All">All Sections</option>';
+
+    const assignments = assignmentsBySubject[subject] || [];
+    const sections = [...new Set(
+        assignments.filter(a => a.grade === grade).map(a => a.section)
+    )].sort();
+
+    if (sections.length > 0) {
+        sections.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = 'Section ' + s;
+            sectionEl.appendChild(opt);
+        });
+    } else {
+        // No mappings — show all sections A–D as fallback
+        ['A','B','C','D'].forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.textContent = 'Section ' + s;
+            sectionEl.appendChild(opt);
+        });
+    }
+
+    updateStudentTargetSummary();
+}
+
+// ── Live student target pill ─────────────────────────────────────
+function updateStudentTargetSummary() {
+    const grade   = document.getElementById('grade-select').value;
+    const section = document.getElementById('section-select')?.value;
+    const subject = document.getElementById('subject-select').value;
+    const summaryDiv = document.getElementById('student-target-summary');
+    const pillEl    = document.getElementById('student-target-pill');
+    if (grade && subject) {
+        const sectionLabel = section && section !== 'All' ? ' › Section ' + section : ' › All Sections';
+        pillEl.textContent = subject + ' · Grade ' + grade + sectionLabel;
+        summaryDiv.classList.remove('hidden');
+    } else {
+        summaryDiv.classList.add('hidden');
+    }
+}
+
+// ── Step navigation ──────────────────────────────────────────────
+function goToStep(step) {
+    document.getElementById('step1').classList.add('hidden');
+    document.getElementById('step2').classList.add('hidden');
+    document.getElementById('step' + step).classList.remove('hidden');
+
+    const btn1 = document.getElementById('step1-btn');
+    const btn2 = document.getElementById('step2-btn');
+    if (step === 1) {
+        btn1.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
+        btn2.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
+    } else {
+        btn2.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
+        btn1.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
+    }
+
+    if (step === 2) {
+        // Sync file preview
+        const input = document.getElementById('file-upload');
         const previewEl = document.getElementById('step2-file-preview');
-        const iconEl = document.getElementById('upload-icon');
-
-        // Get file from input.files or from the _droppedFile fallback
-        const file = (input.files && input.files.length > 0) ? input.files[0] : input._droppedFile;
-        if (file) {
-            if (file.size > maxSize) {
-                errEl.textContent = '⚠️ File too large! Maximum size is 10 MB.';
-                errEl.classList.remove('hidden');
-                nameEl.classList.add('hidden');
-                if (previewEl) previewEl.textContent = 'File too large!';
-                input.value = '';
-                input._droppedFile = null;
-                return;
-            }
-            errEl.classList.add('hidden');
-            nameEl.textContent = '✅ ' + file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
-            nameEl.classList.remove('hidden');
-            if (previewEl) previewEl.textContent = file.name;
-            // Change icon to check
-            iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />';
-            iconEl.classList.remove('text-blue-300');
-            iconEl.classList.add('text-green-400');
+        if (previewEl) {
+            const f = (input.files && input.files.length > 0) ? input.files[0] : input._droppedFile;
+            if (f) previewEl.textContent = f.name;
         }
+        // Sync student target summary
+        updateStudentTargetSummary();
+        // Sync colleague pills
+        const sub = document.getElementById('subject-select').value;
+        renderColleaguePills(sub);
     }
+}
 
-    function handleDrop(event) {
-        event.preventDefault();
-        const dt = event.dataTransfer;
-        const input = document.getElementById('file-upload');
-        if (dt.files && dt.files.length > 0) {
-            // Use DataTransfer to assign files — direct assignment to input.files is read-only
-            try {
-                const dataTransfer = new DataTransfer();
-                for (let i = 0; i < dt.files.length; i++) {
-                    dataTransfer.items.add(dt.files[i]);
-                }
-                input.files = dataTransfer.files;
-            } catch (e) {
-                // Fallback: store file reference and validate manually
-                input._droppedFile = dt.files[0];
-            }
-            validateFile(input);
-        }
-        event.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+// ── Colleague pills ──────────────────────────────────────────────
+function renderColleaguePills(subject) {
+    const pillsEl = document.getElementById('colleague-pills');
+    const noneEl  = document.getElementById('colleague-none');
+    if (!pillsEl || !noneEl) return;
+    pillsEl.innerHTML = '';
+    const names = colleaguesBySubject[subject] || [];
+    if (names.length > 0) {
+        noneEl.classList.add('hidden');
+        names.forEach(name => {
+            const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+            const pill = document.createElement('span');
+            pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
+            pill.innerHTML = `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-bold">${initials}</span>${name}`;
+            pillsEl.appendChild(pill);
+        });
+    } else if (subject) {
+        noneEl.classList.remove('hidden');
+    } else {
+        noneEl.classList.add('hidden');
     }
+}
 
-    // Colleagues data injected from Flask backend
-    const colleaguesBySubject = {{ colleagues_by_subject | tojson }};
-
-    function updateColleagues(subject) {
-        const pillsEl = document.getElementById('colleague-pills');
-        const noneEl  = document.getElementById('colleague-none');
-        if (!pillsEl || !noneEl) return;
-
-        const names = colleaguesBySubject[subject] || [];
-        pillsEl.innerHTML = '';
-        if (names.length > 0) {
-            noneEl.classList.add('hidden');
-            names.forEach(name => {
-                const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
-                const pill = document.createElement('span');
-                pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
-                pill.innerHTML = `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-bold">${initials}</span>${name}`;
-                pillsEl.appendChild(pill);
-            });
-        } else if (subject) {
-            noneEl.classList.remove('hidden');
-        } else {
-            noneEl.classList.add('hidden');
-        }
+// ── File validation ──────────────────────────────────────────────
+function validateFile(input) {
+    const maxSize  = 10 * 1024 * 1024;
+    const nameEl   = document.getElementById('file-name');
+    const errEl    = document.getElementById('file-error');
+    const previewEl = document.getElementById('step2-file-preview');
+    const iconEl   = document.getElementById('upload-icon');
+    const file = (input.files && input.files.length > 0) ? input.files[0] : input._droppedFile;
+    if (!file) return;
+    if (file.size > maxSize) {
+        errEl.textContent = '⚠️ File too large! Maximum size is 10 MB.';
+        errEl.classList.remove('hidden');
+        nameEl.classList.add('hidden');
+        if (previewEl) previewEl.textContent = 'File too large!';
+        input.value = ''; input._droppedFile = null;
+        return;
     }
+    errEl.classList.add('hidden');
+    nameEl.textContent = '✅ ' + file.name + ' (' + (file.size/1024/1024).toFixed(2) + ' MB)';
+    nameEl.classList.remove('hidden');
+    if (previewEl) previewEl.textContent = file.name;
+    iconEl.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+    iconEl.classList.remove('text-blue-300');
+    iconEl.classList.add('text-green-400');
+}
 
-    function submitForm(statusValue) {
-        const input = document.getElementById('file-upload');
-        const hasFile = (input.files && input.files.length > 0) || input._droppedFile;
-        if (!hasFile) {
-            alert('Please attach a file before submitting.');
-            goToStep(1);
-            return;
+// ── Drag & drop ──────────────────────────────────────────────────
+function handleDrop(event) {
+    event.preventDefault();
+    const dt    = event.dataTransfer;
+    const input = document.getElementById('file-upload');
+    if (dt.files && dt.files.length > 0) {
+        try {
+            const dт = new DataTransfer();
+            for (let i = 0; i < dt.files.length; i++) dт.items.add(dt.files[i]);
+            input.files = dт.files;
+        } catch(e) {
+            input._droppedFile = dt.files[0];
         }
-        // Set a hidden status field and submit
-        let statusField = document.getElementById('status-field');
-        if (!statusField) {
-            statusField = document.createElement('input');
-            statusField.type = 'hidden';
-            statusField.id = 'status-field';
-            statusField.name = 'status';
-            document.getElementById('resourceForm').appendChild(statusField);
-        }
-        statusField.value = statusValue;
-        document.getElementById('resourceForm').submit();
+        validateFile(input);
     }
+    event.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+}
 
-
+// ── Form submit ──────────────────────────────────────────────────
+function submitForm(statusValue) {
+    const input = document.getElementById('file-upload');
+    const hasFile = (input.files && input.files.length > 0) || input._droppedFile;
+    if (!hasFile) { alert('Please attach a file before submitting.'); goToStep(1); return; }
+    let sf = document.getElementById('status-field');
+    if (!sf) {
+        sf = document.createElement('input');
+        sf.type = 'hidden'; sf.id = 'status-field'; sf.name = 'status';
+        document.getElementById('resourceForm').appendChild(sf);
+    }
+    sf.value = statusValue;
+    document.getElementById('resourceForm').submit();
+}
 </script>
 {% endblock %}
