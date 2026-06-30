@@ -2735,10 +2735,14 @@ def grade_resource_work(material_id):
         
     student_id = request.form.get('student_id')
     grade = request.form.get('grade')
+    remarks = request.form.get('remarks', '')
     
     db.materials.update_one(
         {'_id': ObjectId(material_id), 'submissions.student_id': student_id},
-        {'$set': {'submissions.$.grade': grade}}
+        {'$set': {
+            'submissions.$.grade': grade,
+            'submissions.$.remarks': remarks
+        }}
     )
     
     flash('Grade updated successfully!')
