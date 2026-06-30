@@ -2631,8 +2631,19 @@ def share_resource_post():
     
     file = request.files.get('file')
     file_url = None
+    original_filename = None
     
+    MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
     if file and file.filename != '':
+        # Read file content to check size
+        file_content = file.read()
+        if len(file_content) > MAX_FILE_SIZE:
+            flash('File is too large. Maximum allowed size is 10 MB.', 'error')
+            return redirect(url_for('share_resource'))
+        file.seek(0)  # Reset pointer after reading
+        
+        original_filename = file.filename
         filename = secure_filename(file.filename)
         unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
         file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
@@ -2651,9 +2662,11 @@ def share_resource_post():
         'share_with_colleagues': share_colleagues,
         'status': status,
         'file_url': file_url,
+        'filename': original_filename,
         'uploaded_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'teacher_id': session.get('user_id'),
-        'teacher_name': session.get('username')
+        'teacher_name': session.get('username'),
+        'submissions': []
     })
     
     flash('Resource successfully created and shared!')
