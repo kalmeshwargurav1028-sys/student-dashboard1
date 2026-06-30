@@ -100,20 +100,13 @@
 
             <!-- ── ATTACH FILE (inside Step 1) ── -->
             <div class="mt-6">
-                <p class="block text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
+                <p class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
                     Attach File
                 </p>
 
-                <!-- Hidden file input -->
-                <input id="file-upload" name="file" type="file"
-                       accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.webp"
-                       required
-                       class="hidden"
-                       onchange="validateFile(this)">
-
-                <!-- Drop Zone — clicking opens file picker via label -->
-                <label for="file-upload" id="drop-zone"
+                <!-- Drop Zone: input INSIDE label with sr-only so label click works across all browsers -->
+                <label id="drop-zone"
                        class="w-full flex justify-center px-6 pt-8 pb-8 border-2 border-blue-300 border-dashed rounded-xl hover:border-blue-500 hover:bg-blue-50 transition bg-gray-50 cursor-pointer group block"
                        ondragover="event.preventDefault(); this.classList.add('border-blue-500','bg-blue-50');"
                        ondragleave="this.classList.remove('border-blue-500','bg-blue-50');"
@@ -126,9 +119,16 @@
                         <p class="text-xs text-gray-400">PDF, DOCX, PPTX, JPG, PNG &mdash; max <strong>10 MB</strong></p>
                         <p id="file-name" class="text-xs font-semibold text-blue-700 mt-1 hidden"></p>
                         <p id="file-error" class="text-xs font-semibold text-red-500 mt-1 hidden"></p>
+                        <!-- Input inside label: sr-only keeps it hidden but clickable via label -->
+                        <input id="file-upload" name="file" type="file"
+                               accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp,.webp"
+                               required
+                               style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;"
+                               onchange="validateFile(this)">
                     </div>
                 </label>
             </div>
+
 
             
             <div class="mt-8 flex justify-end">
