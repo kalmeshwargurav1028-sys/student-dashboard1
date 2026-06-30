@@ -150,7 +150,7 @@ port     → db.settings.MAIL_PORT    (NEVER from env)
 ## 🧩 Frontend Patterns
 
 - **Base layout:** All pages `{% extends "base.html" %}` which provides sidebar, topbar, notification bell, flash messages
-- **Sidebar color:** Emerald `#10b981`, collapses to icon-only via JS class swap
+- **Sidebar color:** Blue `#2563eb`, collapses to icon-only via JS class swap
 - **Role-gated nav:** Controlled by `session.role` + `role_permissions` context processor
 - **JS:** All vanilla. Key patterns:
   - `fetch()` for AJAX (AI chat, notifications, announcements)
@@ -161,7 +161,7 @@ port     → db.settings.MAIL_PORT    (NEVER from env)
 ### Color Palette
 | Context | Color |
 |---|---|
-| Primary / Sidebar | Emerald `#10b981` |
+| Primary / Sidebar | Blue `#2563eb` |
 | Admin accent | Red / Rose |
 | Teacher accent | Blue / Indigo |
 | Student accent | Purple / Fuchsia |

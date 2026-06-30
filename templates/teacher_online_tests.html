@@ -6,7 +6,7 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Online Tests</h1>
-        <a href="{{ url_for('create_online_test') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-emerald-600 hover:bg-emerald-700">
+        <a href="{{ url_for('create_online_test') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
             Create New Test
         </a>
     </div>
@@ -17,7 +17,7 @@
             <li>
                 <div class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700">
                     <div class="flex items-center justify-between">
-                        <p class="text-sm font-medium text-emerald-600 truncate">{{ test.title }}</p>
+                        <p class="text-sm font-medium text-blue-600 truncate">{{ test.title }}</p>
                         <div class="ml-2 flex-shrink-0 flex">
                             <p class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                 {{ test.status|capitalize }}
@@ -33,7 +33,7 @@
                         <div class="mt-2 flex items-center justify-end space-x-3 sm:mt-0 w-full sm:w-auto">
                             <p class="text-xs text-gray-500 dark:text-gray-400 mr-4">Created: {{ test.created_at }}</p>
                             
-                            <a href="{{ url_for('teacher_test_submissions', test_id=test._id) }}" class="inline-flex items-center px-3 py-1.5 border border-emerald-600 text-xs font-medium rounded text-emerald-600 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors shadow-sm">
+                            <a href="{{ url_for('teacher_test_submissions', test_id=test._id) }}" class="inline-flex items-center px-3 py-1.5 border border-blue-600 text-xs font-medium rounded text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors shadow-sm">
                                 View Submissions
                             </a>
                             

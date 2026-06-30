@@ -8,20 +8,20 @@
             <p class="mt-2 text-sm text-gray-500">Your upcoming lectures and class schedules.</p>
         </div>
         <div class="bg-white p-2 rounded-lg shadow-sm border border-gray-100 flex items-center gap-2">
-            <span class="inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
-            <span class="text-sm font-medium text-gray-700">Today: <span class="text-emerald-600 font-bold">{{ current_day }}</span></span>
+            <span class="inline-flex h-3 w-3 rounded-full bg-blue-500"></span>
+            <span class="text-sm font-medium text-gray-700">Today: <span class="text-blue-600 font-bold">{{ current_day }}</span></span>
         </div>
     </div>
 
     <!-- Timetable Grid -->
     <div class="space-y-8">
         {% for day, classes in timetable.items() %}
-        <div class="bg-white shadow sm:rounded-xl border {% if day == current_day %}border-emerald-500 ring-1 ring-emerald-500{% else %}border-gray-100{% endif %} overflow-hidden">
-            <div class="px-4 py-4 {% if day == current_day %}bg-emerald-50{% else %}bg-gray-50{% endif %} border-b border-gray-200">
-                <h3 class="text-lg font-bold {% if day == current_day %}text-emerald-800{% else %}text-gray-800{% endif %} flex items-center gap-2">
+        <div class="bg-white shadow sm:rounded-xl border {% if day == current_day %}border-blue-500 ring-1 ring-blue-500{% else %}border-gray-100{% endif %} overflow-hidden">
+            <div class="px-4 py-4 {% if day == current_day %}bg-blue-50{% else %}bg-gray-50{% endif %} border-b border-gray-200">
+                <h3 class="text-lg font-bold {% if day == current_day %}text-blue-800{% else %}text-gray-800{% endif %} flex items-center gap-2">
                     <i class="fa-regular fa-calendar text-gray-400"></i> {{ day }}
                     {% if day == current_day %}
-                    <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    <span class="ml-2 px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         Today
                     </span>
                     {% endif %}

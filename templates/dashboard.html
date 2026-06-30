@@ -15,8 +15,8 @@
             <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100">
                 <div class="p-5">
                     <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-emerald-100 rounded-md p-3">
-                            <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                        <div class="flex-shrink-0 bg-blue-100 rounded-md p-3">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
                         </div>
                         <div class="ml-5 w-0 flex-1">
                             <dl>
@@ -49,14 +49,14 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
-                    <input type="text" id="studentSearch" class="focus:ring-emerald-500 focus:border-emerald-500 block w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none" placeholder="Search name..." autocomplete="off">
+                    <input type="text" id="studentSearch" class="focus:ring-blue-500 focus:border-blue-500 block w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm transition-all focus:outline-none" placeholder="Search name..." autocomplete="off">
                     <ul id="searchDropdown" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-xl py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm hidden border border-gray-100">
                     </ul>
                 </div>
                 
                 <!-- Grade Filter Selector -->
                 <div class="relative w-full sm:w-44">
-                    <select id="gradeFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
+                    <select id="gradeFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 bg-white focus:outline-none cursor-pointer">
                         <option value="All">All Grades</option>
                         <option value="2nd">2nd Standard</option>
                         <option value="3rd">3rd Standard</option>
@@ -74,7 +74,7 @@
 
                 <!-- Division Filter Selector -->
                 <div class="relative w-full sm:w-40">
-                    <select id="divisionFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-emerald-500 focus:border-emerald-500 bg-white focus:outline-none cursor-pointer">
+                    <select id="divisionFilter" class="w-full pl-3 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:ring-blue-500 focus:border-blue-500 bg-white focus:outline-none cursor-pointer">
                         <option value="All">All Divisions</option>
                         <option value="A">Division A</option>
                         <option value="B">Division B</option>
@@ -84,7 +84,7 @@
                 </div>
 
                 <!-- Add Student Button -->
-                <a href="{{ url_for('profile_form') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition whitespace-nowrap">
+                <a href="{{ url_for('profile_form') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition whitespace-nowrap">
                     <svg class="-ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                     </svg>
@@ -120,13 +120,13 @@
                                     {{ student.get('student_class', 'N/A') }} Standard
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
                                         Division {{ student.get('division', 'A') }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end gap-3">
-                                        <a href="{{ url_for('student_profile', student_id=student.id) }}" class="text-emerald-600 hover:text-emerald-900 flex items-center gap-1 font-semibold">
+                                        <a href="{{ url_for('student_profile', student_id=student.id) }}" class="text-blue-600 hover:text-blue-900 flex items-center gap-1 font-semibold">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                             Learn
                                         </a>
@@ -240,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 matches.forEach(match => {
                     const li = document.createElement('li');
-                    li.className = 'text-gray-900 cursor-default select-none relative py-2.5 pl-3 pr-9 hover:bg-emerald-50 hover:text-emerald-900 cursor-pointer text-sm transition-colors';
+                    li.className = 'text-gray-900 cursor-default select-none relative py-2.5 pl-3 pr-9 hover:bg-blue-50 hover:text-blue-900 cursor-pointer text-sm transition-colors';
                     li.innerHTML = `<span class="block truncate font-medium">${capitalize(match)}</span>`;
                     
                     li.addEventListener('click', () => {

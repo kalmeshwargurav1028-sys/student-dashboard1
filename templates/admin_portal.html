@@ -22,26 +22,26 @@
     <div class="max-w-5xl w-full flex flex-col md:flex-row bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100 min-h-[600px]">
         
         <!-- Left Section - Green white professional theme -->
-        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#dbeafe] to-[#10b981] p-10 md:p-14 flex flex-col justify-center text-emerald-900 relative">
+        <div class="w-full md:w-1/2 bg-gradient-to-br from-[#dbeafe] to-[#2563eb] p-10 md:p-14 flex flex-col justify-center text-blue-900 relative">
             <div class="mb-6">
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/30 text-emerald-900 border border-emerald-600/30">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white/30 text-blue-900 border border-blue-600/30">
                     <i class="fa-solid fa-shield-halved mr-1.5"></i> SECURE ACCESS
                 </span>
             </div>
             <h1 class="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Admin Portal</h1>
-            <p class="text-emerald-800 text-lg mb-10 font-medium">System administration & management</p>
+            <p class="text-blue-800 text-lg mb-10 font-medium">System administration & management</p>
             
             <div class="space-y-4 mt-4">
-                <div class="flex items-center text-emerald-800 text-sm">
-                    <i class="fa-solid fa-lock text-emerald-700 mr-3 w-5 text-center"></i>
+                <div class="flex items-center text-blue-800 text-sm">
+                    <i class="fa-solid fa-lock text-blue-700 mr-3 w-5 text-center"></i>
                     <span>Encrypted secure connection</span>
                 </div>
-                <div class="flex items-center text-emerald-800 text-sm">
-                    <i class="fa-solid fa-user-shield text-emerald-700 mr-3 w-5 text-center"></i>
+                <div class="flex items-center text-blue-800 text-sm">
+                    <i class="fa-solid fa-user-shield text-blue-700 mr-3 w-5 text-center"></i>
                     <span>Authorized administrators only</span>
                 </div>
-                <div class="flex items-center text-emerald-800 text-sm">
-                    <i class="fa-solid fa-chart-line text-emerald-700 mr-3 w-5 text-center"></i>
+                <div class="flex items-center text-blue-800 text-sm">
+                    <i class="fa-solid fa-chart-line text-blue-700 mr-3 w-5 text-center"></i>
                     <span>Full system management access</span>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                 <div class="flex justify-center mb-4">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School Logo" class="h-28 w-auto object-contain">
                 </div>
-                <h2 class="text-xs font-bold text-emerald-800 tracking-widest uppercase mb-4">Indus Personalized Learning</h2>
+                <h2 class="text-xs font-bold text-blue-800 tracking-widest uppercase mb-4">Indus Personalized Learning</h2>
                 <h2 class="text-3xl font-bold text-gray-900 tracking-tight">Admin Login</h2>
             </div>
 
@@ -71,7 +71,7 @@
 
             <!-- Admin Badge -->
             <div class="flex w-full max-w-sm mb-6 bg-gray-100 p-1 rounded-xl">
-                <div class="flex-1 py-2 text-sm font-bold text-emerald-900 bg-white rounded-lg shadow-sm text-center">
+                <div class="flex-1 py-2 text-sm font-bold text-blue-900 bg-white rounded-lg shadow-sm text-center">
                     <i class="fa-solid fa-shield-halved mr-1.5"></i> Administrator
                 </div>
             </div>
@@ -83,7 +83,7 @@
                 <div>
                     <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5">Admin Email</label>
                     <input type="email" id="email" name="email" required 
-                        class="w-full bg-emerald-50/50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                        class="w-full bg-blue-50/50 border border-gray-200 rounded-lg px-4 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                         placeholder="admin@example.com" autocomplete="username">
                 </div>
 
@@ -92,7 +92,7 @@
                     <label for="password" class="block text-sm font-semibold text-gray-700 mb-1.5">Password</label>
                     <div class="relative">
                         <input type="password" id="password" name="password" required 
-                            class="w-full bg-emerald-50/50 border border-gray-200 rounded-lg pl-4 pr-12 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all"
+                            class="w-full bg-blue-50/50 border border-gray-200 rounded-lg pl-4 pr-12 py-3.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
                             placeholder="Enter your password" autocomplete="current-password">
                         <div onclick="const p=document.getElementById('password'); const i=document.getElementById('toggleIcon'); if(p.type==='password'){p.type='text'; i.classList.remove('fa-eye'); i.classList.add('fa-eye-slash');}else{p.type='password'; i.classList.remove('fa-eye-slash'); i.classList.add('fa-eye');}" class="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer z-20">
                             <i class="fa-regular fa-eye text-gray-400 hover:text-gray-600 text-lg" id="toggleIcon"></i>
@@ -102,14 +102,14 @@
                 
                 <!-- Login Button -->
                 <button type="submit" 
-                    class="w-full mt-8 bg-[#10b981] hover:bg-emerald-600 text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center tracking-wide uppercase text-sm">
+                    class="w-full mt-8 bg-[#2563eb] hover:bg-blue-600 text-white font-bold py-3.5 px-4 rounded-lg transition-all duration-200 flex items-center justify-center tracking-wide uppercase text-sm">
                     LOGIN <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
                 </button>
             </form>
 
             <!-- Links -->
             <div class="mt-8 text-center space-y-4 w-full">
-                <a href="{{ url_for('forgot_password') }}" class="flex items-center justify-center text-sm text-[#10b981] hover:text-emerald-700 font-medium transition-colors">
+                <a href="{{ url_for('forgot_password') }}" class="flex items-center justify-center text-sm text-[#2563eb] hover:text-blue-700 font-medium transition-colors">
                     <i class="fa-solid fa-key mr-2"></i> Forgot Password
                 </a>
             </div>

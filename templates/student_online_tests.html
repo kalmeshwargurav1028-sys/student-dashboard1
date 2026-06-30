@@ -20,7 +20,7 @@
                     {% set sub = submissions_map.get(test._id|string) %}
                     {% if sub %}
                     <div class="flex items-center space-x-2">
-                        <span class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-emerald-700 bg-emerald-100">
+                        <span class="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-blue-700 bg-blue-100">
                             Score: {{ sub.final_score }} / {{ test.total_marks | default(100) }}
                         </span>
                         <span class="text-xs text-gray-500 italic">Graded</span>

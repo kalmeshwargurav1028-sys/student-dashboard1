@@ -6,7 +6,7 @@
 <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
     
     <!-- Top Action Bar with Date Controls -->
-    <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 mb-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900">Roster Attendance</h1>
@@ -15,7 +15,7 @@
             
             <!-- Date Navigator -->
             <div class="flex flex-wrap items-center gap-3">
-                <button type="button" id="btn-prev-day" class="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition-all duration-200" title="Previous Day">
+                <button type="button" id="btn-prev-day" class="p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-all duration-200" title="Previous Day">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
@@ -23,10 +23,10 @@
                 
                 <div class="relative">
                     <input type="date" id="attendance-date" value="{{ selected_date }}" 
-                           class="pl-4 pr-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 hover:border-emerald-500 rounded-xl text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 cursor-pointer">
+                           class="pl-4 pr-3 py-2.5 bg-gray-50 hover:bg-white border border-gray-200 hover:border-blue-500 rounded-xl text-gray-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 cursor-pointer">
                 </div>
                 
-                <button type="button" id="btn-next-day" class="p-2.5 rounded-xl border border-gray-200 hover:border-emerald-500 hover:bg-emerald-50 text-gray-600 hover:text-emerald-700 transition-all duration-200" title="Next Day">
+                <button type="button" id="btn-next-day" class="p-2.5 rounded-xl border border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-600 hover:text-blue-700 transition-all duration-200" title="Next Day">
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
@@ -35,19 +35,19 @@
                 <div class="h-8 w-px bg-gray-200 mx-1 hidden sm:block"></div>
                 
                 <button type="button" id="btn-yesterday" class="px-4 py-2.5 text-sm font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-600 transition-all duration-200">Yesterday</button>
-                <button type="button" id="btn-today" class="px-4 py-2.5 text-sm font-semibold rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-all duration-200">Today</button>
+                <button type="button" id="btn-today" class="px-4 py-2.5 text-sm font-semibold rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 transition-all duration-200">Today</button>
             </div>
         </div>
     </div>
 
     <!-- Universal Architecture Mode Selector -->
-    <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-6 mb-6">
+    <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-6 mb-6">
         <div class="flex flex-col md:flex-row md:items-center gap-6">
             <div class="flex bg-gray-100 p-1 rounded-xl">
-                <a href="{{ url_for('attendance', mode='homeroom', date=selected_date) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 {% if mode == 'homeroom' or not mode %}bg-white shadow-sm text-emerald-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                <a href="{{ url_for('attendance', mode='homeroom', date=selected_date) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 {% if mode == 'homeroom' or not mode %}bg-white shadow-sm text-blue-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
                     ⭐ Homeroom Mode
                 </a>
-                <a href="{{ url_for('attendance', mode='universal', date=selected_date) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 {% if mode == 'universal' %}bg-white shadow-sm text-emerald-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
+                <a href="{{ url_for('attendance', mode='universal', date=selected_date) }}" class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 {% if mode == 'universal' %}bg-white shadow-sm text-blue-700{% else %}text-gray-500 hover:text-gray-700{% endif %}">
                     📚 Universal Mode
                 </a>
             </div>
@@ -58,14 +58,14 @@
                     <input type="hidden" name="mode" value="universal">
                     <input type="hidden" name="date" value="{{ selected_date }}">
                     
-                    <select name="target_class" class="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer">
+                    <select name="target_class" class="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
                         <option value="">Select Grade / Class</option>
                         {% for c in ['1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th', '11th', '12th'] %}
                             <option value="{{ c }}" {% if target_class == c %}selected{% endif %}>{{ c }} Standard</option>
                         {% endfor %}
                     </select>
                     
-                    <select name="subject" class="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer">
+                    <select name="subject" class="w-full md:w-auto px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer">
                         <option value="">Select Subject (Optional)</option>
                         <option value="Math" {% if subject == 'Math' %}selected{% endif %}>Mathematics</option>
                         <option value="Science" {% if subject == 'Science' %}selected{% endif %}>Science</option>
@@ -74,7 +74,7 @@
                         <option value="Art" {% if subject == 'Art' %}selected{% endif %}>Art</option>
                     </select>
                     
-                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all duration-200">
+                    <button type="submit" class="w-full md:w-auto px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition-all duration-200">
                         Fetch Roster
                     </button>
                 </form>
@@ -85,38 +85,38 @@
 
     <!-- Live Statistics Roster Cards -->
     <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-50/50 hover:shadow-md transition-shadow duration-300">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md transition-shadow duration-300">
             <span class="text-xs font-semibold text-gray-400 uppercase tracking-wider block">Total Enrolled</span>
             <span id="stats-total" class="text-2xl font-bold text-gray-800 block mt-2">{{ stats.total }}</span>
             <div class="mt-2 text-xs text-gray-500">Students in roster</div>
         </div>
         
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
-            <span class="text-xs font-semibold text-emerald-600 uppercase tracking-wider block">Present</span>
-            <span id="stats-present" class="text-2xl font-bold text-emerald-600 block mt-2">{{ stats.present }}</span>
-            <div class="mt-2 text-xs text-emerald-500 font-medium">Full attendance count</div>
-            <div class="absolute right-0 bottom-0 h-1 bg-emerald-500 w-full" id="bar-present-ratio"></div>
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+            <span class="text-xs font-semibold text-blue-600 uppercase tracking-wider block">Present</span>
+            <span id="stats-present" class="text-2xl font-bold text-blue-600 block mt-2">{{ stats.present }}</span>
+            <div class="mt-2 text-xs text-blue-500 font-medium">Full attendance count</div>
+            <div class="absolute right-0 bottom-0 h-1 bg-blue-500 w-full" id="bar-present-ratio"></div>
         </div>
         
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
             <span class="text-xs font-semibold text-amber-600 uppercase tracking-wider block">Late</span>
             <span id="stats-late" class="text-2xl font-bold text-amber-500 block mt-2">{{ stats.late }}</span>
             <div class="mt-2 text-xs text-amber-500 font-medium">Half attendance value</div>
             <div class="absolute right-0 bottom-0 h-1 bg-amber-500 w-full" id="bar-late-ratio"></div>
         </div>
         
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-emerald-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-blue-50/50 hover:shadow-md transition-shadow duration-300 relative overflow-hidden">
             <span class="text-xs font-semibold text-rose-600 uppercase tracking-wider block">Absent</span>
             <span id="stats-absent" class="text-2xl font-bold text-rose-600 block mt-2">{{ stats.absent }}</span>
             <div class="mt-2 text-xs text-rose-500 font-medium">Zero attendance value</div>
             <div class="absolute right-0 bottom-0 h-1 bg-rose-500 w-full" id="bar-absent-ratio"></div>
         </div>
 
-        <div class="bg-emerald-900 p-5 rounded-2xl shadow-sm col-span-2 lg:col-span-1 text-white relative">
-            <span class="text-xs font-semibold text-emerald-300 uppercase tracking-wider block">Daily Attendance Ratio</span>
+        <div class="bg-blue-900 p-5 rounded-2xl shadow-sm col-span-2 lg:col-span-1 text-white relative">
+            <span class="text-xs font-semibold text-blue-300 uppercase tracking-wider block">Daily Attendance Ratio</span>
             <span id="stats-ratio" class="text-3xl font-extrabold text-white block mt-2">{% if stats.ratio > 0 %}{{ stats.ratio }}%{% else %}--%{% endif %}</span>
-            <div class="mt-2 text-xs text-emerald-200">For selected class/view</div>
-            <svg class="absolute right-4 bottom-4 h-12 w-12 text-emerald-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="mt-2 text-xs text-blue-200">For selected class/view</div>
+            <svg class="absolute right-4 bottom-4 h-12 w-12 text-blue-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 002 2h2a2 2 0 002-2z" />
             </svg>
         </div>
@@ -129,14 +129,14 @@
         <div class="xl:col-span-1 space-y-6">
             
             <!-- Filters Card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-4">Roster Filters</h3>
                 <div class="space-y-4">
                     <div>
                         <label for="student-search" class="block text-xs font-semibold text-gray-500 mb-1.5">Search Name</label>
                         <div class="relative">
                             <input type="text" id="student-search" placeholder="Type a name..." 
-                                   class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
+                                   class="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all">
                             <svg class="absolute left-3 top-2.5 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
@@ -145,7 +145,7 @@
                     
                     <div>
                         <label for="class-filter" class="block text-xs font-semibold text-gray-500 mb-1.5">Class / Standard</label>
-                        <select id="class-filter" class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all cursor-pointer">
+                        <select id="class-filter" class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer">
                             <option value="All">All Classes</option>
                             <option value="2nd">2nd Standard</option>
                             <option value="3rd">3rd Standard</option>
@@ -164,16 +164,16 @@
             </div>
 
             <!-- History log dates card -->
-            <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 p-5">
+            <div class="bg-white rounded-2xl shadow-sm border border-blue-100 p-5">
                 <h3 class="text-sm font-bold text-gray-900 uppercase tracking-wider mb-3">Logged History</h3>
                 <p class="text-xs text-gray-400 mb-4">Quick access to previously recorded dates:</p>
                 <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
                     {% if all_dates %}
                         {% for date_item in all_dates %}
                             <a href="{{ url_for('attendance', date=date_item) }}" 
-                               class="flex items-center justify-between p-2.5 rounded-xl text-sm transition-all duration-200 {% if date_item == selected_date %}bg-emerald-50 text-emerald-800 font-bold border border-emerald-100{% else %}hover:bg-gray-50 text-gray-600 border border-transparent{% endif %}">
+                               class="flex items-center justify-between p-2.5 rounded-xl text-sm transition-all duration-200 {% if date_item == selected_date %}bg-blue-50 text-blue-800 font-bold border border-blue-100{% else %}hover:bg-gray-50 text-gray-600 border border-transparent{% endif %}">
                                 <div class="flex items-center gap-2">
-                                    <svg class="h-4 w-4 {% if date_item == selected_date %}text-emerald-500{% else %}text-gray-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <svg class="h-4 w-4 {% if date_item == selected_date %}text-blue-500{% else %}text-gray-400{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                     </svg>
                                     <span>{{ date_item }}</span>
@@ -200,18 +200,18 @@
                 <input type="hidden" name="target_class" value="{{ target_class }}">
                 <input type="hidden" name="subject" value="{{ subject }}">
                 
-                <div class="bg-white rounded-2xl shadow-sm border border-emerald-100 overflow-hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
                     
                     <!-- Roster Header with Shortcut Tools -->
                     <div class="bg-gray-50/70 border-b border-gray-100 px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div class="flex items-center gap-2">
-                            <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping"></span>
+                            <span class="h-2.5 w-2.5 rounded-full bg-blue-500 animate-ping"></span>
                             <span class="text-sm font-semibold text-gray-700">Roster Sheet - {{ selected_date }}</span>
                         </div>
                         
                         <div class="flex items-center gap-2">
                             <button type="button" id="btn-mark-all-present" 
-                                    class="px-3.5 py-1.5 text-xs font-semibold text-emerald-700 hover:text-white bg-emerald-50 hover:bg-emerald-600 rounded-lg border border-emerald-200/50 hover:border-emerald-600 shadow-sm transition-all duration-200">
+                                    class="px-3.5 py-1.5 text-xs font-semibold text-blue-700 hover:text-white bg-blue-50 hover:bg-blue-600 rounded-lg border border-blue-200/50 hover:border-blue-600 shadow-sm transition-all duration-200">
                                 Mark All Present
                             </button>
                             <button type="button" id="btn-mark-all-absent" 
@@ -226,7 +226,7 @@
                         {% if students %}
                             {% for student in students %}
                             <!-- Student Roster Row -->
-                            <div class="student-row flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-emerald-50/10 transition-colors duration-150" 
+                            <div class="student-row flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 hover:bg-blue-50/10 transition-colors duration-150" 
                                  data-id="{{ student.id }}" 
                                  data-name="{{ student.name | lower }}" 
                                  data-class="{{ student.student_class or '10th' }}">
@@ -235,20 +235,20 @@
                                 <div class="flex items-center gap-3.5 mb-3 sm:mb-0">
                                     <div class="relative flex-shrink-0">
                                         {% if student.photo_url %}
-                                            <img src="{{ student.photo_url }}" alt="{{ student.name }}" class="h-11 w-11 rounded-full object-cover border-2 border-emerald-100">
+                                            <img src="{{ student.photo_url }}" alt="{{ student.name }}" class="h-11 w-11 rounded-full object-cover border-2 border-blue-100">
                                         {% else %}
-                                            <div class="h-11 w-11 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-400 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-white">
+                                            <div class="h-11 w-11 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-400 text-white flex items-center justify-center font-bold text-sm shadow-sm border border-white">
                                                 {{ student.name[:2].upper() }}
                                             </div>
                                         {% endif %}
-                                        <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-emerald-500" title="Active student"></span>
+                                        <span class="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-blue-500" title="Active student"></span>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-gray-800 leading-tight hover:text-emerald-700 transition-colors">
+                                        <h4 class="font-bold text-gray-800 leading-tight hover:text-blue-700 transition-colors">
                                             <a href="{{ url_for('student_profile', student_id=student.id) }}">{{ student.name }}</a>
                                         </h4>
                                         <div class="flex items-center gap-2 mt-1">
-                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 rounded-md border border-emerald-100">{{ student.student_class or '10th' }}</span>
+                                            <span class="px-2 py-0.5 text-[10px] font-bold bg-blue-50 text-blue-700 rounded-md border border-blue-100">{{ student.student_class or '10th' }}</span>
                                             <span class="text-xs text-gray-400">• Age: {{ student.age }}</span>
                                         </div>
                                     </div>
@@ -263,9 +263,9 @@
                                     <button type="button" data-student-id="{{ student.id }}" data-status="Present"
                                             class="btn-status px-4 py-2 text-xs font-semibold rounded-xl border transition-all duration-200 flex items-center gap-1.5 focus:outline-none
                                             {% if current_status == 'Present' %}
-                                                bg-emerald-600 text-white border-emerald-600 shadow-sm shadow-blue-500/10
+                                                bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/10
                                             {% else %}
-                                                bg-white text-gray-500 border-gray-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-200
+                                                bg-white text-gray-500 border-gray-200 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200
                                             {% endif %}">
                                         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
@@ -329,8 +329,8 @@
                             Ensure all statuses are verified before submitting standard logs.
                         </div>
                         <button type="submit" id="btn-save-attendance"
-                                class="w-full sm:w-auto px-7 py-3 font-bold text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 rounded-xl shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
-                            <svg class="h-5 w-5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                class="w-full sm:w-auto px-7 py-3 font-bold text-white bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl shadow-md hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 active:scale-[0.98] transition-all duration-200 flex items-center justify-center gap-2">
+                            <svg class="h-5 w-5 text-blue-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                             </svg>
                             <span>Save Roster Logs</span>
@@ -521,7 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Add specific state if active
                 if (bStatus === targetStatus) {
                     if (bStatus === 'Present') {
-                        b.classList.add('bg-emerald-600', 'text-white', 'border-emerald-600', 'shadow-sm', 'shadow-blue-500/10');
+                        b.classList.add('bg-blue-600', 'text-white', 'border-blue-600', 'shadow-sm', 'shadow-blue-500/10');
                         b.classList.remove('bg-white', 'text-gray-500', 'border-gray-200');
                     } else if (bStatus === 'Late') {
                         b.classList.add('bg-amber-50', 'text-amber-800', 'border-amber-200');
@@ -533,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 } else {
                     // Add subtle hover accent borders for inactive states
-                    if (bStatus === 'Present') b.classList.add('hover:bg-emerald-50', 'hover:text-emerald-700', 'hover:border-emerald-200');
+                    if (bStatus === 'Present') b.classList.add('hover:bg-blue-50', 'hover:text-blue-700', 'hover:border-blue-200');
                     if (bStatus === 'Late') b.classList.add('hover:bg-amber-50', 'hover:text-amber-600', 'hover:border-amber-200');
                     if (bStatus === 'Absent') b.classList.add('hover:bg-rose-50', 'hover:text-rose-600', 'hover:border-rose-200');
                 }

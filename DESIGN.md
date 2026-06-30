@@ -716,21 +716,21 @@ The AI is stateless — no conversation history is stored server-side. The chat 
 ### 8.1 Layout
 
 All pages extend `base.html`, which provides:
-- Collapsible green sidebar (`bg-[#10b981]`) with role-gated navigation links
+- Collapsible green sidebar (`bg-[#2563eb]`) with role-gated navigation links
 - Top header bar with: notification bell, page title, username, profile avatar
-- Flash message area (emerald-themed alert banners)
+- Flash message area (blue-themed alert banners)
 - Main scrollable content area
 
 ### 8.2 Color Palette
 
 | Usage | Color |
 |-------|-------|
-| Primary / Sidebar | Emerald (`#10b981`) |
-| Sidebar hover / accent | Emerald-600 |
+| Primary / Sidebar | Blue (`#2563eb`) |
+| Sidebar hover / accent | Blue-600 |
 | Admin dashboard accent | Red / Rose |
 | Teacher dashboard accent | Blue / Indigo |
 | Student accent | Purple / Fuchsia |
-| Success states | Emerald-100 / Green-100 |
+| Success states | Blue-100 / Green-100 |
 | Warning states | Yellow-100 |
 | Danger states | Red-100 |
 | Background | Gray-50 with dot-grid pattern |

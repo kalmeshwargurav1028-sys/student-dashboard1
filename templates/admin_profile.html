@@ -134,13 +134,13 @@
             
             if (response.ok) {
                 btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved Successfully!';
-                btn.classList.replace('bg-blue-600', 'bg-emerald-500');
-                btn.classList.replace('hover:bg-blue-700', 'hover:bg-emerald-600');
+                btn.classList.replace('bg-blue-600', 'bg-blue-500');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-blue-600');
                 
                 setTimeout(() => {
                     btn.innerHTML = originalText;
-                    btn.classList.replace('bg-emerald-500', 'bg-blue-600');
-                    btn.classList.replace('hover:bg-emerald-600', 'hover:bg-blue-700');
+                    btn.classList.replace('bg-blue-500', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-blue-600', 'hover:bg-blue-700');
                     btn.classList.remove('opacity-75', 'cursor-not-allowed');
                     btn.disabled = false;
                 }, 2000);

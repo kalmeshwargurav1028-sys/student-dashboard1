@@ -10,7 +10,7 @@
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Class Assignments</h1>
                 <p class="text-sm text-gray-500 mt-1">Create, track, and grade homework assignments.</p>
             </div>
-            <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center">
+            <button onclick="document.getElementById('addModal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex items-center">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                 Create Assignment
             </button>
@@ -25,7 +25,7 @@
                         <div class="text-sm text-gray-500 flex gap-4 mt-1">
                             <span>Subject: {{ a.subject }}</span>
                             <span>Class: {{ a.class_name }}</span>
-                            <span class="text-emerald-600 dark:text-emerald-400 font-medium">Due: {{ a.due_date }}</span>
+                            <span class="text-blue-600 dark:text-blue-400 font-medium">Due: {{ a.due_date }}</span>
                         </div>
                     </div>
                     <form action="{{ url_for('assignments') }}" method="POST">
@@ -256,10 +256,10 @@
                 {% set border_color = 'border-red-400 dark:border-red-600' %}
                 {% set badge_class = 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' %}
             {% elif assignment.status == 'submitted' %}
-                {% set border_color = 'border-emerald-200 dark:border-emerald-800' %}
+                {% set border_color = 'border-blue-200 dark:border-blue-800' %}
                 {% set bg_color = 'bg-gray-50 dark:bg-gray-800/50 opacity-75' %}
                 {% set text_color = 'text-gray-500 dark:text-gray-400' %}
-                {% set badge_class = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' %}
+                {% set badge_class = 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' %}
             {% endif %}
 
             <div class="rounded-xl shadow-sm border-2 {{ border_color }} {{ bg_color }} overflow-hidden flex flex-col hover:shadow-md transition-shadow">
@@ -314,7 +314,7 @@
                             Grade: {{ assignment.my_grade }}
                         </span>
                         {% endif %}
-                        <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        <span class="inline-flex items-center px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400">
                             <svg class="-ml-1 mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                             Completed
                         </span>

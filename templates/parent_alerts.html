@@ -47,13 +47,13 @@
                             </p>
                             <span class="inline-block mt-0.5 text-[10px] font-bold px-1.5 py-0.5 rounded
                                 {% if s.attendance|float < 75 %}bg-red-100 text-red-700
-                                {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                {% else %}bg-blue-100 text-blue-700{% endif %}">
                                 Att: {{ s.attendance }}%
                             </span>
                         </div>
                         <div class="flex flex-row flex-wrap gap-2 pt-3 border-t border-gray-100 mt-auto">
                             <button onclick="sendQuickAlert('{{ s.id }}', 'present', this)"
-                                    class="px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors">
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg transition-colors">
                                 Present
                             </button>
                             <button onclick="sendQuickAlert('{{ s.id }}', 'absent', this)"
@@ -65,7 +65,7 @@
                                 HW Reminder
                             </button>
                             <button onclick="sendQuickAlert('{{ s.id }}', 'performance', this)"
-                                    class="px-2.5 py-1 text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors">
+                                    class="px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg transition-colors">
                                 Performance
                             </button>
                         </div>
@@ -109,9 +109,9 @@
                                     {% set atype = a.get('alert_type', 'absent') %}
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold
                                         {% if atype == 'absent' %}bg-rose-100 text-rose-700
-                                        {% elif atype == 'present' %}bg-emerald-50 text-emerald-600
+                                        {% elif atype == 'present' %}bg-blue-50 text-blue-600
                                         {% elif atype == 'homework' %}bg-indigo-100 text-indigo-700
-                                        {% elif atype == 'performance' %}bg-emerald-100 text-emerald-700
+                                        {% elif atype == 'performance' %}bg-blue-100 text-blue-700
                                         {% else %}bg-gray-100 text-gray-600{% endif %}">
                                         {{ atype | capitalize }}
                                     </span>
@@ -121,7 +121,7 @@
                                 </td>
                                 <td class="px-5 py-3 whitespace-nowrap text-xs text-gray-500">
                                     {% for sv in (a.get('sent_via') or ['SMS/Email']) %}
-                                    <span class="inline-block bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded text-[10px] font-semibold mr-1">{{ sv }}</span>
+                                    <span class="inline-block bg-blue-50 text-blue-700 border border-blue-100 px-1.5 py-0.5 rounded text-[10px] font-semibold mr-1">{{ sv }}</span>
                                     {% endfor %}
                                 </td>
                                 <td class="px-5 py-3 whitespace-nowrap">
@@ -187,7 +187,7 @@
                 <label class="block text-sm font-semibold text-gray-700 mb-1.5">Alert Type</label>
                 <div class="flex gap-3">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="composeType" value="present" class="accent-emerald-500"> <span class="text-sm text-gray-700">Present</span>
+                        <input type="radio" name="composeType" value="present" class="accent-blue-500"> <span class="text-sm text-gray-700">Present</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="composeType" value="absent" checked class="accent-rose-500"> <span class="text-sm text-gray-700">Absent</span>
@@ -196,7 +196,7 @@
                         <input type="radio" name="composeType" value="homework" class="accent-indigo-500"> <span class="text-sm text-gray-700">Homework</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="composeType" value="performance" class="accent-emerald-500"> <span class="text-sm text-gray-700">Performance</span>
+                        <input type="radio" name="composeType" value="performance" class="accent-blue-500"> <span class="text-sm text-gray-700">Performance</span>
                     </label>
                     <label class="flex items-center gap-2 cursor-pointer">
                         <input type="radio" name="composeType" value="custom" class="accent-amber-500"> <span class="text-sm text-gray-700">Custom</span>
@@ -230,7 +230,7 @@
         </div>
 
         <div id="composeError" class="hidden mt-3 px-3 py-2 bg-red-50 border border-red-200 text-red-700 text-xs rounded-lg"></div>
-        <div id="composeSuccess" class="hidden mt-3 px-3 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs rounded-lg font-medium"></div>
+        <div id="composeSuccess" class="hidden mt-3 px-3 py-2 bg-blue-50 border border-blue-200 text-blue-700 text-xs rounded-lg font-medium"></div>
 
         <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-100">
             <button type="button" onclick="document.getElementById('composeModal').classList.add('hidden')"
@@ -284,17 +284,17 @@ async function sendQuickAlert(studentId, alertType, btn) {
         const data = await res.json();
         if (data.success) {
             btn.textContent = '✓ Sent';
-            btn.className = btn.className.replace(/bg-\w+-100 text-\w+-700 hover:bg-\w+-600/, 'bg-emerald-500 text-white');
+            btn.className = btn.className.replace(/bg-\w+-100 text-\w+-700 hover:bg-\w+-600/, 'bg-blue-500 text-white');
             setTimeout(() => {
                 btn.textContent = original;
                 btn.disabled = false;
                 btn.className = alertType === 'absent'
                     ? 'px-2.5 py-1 text-[11px] font-bold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-colors'
                     : alertType === 'present'
-                    ? 'px-2.5 py-1 text-[11px] font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-colors'
+                    ? 'px-2.5 py-1 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg transition-colors'
                     : alertType === 'homework'
                     ? 'px-2.5 py-1 text-[11px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors'
-                    : 'px-2.5 py-1 text-[11px] font-bold bg-emerald-100 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-lg transition-colors';
+                    : 'px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg transition-colors';
             }, 3000);
         } else {
             alert('Failed: ' + data.error);
