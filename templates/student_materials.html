@@ -2,91 +2,136 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    
+
     <div class="mb-8">
         <h1 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
             <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-            📚 My Class Study Materials
+            My Study Materials
         </h1>
-        <p class="mt-2 text-sm text-gray-500">View and download study materials assigned to your class (Class {{ student.get('student_class', 'Unknown') }}).</p>
+        <p class="mt-2 text-sm text-gray-500">Study materials and assignments shared with your class (Grade {{ student.get('student_class', 'Unknown') }} — Section {{ student.get('division', '') }}).</p>
     </div>
 
-    <!-- Study Materials Section -->
-    <div class="bg-white shadow sm:rounded-xl border border-gray-100 overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title & Description</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject / Category</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uploaded On</th>
-                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    {% if materials %}
-                        {% for mat in materials %}
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="text-sm font-bold text-gray-900">{{ mat.title }}</div>
-                                {% if mat.description %}
-                                <div class="text-xs text-gray-500 mt-1 max-w-xs truncate" title="{{ mat.description }}">{{ mat.description }}</div>
-                                {% endif %}
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900 font-medium">{{ mat.subject }}</div>
-                                <div class="text-xs text-gray-500">{{ mat.category or 'Material' }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ mat.uploaded_at.split(' ')[0] if mat.uploaded_at else 'Unknown' }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <div class="flex flex-col gap-2">
-                                    <a href="{{ mat.file_url }}" target="_blank" class="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-sm">
-                                        <svg class="mr-2 -ml-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                                        View
-                                    </a>
-                                    
-                                    {% if mat.category == 'Assignment' %}
-                                        <!-- Check if already submitted (passed in from backend) -->
-                                        {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
-                                        
-                                        {% if my_sub %}
-                                            <div class="text-xs text-green-700 bg-green-50 rounded p-2 text-center border border-green-200">
-                                                <div class="font-bold">Submitted</div>
-                                                {% if my_sub.grade %}
-                                                    <div>Grade: {{ my_sub.grade }}</div>
-                                                {% endif %}
-                                            </div>
-                                        {% else %}
-                                            <form action="/api/submit-resource-work/{{ mat._id }}" method="POST" enctype="multipart/form-data" class="mt-2 w-full max-w-[200px]">
-                                                <div class="w-full flex justify-center px-2 py-3 border-2 border-blue-200 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50 transition bg-white group cursor-pointer mb-2 relative">
-                                                    <div class="text-center">
-                                                        <svg class="mx-auto h-6 w-6 text-blue-300 group-hover:text-blue-500 transition mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                                        </svg>
-                                                        <label class="cursor-pointer block">
-                                                            <span class="text-[10px] font-bold text-blue-600">Attach File</span>
-                                                            <input name="submission_file" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required onchange="this.parentElement.parentElement.querySelector('.file-name').textContent = this.files[0].name; this.parentElement.parentElement.querySelector('.file-name').classList.remove('hidden');">
-                                                        </label>
-                                                        <p class="file-name text-[9px] font-semibold text-blue-600 mt-1 hidden truncate max-w-[120px]"></p>
-                                                    </div>
-                                                </div>
-                                                <button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-500 hover:bg-blue-600 focus:outline-none transition shadow-sm">
-                                                    Submit Work
-                                                </button>
-                                            </form>
-                                        {% endif %}
-                                    {% endif %}
-                                </div>
-                            </td>
-                        </tr>
-                        {% endfor %}
+    {% if materials %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for mat in materials %}
+
+        {% set is_pdf = mat.filename and mat.filename.lower().endswith('.pdf') %}
+        {% set is_img = mat.filename and (mat.filename.lower().endswith('.jpg') or mat.filename.lower().endswith('.jpeg') or mat.filename.lower().endswith('.png')) %}
+        {% set ext = mat.filename.split('.')[-1].upper() if mat.filename and '.' in mat.filename else 'FILE' %}
+
+        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+
+            <!-- File Icon / Thumbnail -->
+            <div class="flex items-center justify-center bg-gray-50 border-b border-gray-100 h-36 relative">
+                {% if is_pdf %}
+                    <!-- PDF Icon -->
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="relative">
+                            <svg class="h-16 w-16 text-red-500" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <rect x="4" y="2" width="40" height="52" rx="4" fill="#FEE2E2" stroke="#EF4444" stroke-width="2"/>
+                                <rect x="4" y="2" width="40" height="52" rx="4" fill="white" stroke="#EF4444" stroke-width="2"/>
+                                <path d="M36 2L44 10H36V2Z" fill="#FCA5A5" stroke="#EF4444" stroke-width="1.5"/>
+                                <rect x="10" y="30" width="28" height="16" rx="3" fill="#EF4444"/>
+                                <text x="24" y="42" text-anchor="middle" font-size="9" fill="white" font-weight="bold" font-family="Arial, sans-serif">PDF</text>
+                                <line x1="12" y1="20" x2="36" y2="20" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                                <line x1="12" y1="24" x2="30" y2="24" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                    </div>
+                {% elif is_img %}
+                    <img src="{{ mat.file_url }}" alt="{{ mat.title }}" class="h-full w-full object-cover">
+                {% else %}
+                    <!-- Generic file icon -->
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="h-16 w-12 bg-blue-100 rounded-lg border border-blue-200 flex items-end justify-center pb-2 relative">
+                            <div class="absolute top-0 right-0 w-4 h-4 bg-blue-300 rounded-bl-md"></div>
+                            <span class="text-blue-700 font-bold text-[10px]">{{ ext }}</span>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Category badge -->
+                <span class="absolute top-3 left-3 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold
+                    {% if mat.category == 'Assignment' %}bg-orange-100 text-orange-700
+                    {% elif mat.category == 'Note' %}bg-blue-100 text-blue-700
+                    {% elif mat.category == 'Syllabus' %}bg-purple-100 text-purple-700
+                    {% else %}bg-gray-100 text-gray-600{% endif %}">
+                    {{ mat.category or 'Material' }}
+                </span>
+            </div>
+
+            <!-- Card Body -->
+            <div class="p-4 flex flex-col flex-1">
+                <h3 class="text-sm font-bold text-gray-900 truncate" title="{{ mat.title }}">{{ mat.title }}</h3>
+                <p class="text-xs text-gray-500 mt-0.5">{{ mat.subject }} &bull; {{ mat.uploaded_at.split(' ')[0] if mat.uploaded_at else '' }}</p>
+                {% if mat.description %}
+                <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ mat.description }}</p>
+                {% endif %}
+
+                <!-- Buttons -->
+                <div class="mt-auto pt-4 flex items-center gap-2 flex-wrap">
+                    <!-- View PDF -->
+                    <a href="{{ mat.file_url }}" target="_blank"
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 text-gray-100 bg-gray-800 hover:bg-gray-700 transition shadow-sm">
+                        <svg class="h-3.5 w-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        View PDF
+                    </a>
+
+                    <!-- Download -->
+                    <a href="{{ mat.file_url }}" download
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 text-gray-100 bg-gray-800 hover:bg-gray-700 transition shadow-sm">
+                        <svg class="h-3.5 w-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Download
+                    </a>
+                </div>
+
+                <!-- Assignment Submission -->
+                {% if mat.category == 'Assignment' %}
+                    {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
+                    {% if my_sub %}
+                        <div class="mt-3 text-xs text-green-700 bg-green-50 rounded-lg p-2 text-center border border-green-200 font-semibold">
+                            ✅ Submitted
+                            {% if my_sub.grade %}
+                            <span class="block text-green-800 font-bold mt-0.5">Grade: {{ my_sub.grade }}</span>
+                            {% else %}
+                            <span class="block text-green-500 font-normal">Awaiting grade</span>
+                            {% endif %}
+                        </div>
                     {% else %}
-                        <tr><td colspan="4" class="text-sm text-gray-500 py-12 text-center">No study materials available for your class yet.</td></tr>
+                        <form action="/api/submit-resource-work/{{ mat._id }}" method="POST" enctype="multipart/form-data" class="mt-3">
+                            <div class="w-full flex justify-center px-2 py-3 border-2 border-blue-200 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50 transition bg-white cursor-pointer mb-2 relative group">
+                                <div class="text-center">
+                                    <svg class="mx-auto h-5 w-5 text-blue-300 group-hover:text-blue-500 transition mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                    </svg>
+                                    <label class="cursor-pointer block">
+                                        <span class="text-[10px] font-bold text-blue-600">Attach Work File</span>
+                                        <input name="submission_file" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required
+                                               onchange="this.closest('form').querySelector('.file-name').textContent = this.files[0].name; this.closest('form').querySelector('.file-name').classList.remove('hidden');">
+                                    </label>
+                                    <p class="file-name text-[9px] font-semibold text-blue-600 mt-1 hidden truncate max-w-full"></p>
+                                </div>
+                            </div>
+                            <button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 text-xs font-bold rounded-lg text-white bg-blue-500 hover:bg-blue-600 transition shadow-sm">
+                                📤 Submit Work
+                            </button>
+                        </form>
                     {% endif %}
-                </tbody>
-            </table>
+                {% endif %}
+            </div>
         </div>
+
+        {% endfor %}
     </div>
 
+    {% else %}
+    <div class="bg-white rounded-2xl shadow border border-gray-100 text-center py-20">
+        <svg class="mx-auto h-14 w-14 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="text-base font-semibold text-gray-700">No materials available yet</h3>
+        <p class="mt-1 text-sm text-gray-400">Your teacher hasn't shared any materials with your class yet.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
