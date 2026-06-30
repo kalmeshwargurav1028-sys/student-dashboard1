@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block header_title %}My Shared Resources{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                <svg class="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                My Shared Resources
+            </h1>
+            <p class="mt-2 text-sm text-gray-500">Track the study materials and assignments you have shared with your students.</p>
+        </div>
+        <a href="{{ url_for('share_resource') }}" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition text-sm shadow-sm">
+            + Share New Resource
+        </a>
+    </div>
+
+    <div class="bg-white shadow sm:rounded-xl border border-gray-100 overflow-hidden">
+        <ul role="list" class="divide-y divide-gray-200">
+            {% if resources %}
+                {% for res in resources %}
+                <li class="p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-1">
+                                <h3 class="text-lg font-bold text-gray-900">{{ res.title }}</h3>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ res.category or 'Material' }}
+                                </span>
+                            </div>
+                            <div class="text-sm text-gray-500 flex items-center gap-4">
+                                <span>📚 {{ res.subject }}</span>
+                                <span>👥 Grade {{ res.get('class', 'N/A') }} {% if res.section and res.section != 'All' %}(Sec {{ res.section }}){% endif %}</span>
+                                <span>📅 {{ res.uploaded_at.split(' ')[0] if res.uploaded_at else 'Unknown' }}</span>
+                            </div>
+                            {% if res.description %}
+                            <p class="mt-2 text-sm text-gray-600">{{ res.description }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex items-center gap-3">
+                            <a href="{{ res.file_url }}" target="_blank" class="text-gray-500 hover:text-blue-600 font-medium text-sm flex items-center gap-1 transition">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                                View File
+                            </a>
+                            <form action="/api/delete-resource/{{ res._id }}" method="POST" onsubmit="return confirm('Delete this resource permanently?');">
+                                <button type="submit" class="text-red-500 hover:text-red-700 font-medium text-sm flex items-center gap-1 transition">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Grading Section for Assignments -->
+                    {% if res.category == 'Assignment' %}
+                    <div class="mt-6 bg-gray-50 rounded-xl border border-gray-200 p-4">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Student Submissions ({{ res.submissions|length if res.submissions else 0 }})</h4>
+                        
+                        {% if res.submissions %}
+                            <div class="overflow-hidden rounded-lg border border-gray-200 bg-white">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Student</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Submitted On</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">File</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Grade</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200">
+                                        {% for sub in res.submissions %}
+                                        <tr>
+                                            <td class="px-4 py-2 text-sm font-medium text-gray-900">{{ sub.student_name }}</td>
+                                            <td class="px-4 py-2 text-sm text-gray-500">{{ sub.submitted_at.split(' ')[0] }}</td>
+                                            <td class="px-4 py-2 text-sm text-blue-600 hover:text-blue-800">
+                                                <a href="{{ sub.file_url }}" target="_blank" class="flex items-center gap-1">
+                                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                                    Download
+                                                </a>
+                                            </td>
+                                            <form action="/api/grade-resource-work/{{ res._id }}" method="POST">
+                                                <input type="hidden" name="student_id" value="{{ sub.student_id }}">
+                                                <td class="px-4 py-2">
+                                                    <input type="text" name="grade" value="{{ sub.grade or '' }}" class="w-16 px-2 py-1 text-sm border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500" placeholder="e.g. 95/100">
+                                                </td>
+                                                <td class="px-4 py-2">
+                                                    <button type="submit" class="text-xs bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold px-3 py-1 rounded transition">Save</button>
+                                                </td>
+                                            </form>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-gray-500 italic">No submissions yet.</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-16">
+                    <svg class="mx-auto h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h3 class="mt-2 text-sm font-medium text-gray-900">No resources shared yet</h3>
+                    <p class="mt-1 text-sm text-gray-500">Get started by sharing your first study material or assignment.</p>
+                    <div class="mt-6">
+                        <a href="{{ url_for('share_resource') }}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-xl text-white bg-blue-600 hover:bg-blue-700">
+                            + Create Resource
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

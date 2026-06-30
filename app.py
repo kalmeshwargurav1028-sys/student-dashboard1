@@ -1895,6 +1895,37 @@ def student_materials():
         
     return render_template('student_materials.html', student=student, materials=materials)
 
+@app.route('/api/submit-resource-work/<material_id>', methods=['POST'])
+def submit_resource_work(material_id):
+    if not session.get('logged_in') or session.get('role') != 'student':
+        return redirect(url_for('login'))
+        
+    file = request.files.get('submission_file')
+    if not file or file.filename == '':
+        flash('No file selected for submission.')
+        return redirect(url_for('student_materials'))
+        
+    filename = secure_filename(file.filename)
+    unique_filename = f"{uuid.uuid4().hex[:8]}_{filename}"
+    file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
+    file_url = url_for('get_file', file_id=str(file_id))
+    
+    submission = {
+        'student_id': session.get('user_id'),
+        'student_name': session.get('username'),
+        'file_url': file_url,
+        'submitted_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+        'grade': None
+    }
+    
+    db.materials.update_one(
+        {'_id': ObjectId(material_id)},
+        {'$push': {'submissions': submission}}
+    )
+    
+    flash('Work submitted successfully!')
+    return redirect(url_for('student_materials'))
+
 @app.route('/student/<student_id>/id_card')
 def student_id_card(student_id):
     if not session.get('logged_in'):
@@ -2627,6 +2658,41 @@ def share_resource_post():
     
     flash('Resource successfully created and shared!')
     return redirect(url_for('dashboard'))
+
+@app.route('/teacher/my-resources', methods=['GET'])
+def teacher_my_resources():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    teacher_id = session.get('user_id')
+    resources = list(db.materials.find({'teacher_id': teacher_id}).sort('uploaded_at', -1))
+    
+    return render_template('teacher_my_resources.html', resources=resources)
+
+@app.route('/api/grade-resource-work/<material_id>', methods=['POST'])
+def grade_resource_work(material_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    student_id = request.form.get('student_id')
+    grade = request.form.get('grade')
+    
+    db.materials.update_one(
+        {'_id': ObjectId(material_id), 'submissions.student_id': student_id},
+        {'$set': {'submissions.$.grade': grade}}
+    )
+    
+    flash('Grade updated successfully!')
+    return redirect(url_for('teacher_my_resources'))
+
+@app.route('/api/delete-resource/<material_id>', methods=['POST'])
+def delete_resource(material_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    db.materials.delete_one({'_id': ObjectId(material_id), 'teacher_id': session.get('user_id')})
+    flash('Resource deleted.')
+    return redirect(url_for('teacher_my_resources'))
 
 @app.route('/teacher/shared-resources', methods=['GET'])
 def colleague_resources():
