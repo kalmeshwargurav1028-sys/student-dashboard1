@@ -102,6 +102,8 @@
                 </div>
 
                 <!-- Assignment Submission -->
+                {% if mat.category == 'Assignment' %}
+                    {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
                     {% if my_sub %}
                         <div class="mt-4 border border-gray-200 rounded-lg overflow-x-auto bg-white">
                             <table class="min-w-full divide-y divide-gray-200 text-left text-[11px]">
