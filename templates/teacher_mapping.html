@@ -8,7 +8,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
     <div>
       <h1 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-        <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+        <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
           <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
@@ -22,7 +22,7 @@
     </div>
     <!-- Quick stats pills -->
     <div class="flex flex-wrap gap-2" id="stats-row">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
         <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
         {{ teachers|length }} Teachers
       </span>
@@ -42,7 +42,7 @@
   <!-- Toast -->
   <div id="toast"
        class="fixed bottom-6 right-6 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-semibold
-              bg-emerald-600 transition-all duration-300 flex items-center gap-2">
+              bg-blue-600 transition-all duration-300 flex items-center gap-2">
     <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
     </svg>
@@ -53,7 +53,7 @@
   <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit mb-6">
     <button id="tab-homeroom" onclick="switchTab('homeroom')"
             class="tab-btn px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200
-                   bg-white dark:bg-gray-700 text-emerald-700 dark:text-emerald-400 shadow">
+                   bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow">
       🏠 Homeroom Mapping
     </button>
     <button id="tab-subject" onclick="switchTab('subject')"
@@ -74,7 +74,7 @@
       {% for grade in grades %}
       <button onclick="selectGrade('{{ grade }}')" id="gbtn-{{ grade }}"
               class="grade-btn px-4 py-1.5 rounded-lg border text-sm font-semibold transition-all
-                     {% if loop.first %}bg-emerald-600 text-white border-emerald-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-emerald-400{% endif %}">
+                     {% if loop.first %}bg-blue-600 text-white border-blue-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400{% endif %}">
         Gr {{ grade }}
       </button>
       {% endfor %}
@@ -93,7 +93,7 @@
               <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Grade {{ grade }}</span>
               <h3 class="text-xl font-black text-gray-800 dark:text-white">Section {{ section }}</h3>
             </div>
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center shadow">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow">
               <span class="text-white font-black text-sm">{{ section }}</span>
             </div>
           </div>
@@ -101,7 +101,7 @@
           <!-- Current assignment badge -->
           <div id="hr-badge-{{ grade }}-{{ section }}"
                class="mb-4 px-3 py-2 rounded-lg text-xs font-semibold
-                      {% if hr.get('teacher_name') %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600{% endif %}">
+                      {% if hr.get('teacher_name') %}bg-blue-50 text-blue-700 border border-blue-200{% else %}bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600{% endif %}">
             {% if hr.get('teacher_name') %}
               🎓 {{ hr.teacher_name }}
             {% else %}
@@ -114,7 +114,7 @@
                   onchange="saveHomeroom('{{ grade }}', '{{ section }}', this)"
                   class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2
                          bg-white dark:bg-gray-700 text-gray-800 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-emerald-400 transition">
+                         focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
             <option value="">— Select teacher —</option>
             {% for t in teachers %}
             <option value="{{ t._id }}" data-name="{{ t.full_name }}"
@@ -153,7 +153,7 @@
         {% for grade in grades %}
         <button onclick="selectSubjectGrade('{{ grade }}')" id="sgbtn-{{ grade }}"
                 class="subgrade-btn px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all
-                       {% if loop.first %}bg-emerald-600 text-white border-emerald-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-emerald-400{% endif %}">
+                       {% if loop.first %}bg-blue-600 text-white border-blue-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400{% endif %}">
           Gr {{ grade }}
         </button>
         {% endfor %}
@@ -206,14 +206,14 @@ function switchTab(tab) {
   const btnHR  = document.getElementById('tab-homeroom');
   const btnSub = document.getElementById('tab-subject');
   if (tab === 'homeroom') {
-    btnHR.classList.add('bg-white','dark:bg-gray-700','text-emerald-700','dark:text-emerald-400','shadow');
+    btnHR.classList.add('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
     btnHR.classList.remove('text-gray-500','dark:text-gray-400');
-    btnSub.classList.remove('bg-white','dark:bg-gray-700','text-emerald-700','dark:text-emerald-400','shadow');
+    btnSub.classList.remove('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
     btnSub.classList.add('text-gray-500','dark:text-gray-400');
   } else {
-    btnSub.classList.add('bg-white','dark:bg-gray-700','text-emerald-700','dark:text-emerald-400','shadow');
+    btnSub.classList.add('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
     btnSub.classList.remove('text-gray-500','dark:text-gray-400');
-    btnHR.classList.remove('bg-white','dark:bg-gray-700','text-emerald-700','dark:text-emerald-400','shadow');
+    btnHR.classList.remove('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
     btnHR.classList.add('text-gray-500','dark:text-gray-400');
     renderSubjectGrid();
   }
@@ -225,11 +225,11 @@ function selectGrade(grade) {
   document.querySelectorAll('.grade-panel').forEach(p => p.classList.add('hidden'));
   document.getElementById(`grade-panel-${grade}`).classList.remove('hidden');
   document.querySelectorAll('.grade-btn').forEach(b => {
-    b.classList.remove('bg-emerald-600','text-white','border-emerald-600');
+    b.classList.remove('bg-blue-600','text-white','border-blue-600');
     b.classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
   });
   const active = document.getElementById(`gbtn-${grade}`);
-  active.classList.add('bg-emerald-600','text-white','border-emerald-600');
+  active.classList.add('bg-blue-600','text-white','border-blue-600');
   active.classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
 }
 
@@ -237,11 +237,11 @@ function selectGrade(grade) {
 function selectSubjectGrade(grade) {
   subActiveGrade = grade;
   document.querySelectorAll('.subgrade-btn').forEach(b => {
-    b.classList.remove('bg-emerald-600','text-white','border-emerald-600');
+    b.classList.remove('bg-blue-600','text-white','border-blue-600');
     b.classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
   });
   const active = document.getElementById(`sgbtn-${grade}`);
-  active.classList.add('bg-emerald-600','text-white','border-emerald-600');
+  active.classList.add('bg-blue-600','text-white','border-blue-600');
   active.classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
   renderSubjectGrid();
 }
@@ -345,7 +345,7 @@ async function saveHomeroom(grade, section, selectEl) {
     const badge = document.getElementById(`hr-badge-${grade}-${section}`);
     if (badge) {
       if (teacherName) {
-        badge.className = 'mb-4 px-3 py-2 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200';
+        badge.className = 'mb-4 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
         badge.innerHTML = `🎓 ${teacherName}`;
       } else {
         badge.className = 'mb-4 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600';
@@ -412,7 +412,7 @@ function showToast(msg, isError = false) {
   const el = document.getElementById('toast');
   const msgEl = document.getElementById('toast-msg');
   msgEl.textContent = msg;
-  el.className = el.className.replace(/bg-\w+-\d+/g, isError ? 'bg-red-600' : 'bg-emerald-600');
+  el.className = el.className.replace(/bg-\w+-\d+/g, isError ? 'bg-red-600' : 'bg-blue-600');
   el.classList.remove('hidden');
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => el.classList.add('hidden'), 3000);
