@@ -2609,7 +2609,27 @@ def share_resource():
         'Hindi', 'Physics', 'Chemistry', 'Biology',
         'Computer Science', 'Physical Education', 'Art', 'Music'
     ]
-    return render_template('share_resource.html', subjects=subjects)
+
+    # Build a dict: { subject -> [list of colleague names] }
+    teacher_id = session.get('user_id')
+    # Find all subjects this teacher teaches
+    my_mappings = list(db.teacher_mappings.find({'teacher_id': teacher_id, 'type': 'subject'}))
+    my_subjects = list(set(m.get('subject') for m in my_mappings if m.get('subject')))
+
+    # For each subject, find other teachers mapped to the same subject
+    colleagues_by_subject = {}
+    for sub in my_subjects:
+        maps = list(db.teacher_mappings.find({
+            'type': 'subject',
+            'subject': sub,
+            'teacher_id': {'$ne': teacher_id}
+        }))
+        names = list(set(m.get('teacher_name', 'Unknown') for m in maps if m.get('teacher_name')))
+        if names:
+            colleagues_by_subject[sub] = names
+
+    return render_template('share_resource.html', subjects=subjects,
+                           colleagues_by_subject=colleagues_by_subject)
 
 @app.route('/api/share-resource', methods=['POST'])
 def share_resource_post():

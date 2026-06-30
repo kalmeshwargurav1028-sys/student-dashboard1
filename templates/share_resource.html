@@ -46,7 +46,7 @@
                 </div>
                 <div class="md:col-span-1">
                     <label class="block text-sm font-semibold text-gray-700 mb-1">Subject *</label>
-                    <select name="subject" required class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
+                    <select name="subject" id="subject-select" required onchange="updateColleagues(this.value)" class="w-full border-gray-200 rounded-xl px-4 py-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 border text-sm text-gray-600">
                         <option value="">-- Subject --</option>
                         {% for sub in subjects %}
                         <option value="{{ sub }}">{{ sub }}</option>
@@ -163,9 +163,12 @@
                             <div class="flex items-center h-5">
                                 <input type="checkbox" name="share_colleagues" value="true" class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
                             </div>
-                            <div class="ml-3 text-sm">
+                            <div class="ml-3 text-sm w-full">
                                 <span class="font-bold text-gray-900 block">Subject Colleagues</span>
-                                <span class="text-gray-500">Share this with other teachers teaching the same subject.</span>
+                                <span class="text-gray-500 text-xs">Share with other teachers teaching the same subject.</span>
+                                <!-- Colleague name pills, shown when a matching subject is selected -->
+                                <div id="colleague-pills" class="mt-2 flex flex-wrap gap-1.5"></div>
+                                <p id="colleague-none" class="mt-1.5 text-xs text-gray-400 hidden">No colleagues found for the selected subject.</p>
                             </div>
                         </label>
                     </div>
@@ -231,9 +234,13 @@
         if (step === 2) {
             const input = document.getElementById('file-upload');
             const previewEl = document.getElementById('step2-file-preview');
-            if (input && input.files.length > 0 && previewEl) {
-                previewEl.textContent = input.files[0].name;
+            if (input && (input.files.length > 0 || input._droppedFile) && previewEl) {
+                const f = input.files.length > 0 ? input.files[0] : input._droppedFile;
+                previewEl.textContent = f.name;
             }
+            // Sync colleague pills based on currently selected subject
+            const subjectSel = document.getElementById('subject-select');
+            if (subjectSel) updateColleagues(subjectSel.value);
         }
     }
 
@@ -286,6 +293,32 @@
             validateFile(input);
         }
         event.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
+    }
+
+    // Colleagues data injected from Flask backend
+    const colleaguesBySubject = {{ colleagues_by_subject | tojson }};
+
+    function updateColleagues(subject) {
+        const pillsEl = document.getElementById('colleague-pills');
+        const noneEl  = document.getElementById('colleague-none');
+        if (!pillsEl || !noneEl) return;
+
+        const names = colleaguesBySubject[subject] || [];
+        pillsEl.innerHTML = '';
+        if (names.length > 0) {
+            noneEl.classList.add('hidden');
+            names.forEach(name => {
+                const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0,2);
+                const pill = document.createElement('span');
+                pill.className = 'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
+                pill.innerHTML = `<span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-bold">${initials}</span>${name}`;
+                pillsEl.appendChild(pill);
+            });
+        } else if (subject) {
+            noneEl.classList.remove('hidden');
+        } else {
+            noneEl.classList.add('hidden');
+        }
     }
 
     function submitForm(statusValue) {

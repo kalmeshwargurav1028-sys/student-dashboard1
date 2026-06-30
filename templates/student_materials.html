@@ -64,6 +64,24 @@
             <div class="p-4 flex flex-col flex-1">
                 <h3 class="text-sm font-bold text-gray-900 truncate" title="{{ mat.title }}">{{ mat.title }}</h3>
                 <p class="text-xs text-gray-500 mt-0.5">{{ mat.subject }} &bull; {{ mat.uploaded_at.split(' ')[0] if mat.uploaded_at else '' }}</p>
+                <!-- Grade & Section badge -->
+                <div class="mt-1.5 flex flex-wrap gap-1.5">
+                    {% if mat.class %}
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                        <svg class="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6m0-6l-9-5m9 5l9-5"/></svg>
+                        Grade {{ mat.class }}
+                    </span>
+                    {% endif %}
+                    {% if mat.section and mat.section != 'All' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                        Section {{ mat.section }}
+                    </span>
+                    {% elif mat.section == 'All' %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-50 text-teal-700 border border-teal-200">
+                        All Sections
+                    </span>
+                    {% endif %}
+                </div>
                 {% if mat.description %}
                 <p class="text-xs text-gray-400 mt-1 line-clamp-2">{{ mat.description }}</p>
                 {% endif %}
