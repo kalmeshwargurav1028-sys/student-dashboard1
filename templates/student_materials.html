@@ -57,9 +57,20 @@
                                                 {% endif %}
                                             </div>
                                         {% else %}
-                                            <form action="/api/submit-resource-work/{{ mat._id }}" method="POST" enctype="multipart/form-data" class="mt-2 flex flex-col gap-1">
-                                                <input type="file" name="submission_file" required class="block w-full text-[10px] text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200">
-                                                <button type="submit" class="inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none transition">
+                                            <form action="/api/submit-resource-work/{{ mat._id }}" method="POST" enctype="multipart/form-data" class="mt-2 w-full max-w-[200px]">
+                                                <div class="w-full flex justify-center px-2 py-3 border-2 border-blue-200 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50 transition bg-white group cursor-pointer mb-2 relative">
+                                                    <div class="text-center">
+                                                        <svg class="mx-auto h-6 w-6 text-blue-300 group-hover:text-blue-500 transition mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                                        </svg>
+                                                        <label class="cursor-pointer block">
+                                                            <span class="text-[10px] font-bold text-blue-600">Attach File</span>
+                                                            <input name="submission_file" type="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required onchange="this.parentElement.parentElement.querySelector('.file-name').textContent = this.files[0].name; this.parentElement.parentElement.querySelector('.file-name').classList.remove('hidden');">
+                                                        </label>
+                                                        <p class="file-name text-[9px] font-semibold text-blue-600 mt-1 hidden truncate max-w-[120px]"></p>
+                                                    </div>
+                                                </div>
+                                                <button type="submit" class="w-full inline-flex items-center justify-center px-3 py-1.5 border border-transparent text-xs font-medium rounded text-white bg-blue-500 hover:bg-blue-600 focus:outline-none transition shadow-sm">
                                                     Submit Work
                                                 </button>
                                             </form>
