@@ -25,18 +25,16 @@
             <div class="flex items-center justify-center bg-gray-50 border-b border-gray-100 h-36 relative">
                 {% if is_pdf %}
                     <!-- PDF Icon -->
-                    <div class="flex flex-col items-center justify-center">
-                        <div class="relative">
-                            <svg class="h-16 w-16 text-red-500" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <rect x="4" y="2" width="40" height="52" rx="4" fill="#FEE2E2" stroke="#EF4444" stroke-width="2"/>
-                                <rect x="4" y="2" width="40" height="52" rx="4" fill="white" stroke="#EF4444" stroke-width="2"/>
-                                <path d="M36 2L44 10H36V2Z" fill="#FCA5A5" stroke="#EF4444" stroke-width="1.5"/>
-                                <rect x="10" y="30" width="28" height="16" rx="3" fill="#EF4444"/>
-                                <text x="24" y="42" text-anchor="middle" font-size="9" fill="white" font-weight="bold" font-family="Arial, sans-serif">PDF</text>
-                                <line x1="12" y1="20" x2="36" y2="20" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
-                                <line x1="12" y1="24" x2="30" y2="24" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
-                            </svg>
-                        </div>
+                    <div class="flex flex-col items-center justify-center w-full h-full">
+                        <svg class="h-16 w-16 text-red-500 mx-auto" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="4" y="2" width="40" height="52" rx="4" fill="#FEE2E2" stroke="#EF4444" stroke-width="2"/>
+                            <rect x="4" y="2" width="40" height="52" rx="4" fill="white" stroke="#EF4444" stroke-width="2"/>
+                            <path d="M36 2L44 10H36V2Z" fill="#FCA5A5" stroke="#EF4444" stroke-width="1.5"/>
+                            <rect x="10" y="30" width="28" height="16" rx="3" fill="#EF4444"/>
+                            <text x="24" y="42" text-anchor="middle" font-size="9" fill="white" font-weight="bold" font-family="Arial, sans-serif">PDF</text>
+                            <line x1="12" y1="20" x2="36" y2="20" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                            <line x1="12" y1="24" x2="30" y2="24" stroke="#D1D5DB" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
                     </div>
                 {% elif is_img %}
                     <img src="{{ mat.file_url }}" alt="{{ mat.title }}" class="h-full w-full object-cover">
@@ -90,15 +88,15 @@
                 <div class="mt-auto pt-4 flex items-center gap-2 flex-wrap">
                     <!-- View PDF -->
                     <a href="{{ mat.file_url }}" target="_blank"
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 text-gray-100 bg-gray-800 hover:bg-gray-700 transition shadow-sm">
-                        <svg class="h-3.5 w-3.5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-blue-200 text-blue-700 bg-white hover:bg-blue-50 transition shadow-sm">
+                        <svg class="h-3.5 w-3.5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                         View PDF
                     </a>
 
                     <!-- Download -->
                     <a href="{{ mat.file_url }}" download
-                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-gray-700 text-gray-100 bg-gray-800 hover:bg-gray-700 transition shadow-sm">
-                        <svg class="h-3.5 w-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                       class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border border-transparent text-white bg-blue-600 hover:bg-blue-700 transition shadow-sm">
+                        <svg class="h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Download
                     </a>
                 </div>
@@ -117,6 +115,7 @@
                         </div>
                     {% else %}
                         <form action="/api/submit-resource-work/{{ mat._id }}" method="POST" enctype="multipart/form-data" class="mt-3">
+                            <textarea name="student_response" rows="2" placeholder="Add a response/comment to your teacher..." class="w-full mb-2 p-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"></textarea>
                             <div class="w-full flex justify-center px-2 py-3 border-2 border-blue-200 border-dashed rounded-lg hover:border-blue-400 hover:bg-blue-50 transition bg-white cursor-pointer mb-2 relative group">
                                 <div class="text-center">
                                     <svg class="mx-auto h-5 w-5 text-blue-300 group-hover:text-blue-500 transition mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

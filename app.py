@@ -1910,10 +1910,13 @@ def submit_resource_work(material_id):
     file_id = fs.put(file, filename=unique_filename, content_type=file.content_type)
     file_url = url_for('get_file', file_id=str(file_id))
     
+    student_response = request.form.get('student_response', '')
+    
     submission = {
         'student_id': session.get('user_id'),
         'student_name': session.get('username'),
         'file_url': file_url,
+        'student_response': student_response,
         'submitted_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
         'grade': None
     }
