@@ -12,17 +12,17 @@
     </div>
 
     {% if materials %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div class="grid grid-cols-1 gap-6">
         {% for mat in materials %}
 
         {% set is_pdf = mat.filename and mat.filename.lower().endswith('.pdf') %}
         {% set is_img = mat.filename and (mat.filename.lower().endswith('.jpg') or mat.filename.lower().endswith('.jpeg') or mat.filename.lower().endswith('.png')) %}
         {% set ext = mat.filename.split('.')[-1].upper() if mat.filename and '.' in mat.filename else 'FILE' %}
 
-        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col lg:flex-row hover:shadow-md transition-shadow">
 
             <!-- File Icon / Thumbnail -->
-            <div class="flex items-center justify-center bg-gray-50 border-b border-gray-100 h-36 relative">
+            <div class="flex items-center justify-center bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-100 h-36 lg:h-auto lg:w-48 relative flex-shrink-0">
                 {% if is_pdf %}
                     <!-- PDF Icon -->
                     <div class="flex flex-col items-center justify-center w-full h-full">
@@ -59,7 +59,7 @@
             </div>
 
             <!-- Card Body -->
-            <div class="p-4 flex flex-col flex-1">
+            <div class="p-4 flex flex-col flex-1 min-w-[250px]">
                 <h3 class="text-sm font-bold text-gray-900 truncate" title="{{ mat.title }}">{{ mat.title }}</h3>
                 <p class="text-xs text-gray-500 mt-0.5">{{ mat.subject }} &bull; {{ mat.uploaded_at.split(' ')[0] if mat.uploaded_at else '' }}</p>
                 <!-- Grade & Section badge -->
@@ -100,12 +100,14 @@
                         Download
                     </a>
                 </div>
+            </div>
 
-                <!-- Assignment Submission -->
-                {% if mat.category == 'Assignment' %}
-                    {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
-                    {% if my_sub %}
-                        <div class="mt-4 border border-gray-200 rounded-lg overflow-x-auto bg-white">
+            <!-- Assignment Submission -->
+            {% if mat.category == 'Assignment' %}
+            <div class="border-t lg:border-t-0 lg:border-l border-gray-100 bg-gray-50 px-4 py-3 flex-[2] min-w-0">
+                {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
+                {% if my_sub %}
+                    <div class="mt-2 border border-gray-200 rounded-lg overflow-x-auto bg-white">
                             <table class="min-w-full divide-y divide-gray-200 text-left text-[11px]">
                                 <thead class="bg-gray-50 text-gray-500 uppercase tracking-wider">
                                     <tr>
@@ -165,8 +167,8 @@
                             </button>
                         </form>
                     {% endif %}
-                {% endif %}
             </div>
+            {% endif %}
         </div>
 
         {% endfor %}
