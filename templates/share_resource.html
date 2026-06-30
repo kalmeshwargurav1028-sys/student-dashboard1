@@ -220,6 +220,15 @@
             btn2.className = 'flex-1 text-center py-2 rounded-full bg-blue-600 text-white transition-all';
             btn1.className = 'flex-1 text-center py-2 rounded-full text-gray-400 hover:text-gray-600 transition-all';
         }
+
+        // Sync attached file name to step 2 preview
+        if (step === 2) {
+            const input = document.getElementById('file-upload');
+            const previewEl = document.getElementById('step2-file-preview');
+            if (input && input.files.length > 0 && previewEl) {
+                previewEl.textContent = input.files[0].name;
+            }
+        }
     }
 
     function validateFile(input) {
@@ -261,17 +270,6 @@
         event.currentTarget.classList.remove('border-blue-500', 'bg-blue-50');
     }
 
-    // Sync file name to step 2 preview on step change
-    const origGoToStep = goToStep;
-    function goToStep(step) {
-        origGoToStep(step);
-        if (step === 2) {
-            const input = document.getElementById('file-upload');
-            const previewEl = document.getElementById('step2-file-preview');
-            if (input.files.length > 0 && previewEl) {
-                previewEl.textContent = input.files[0].name;
-            }
-        }
-    }
+
 </script>
 {% endblock %}
