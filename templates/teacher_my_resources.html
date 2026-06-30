@@ -14,17 +14,17 @@
     </div>
 
     {% if resources %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-10">
+    <div class="grid grid-cols-1 gap-6 mb-10">
         {% for res in resources %}
 
         {% set is_pdf = res.filename and res.filename.lower().endswith('.pdf') %}
         {% set is_img = res.filename and (res.filename.lower().endswith('.jpg') or res.filename.lower().endswith('.jpeg') or res.filename.lower().endswith('.png')) %}
         {% set ext = res.filename.split('.')[-1].upper() if res.filename and '.' in res.filename else 'FILE' %}
 
-        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition-shadow">
+        <div class="bg-white rounded-2xl shadow border border-gray-100 overflow-hidden flex flex-col lg:flex-row hover:shadow-md transition-shadow">
 
             <!-- File Icon / Thumbnail -->
-            <div class="flex items-center justify-center bg-gray-50 border-b border-gray-100 h-36 relative">
+            <div class="flex items-center justify-center bg-gray-50 border-b lg:border-b-0 lg:border-r border-gray-100 h-36 lg:h-auto lg:w-48 relative flex-shrink-0">
                 {% if is_pdf %}
                 <div class="w-full h-full p-4 flex items-center justify-center">
                     <svg class="h-full w-full max-h-24 max-w-24 text-red-500" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -65,7 +65,7 @@
             </div>
 
             <!-- Card Body -->
-            <div class="p-4 flex flex-col flex-1">
+            <div class="p-4 flex flex-col flex-1 min-w-[250px]">
                 <h3 class="text-sm font-bold text-gray-900 truncate" title="{{ res.title }}">{{ res.title }}</h3>
                 <p class="text-xs text-gray-500 mt-0.5">
                     {{ res.subject }} &bull; Grade {{ res.get('class', 'N/A') }}
@@ -103,7 +103,7 @@
 
             <!-- Grading Section for Assignments -->
             {% if res.category == 'Assignment' %}
-            <div class="border-t border-gray-100 bg-gray-50 px-4 py-3">
+            <div class="border-t lg:border-t-0 lg:border-l border-gray-100 bg-gray-50 px-4 py-3 flex-[2] min-w-0">
                 <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2 flex items-center gap-1">
                     📝 Submissions
                     <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-700">{{ res.submissions|length if res.submissions else 0 }}</span>
