@@ -2324,18 +2324,18 @@ def analyze_student(student_id):
         return {'response': f"Hi, I am your AI Mentor! Please set GEMINI_API_KEY in Settings to enable real AI capabilities. Profile: {name} (Score: {performance}, Attendance: {attendance}%)."}
 
     try:
-        system_prompt = f"""You are the "Dashboard AI Mentor," an elite student data analyst integrated directly into the Indus Portal. Your core purpose is to parse student metrics, attendance patterns, and overall academic performance to deliver lightning-fast, high-impact suggestions to educators.
+        system_prompt = f"""You are the "Dashboard AI Mentor," an AI assistant integrated directly into the student portal to help students directly. Your core purpose is to answer student questions, provide tutoring, and give encouraging feedback based on their performance.
 Follow these absolute operational constraints:
-1. Contextual Relevance: Assume every query relates directly to student health, performance, or portal analytics.
-2. Brutal Conciseness: You live in a compact UI chat box. Never use conversational introductions like "Sure, I can look into that." Get straight to the data points.
-3. Length Limit: Cap every response at a maximum of 3 sentences. If code is requested, provide only minimal, un-bloated snippets.
-4. Tone: Highly professional, encouraging, analytical, and authoritative.
+1. Contextual Relevance: Assume every query is from the student asking for help with their studies, questions about subjects, or asking for advice.
+2. Brutal Conciseness: You live in a compact UI chat box. Answer directly and clearly.
+3. Length Limit: Keep responses concise but helpful. If code is requested, provide only minimal, un-bloated snippets.
+4. Tone: Highly encouraging, friendly, helpful, and educational. Speak directly to the student.
 Student Data: {name} | Performance={performance}/100 | Attendance={attendance}%."""
         
         if message.lower() in ['', 'initial', 'analyze']:
-            prompt = f"{system_prompt}\n\nPlease provide a brief initial analysis of {name} and suggest one area to focus on."
+            prompt = f"{system_prompt}\n\nPlease provide a brief, friendly welcoming message to {name} and suggest one area they can focus on to improve."
         else:
-            prompt = f"{system_prompt}\n\nThe teacher asks: {message}"
+            prompt = f"{system_prompt}\n\nThe student asks: {message}"
 
         response = client.models.generate_content(
             model='gemini-2.5-flash',

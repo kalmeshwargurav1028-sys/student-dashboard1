@@ -87,8 +87,26 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 function speakWithVoice(voices, utterance) {
-                    const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Samantha')));
-                    if (englishVoice) utterance.voice = englishVoice;
+                    // Try to find a premium/high-quality English voice
+                    let bestVoice = voices.find(v => 
+                        v.name.includes('Google US English') || 
+                        v.name.includes('Microsoft Zira') || 
+                        v.name.includes('Samantha')
+                    );
+                    
+                    if (!bestVoice) {
+                        // Fallback to any English female voice
+                        bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
+                    }
+                    
+                    if (!bestVoice) {
+                        // Fallback to any English voice
+                        bestVoice = voices.find(v => v.lang.startsWith('en'));
+                    }
+                    
+                    if (bestVoice) {
+                        utterance.voice = bestVoice;
+                    }
                     window.speechSynthesis.speak(utterance);
                 }
             }
