@@ -96,37 +96,55 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 
                 function speakWithVoice(voices, utterance) {
-                    const selectedLang = languageSelect.value;
-                    let bestVoice;
-                    
-                    if (selectedLang === 'Hindi') {
-                        utterance.lang = 'hi-IN';
-                        bestVoice = voices.find(v => v.lang.startsWith('hi') && (v.name.toLowerCase().includes('female') || v.name.includes('Google')));
-                        if(!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('hi'));
-                    } else if (selectedLang === 'Kannada') {
-                        utterance.lang = 'kn-IN';
-                        bestVoice = voices.find(v => v.lang.startsWith('kn') && (v.name.toLowerCase().includes('female') || v.name.includes('Google')));
-                        if(!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('kn'));
-                    } else if (selectedLang === 'Marathi') {
-                        utterance.lang = 'mr-IN';
-                        bestVoice = voices.find(v => v.lang.startsWith('mr') && (v.name.toLowerCase().includes('female') || v.name.includes('Google')));
-                        if(!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('mr'));
-                    } else {
-                        // Try to find a premium/high-quality English voice
-                        utterance.lang = 'en-US';
-                        bestVoice = voices.find(v => 
-                            v.name.includes('Google US English') || 
-                            v.name.includes('Microsoft Zira') || 
-                            v.name.includes('Samantha')
-                        );
-                        if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
-                        if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en'));
+                    try {
+                        const selectedLang = languageSelect.value;
+                        let bestVoice;
+                        
+                        // Helper to find a voice by prefix
+                        const findVoice = (prefix) => {
+                            let v = voices.find(v => v.lang.startsWith(prefix) && (v.name.toLowerCase().includes('female') || v.name.includes('Google')));
+                            if (!v) v = voices.find(v => v.lang.startsWith(prefix));
+                            return v;
+                        };
+                        
+                        if (selectedLang === 'Hindi') {
+                            utterance.lang = 'hi-IN';
+                            bestVoice = findVoice('hi');
+                        } else if (selectedLang === 'Kannada') {
+                            utterance.lang = 'kn-IN';
+                            bestVoice = findVoice('kn');
+                        } else if (selectedLang === 'Marathi') {
+                            utterance.lang = 'mr-IN';
+                            bestVoice = findVoice('mr');
+                            // Fallback to Hindi for Marathi (both use Devanagari script)
+                            if (!bestVoice) {
+                                utterance.lang = 'hi-IN';
+                                bestVoice = findVoice('hi');
+                            }
+                        } else {
+                            utterance.lang = 'en-US';
+                            bestVoice = voices.find(v => 
+                                v.name.includes('Google US English') || 
+                                v.name.includes('Microsoft Zira') || 
+                                v.name.includes('Samantha')
+                            );
+                            if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
+                            if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en'));
+                        }
+                        
+                        // Ultimate fallback: just use the first available voice if nothing matched
+                        if (!bestVoice && voices.length > 0) {
+                            bestVoice = voices[0];
+                        }
+                        
+                        if (bestVoice) {
+                            utterance.voice = bestVoice;
+                        }
+                        
+                        window.speechSynthesis.speak(utterance);
+                    } catch (e) {
+                        console.error('Speech synthesis error:', e);
                     }
-                    
-                    if (bestVoice) {
-                        utterance.voice = bestVoice;
-                    }
-                    window.speechSynthesis.speak(utterance);
                 }
             }
         }
