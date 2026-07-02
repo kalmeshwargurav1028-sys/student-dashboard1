@@ -2342,7 +2342,7 @@ Student Data: {name} | Performance={performance}/100 | Attendance={attendance}%.
         return {'response': response_text}
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        return {'response': "Sorry, I encountered an error communicating with my AI brain."}
+        return {'response': f"Sorry, I encountered an error communicating with my AI brain. Error: {str(e)}"}
 
 @app.route('/api/dashboard_ai', methods=['POST'])
 def dashboard_ai():

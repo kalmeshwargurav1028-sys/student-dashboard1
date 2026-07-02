@@ -59,6 +59,21 @@ document.addEventListener('DOMContentLoaded', function() {
         msgDiv.appendChild(bubble);
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
+        
+        // Voice Over for AI Mentor
+        if (!isUser) {
+            if ('speechSynthesis' in window) {
+                // Cancel any ongoing speech
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                // Optional: Try to find a good English voice
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Female') || v.name.includes('Google')));
+                if (englishVoice) utterance.voice = englishVoice;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
     }
     
     function addTypingIndicator() {
