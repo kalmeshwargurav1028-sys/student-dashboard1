@@ -476,13 +476,14 @@ def delete_announcement(ann_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def log_notification(title, message, type='info', role_target='admin'):
+def log_notification(title, message, type='info', role_target='admin', target_user_id=None):
     try:
         db.notifications.insert_one({
             'title': title,
             'message': message,
             'type': type,
             'role_target': role_target,
+            'target_user_id': target_user_id,
             'read_by': [],
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         })
@@ -501,7 +502,10 @@ def get_notifications():
         target_roles.extend(['teacher', 'student'])
         
     notifs = list(db.notifications.find({
-        'role_target': {'$in': target_roles},
+        '$or': [
+            {'role_target': {'$in': target_roles}},
+            {'target_user_id': user_id}
+        ],
         'read_by': {'$ne': user_id},
         'type': {'$ne': 'error'}
     }).sort('timestamp', -1).limit(10))
@@ -4345,6 +4349,15 @@ def send_message(other_user_id):
     
     result = db.messages.insert_one(msg)
     msg['_id'] = str(result.inserted_id)
+    
+    sender_name = session.get('username', 'Someone')
+    log_notification(
+        title="New Message",
+        message=f"You received a new message from {sender_name}",
+        type='info',
+        role_target='none', # Use none since we target specific user
+        target_user_id=other_user_id
+    )
     
     return jsonify({'success': True, 'message': msg})
 
