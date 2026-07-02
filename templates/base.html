@@ -590,6 +590,191 @@
                 console.error("Error clearing notifications", e);
             }
         }
+    <!-- Global Chat Modal -->
+    <div id="globalChatModal" class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md flex flex-col h-[500px] overflow-hidden transform transition-all">
+            <!-- Header -->
+            <div class="bg-blue-600 dark:bg-blue-700 px-4 py-3 flex justify-between items-center text-white shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center font-bold" id="chatAvatar">
+                        ?
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm" id="chatTitle">Chat</h3>
+                        <p class="text-xs text-blue-100 opacity-90" id="chatSubtitle">Online</p>
+                    </div>
+                </div>
+                <button onclick="closeChat()" class="text-white hover:text-gray-200 focus:outline-none transition-colors">
+                    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <!-- Messages Area -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 dark:bg-gray-900">
+                <div class="text-center text-xs text-gray-500 py-4">Loading messages...</div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="p-3 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shrink-0">
+                <form id="chatForm" onsubmit="sendChatMessage(event)" class="flex items-center gap-2">
+                    <input type="hidden" id="chatOtherUserId" value="">
+                    
+                    <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-2 rounded-full transition-colors">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    </button>
+                    
+                    <input type="text" id="chatInput" placeholder="Type a message..." class="flex-1 bg-gray-100 dark:bg-gray-700 border-transparent focus:bg-white dark:focus:bg-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 rounded-full px-4 py-2 text-sm dark:text-white transition-colors" autocomplete="off" required>
+                    
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-full transition-colors flex items-center justify-center w-9 h-9" id="chatSendBtn">
+                        <svg class="w-4 h-4 ml-1" fill="currentColor" viewBox="0 0 20 20"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let chatPollingInterval = null;
+        const currentUserId = '{{ session.get("user_id", "") }}';
+        
+        function openChat(otherUserId, otherUserName, subtitle = 'Teacher') {
+            document.getElementById('globalChatModal').classList.remove('hidden');
+            document.getElementById('chatTitle').innerText = otherUserName;
+            document.getElementById('chatSubtitle').innerText = subtitle;
+            document.getElementById('chatOtherUserId').value = otherUserId;
+            
+            // Set Avatar Initials
+            let initials = otherUserName.substring(0, 2).toUpperCase();
+            if(otherUserName.includes(' ')) {
+                const parts = otherUserName.split(' ');
+                initials = parts[0][0] + (parts[1] ? parts[1][0] : '');
+            }
+            document.getElementById('chatAvatar').innerText = initials;
+            
+            document.getElementById('chatMessages').innerHTML = '<div class="text-center text-xs text-gray-500 py-4"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Loading messages...</div>';
+            
+            fetchChatMessages();
+            
+            // Poll for new messages while modal is open
+            if(chatPollingInterval) clearInterval(chatPollingInterval);
+            chatPollingInterval = setInterval(fetchChatMessages, 5000);
+            
+            setTimeout(() => document.getElementById('chatInput').focus(), 100);
+        }
+        
+        function closeChat() {
+            document.getElementById('globalChatModal').classList.add('hidden');
+            if(chatPollingInterval) {
+                clearInterval(chatPollingInterval);
+                chatPollingInterval = null;
+            }
+        }
+        
+        async function fetchChatMessages() {
+            const otherUserId = document.getElementById('chatOtherUserId').value;
+            if(!otherUserId) return;
+            
+            try {
+                const res = await fetch(`/api/messages/${otherUserId}`);
+                const data = await res.json();
+                
+                if(data.success) {
+                    renderMessages(data.messages);
+                }
+            } catch(e) {
+                console.error("Error fetching messages", e);
+            }
+        }
+        
+        function renderMessages(messages) {
+            const container = document.getElementById('chatMessages');
+            
+            if(!messages || messages.length === 0) {
+                container.innerHTML = '<div class="text-center text-xs text-gray-500 py-4 italic mt-10">No messages yet. Send a message to start the conversation!</div>';
+                return;
+            }
+            
+            // Check if user is scrolled to bottom before updating
+            const isScrolledToBottom = container.scrollHeight - container.clientHeight <= container.scrollTop + 50;
+            
+            let html = '';
+            messages.forEach(msg => {
+                const isMine = msg.sender_id === currentUserId;
+                const timeStr = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                
+                if (isMine) {
+                    html += `
+                        <div class="flex flex-col items-end">
+                            <div class="bg-blue-600 text-white rounded-2xl rounded-tr-sm px-4 py-2 max-w-[80%] shadow-sm">
+                                <p class="text-sm whitespace-pre-wrap">${escapeHtml(msg.message)}</p>
+                            </div>
+                            <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="flex flex-col items-start">
+                            <div class="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-2xl rounded-tl-sm px-4 py-2 max-w-[80%] shadow-sm">
+                                <p class="text-sm whitespace-pre-wrap">${escapeHtml(msg.message)}</p>
+                            </div>
+                            <span class="text-[10px] text-gray-400 mt-1">${timeStr}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+            
+            if(isScrolledToBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+        
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const otherUserId = document.getElementById('chatOtherUserId').value;
+            const msg = input.value.trim();
+            const btn = document.getElementById('chatSendBtn');
+            
+            if(!msg || !otherUserId) return;
+            
+            input.disabled = true;
+            btn.disabled = true;
+            
+            try {
+                const res = await fetch(`/api/messages/${otherUserId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg })
+                });
+                
+                const data = await res.json();
+                if(data.success) {
+                    input.value = '';
+                    await fetchChatMessages();
+                    const container = document.getElementById('chatMessages');
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch(error) {
+                console.error("Error sending message", error);
+                alert("Failed to send message. Please try again.");
+            } finally {
+                input.disabled = false;
+                btn.disabled = false;
+                input.focus();
+            }
+        }
+        
+        function escapeHtml(unsafe) {
+            if(!unsafe) return '';
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
     </script>
 </body>
 </html>

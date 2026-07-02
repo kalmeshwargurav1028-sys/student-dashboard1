@@ -301,12 +301,19 @@
                 
                 <div class="px-5 py-3 bg-gray-50 dark:bg-gray-900/30 border-t border-gray-200 dark:border-gray-700 flex justify-end items-center">
                     {% if assignment.status != 'submitted' %}
-                    <form action="{{ url_for('assignments') }}" method="POST">
-                        <input type="hidden" name="assignment_id" value="{{ assignment._id }}">
-                        <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                            Submit Work
+                    <div class="flex items-center space-x-3">
+                        {% if assignment.teacher_id %}
+                        <button type="button" onclick="openChat('{{ assignment.teacher_id }}', '{{ assignment.teacher_name }}', 'Assignment Support')" class="inline-flex items-center px-4 py-2 border border-indigo-200 dark:border-indigo-800 shadow-sm text-sm font-medium rounded-md text-indigo-700 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-800/50 transition-colors">
+                            <i class="fa-regular fa-comment-dots mr-2"></i> Message
                         </button>
-                    </form>
+                        {% endif %}
+                        <form action="{{ url_for('assignments') }}" method="POST">
+                            <input type="hidden" name="assignment_id" value="{{ assignment._id }}">
+                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                                Submit Work
+                            </button>
+                        </form>
+                    </div>
                     {% else %}
                     <div class="flex items-center space-x-4">
                         {% if assignment.my_grade %}

@@ -59,6 +59,13 @@
                             Att: {{ student.get('attendance', 0) }}%
                         </span>
                     </div>
+                    {% if homeroom_teacher and session.get('role') == 'student' %}
+                    <div class="mt-4">
+                        <button onclick="openChat('{{ homeroom_teacher.id }}', '{{ homeroom_teacher.name }}', 'Homeroom Teacher')" class="inline-flex items-center px-4 py-2 border border-blue-200 shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 transition-colors">
+                            <i class="fa-regular fa-comment-dots mr-2"></i> Message Homeroom Teacher
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
             

@@ -1256,8 +1256,22 @@ def student_profile(student_id):
             t['display_name'] = f"{t['first_name']} {t['last_name']}"
         else:
             t['display_name'] = t.get('email', 'Teacher').split('@')[0].capitalize()
+            
+    # Homeroom Teacher check
+    homeroom_teacher = None
+    if student.get('student_class') and student.get('division'):
+        mapping = db.teacher_mappings.find_one({
+            'type': 'homeroom', 
+            'grade': str(student.get('student_class')), 
+            'section': str(student.get('division'))
+        })
+        if mapping:
+            homeroom_teacher = {
+                'id': mapping.get('teacher_id'),
+                'name': mapping.get('teacher_name')
+            }
         
-    return render_template('student_profile.html', student=student, teachers=teachers)
+    return render_template('student_profile.html', student=student, teachers=teachers, homeroom_teacher=homeroom_teacher)
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
@@ -1698,6 +1712,7 @@ def assignments():
                     'file_id': file_id,
                     'filename': filename,
                     'created_by': session.get('username'),
+                    'teacher_id': session.get('user_id'),
                     'submissions': []
                 })
                 flash('Assignment created!')
@@ -1748,6 +1763,16 @@ def assignments():
                 a['my_grade'] = my_sub.get('grade')
             else:
                 a['status'] = 'pending' if a['days_left'] >= 0 else 'overdue'
+                
+            if not a.get('teacher_id'):
+                teacher = db.users.find_one({'username': a.get('created_by'), 'role': 'teacher'})
+                if teacher:
+                    a['teacher_id'] = str(teacher['_id'])
+                    a['teacher_name'] = teacher.get('name') or teacher.get('username')
+            else:
+                teacher = db.users.find_one({'_id': ObjectId(a['teacher_id'])})
+                if teacher:
+                    a['teacher_name'] = teacher.get('name') or teacher.get('username')
                 
     return render_template('assignments.html', assignments=assignments_data)
 
@@ -4554,6 +4579,15 @@ def student_courses(student_id):
         'division': {'$in': [student_division, 'All']},
         'is_published': True
     }).sort('created_at', -1))
+    
+    # Inject teacher names for messaging
+    for c in courses:
+        if c.get('teacher_id'):
+            teacher = db.users.find_one({'_id': ObjectId(c['teacher_id'])})
+            if teacher:
+                c['teacher_name'] = teacher.get('name') or teacher.get('email', '').split('@')[0]
+            else:
+                c['teacher_name'] = 'Course Teacher'
     
     return render_template('student_courses.html', student=student, courses=courses)
 
