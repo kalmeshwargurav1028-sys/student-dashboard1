@@ -4535,12 +4535,12 @@ def student_courses(student_id):
         return redirect(url_for('dashboard'))
         
     # Find courses matching student's grade and division
-    student_class = student.get('student_class', '')
-    student_division = student.get('division', '')
+    student_class = str(student.get('student_class') or '')
+    student_division = str(student.get('division') or '')
     
     # Format grade to match Course creation format (e.g. "1st Standard")
     grade_str = student_class
-    if not grade_str.endswith('Standard'):
+    if grade_str and not grade_str.endswith('Standard'):
         if grade_str.endswith('th') or grade_str.endswith('st') or grade_str.endswith('nd') or grade_str.endswith('rd'):
             grade_str = grade_str[:-2]
         if grade_str == '1': grade_str = '1st Standard'
