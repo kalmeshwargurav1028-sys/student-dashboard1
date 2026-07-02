@@ -93,7 +93,8 @@ def send_error_email(error_details):
 def configure_gemini():
     try:
         config_data = db.settings.find_one({}, {'_id': 0}) or {}
-        api_key = config_data.get('GEMINI_API_KEY') or os.environ.get('GEMINI_API_KEY')
+        # Always prefer Environment Variable first, fallback to database
+        api_key = os.environ.get('GEMINI_API_KEY') or config_data.get('GEMINI_API_KEY')
         if api_key:
             client = genai.Client(api_key=api_key)
             return client, api_key
