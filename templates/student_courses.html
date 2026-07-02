@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block header_title %}My Courses - {{ student.name | title }}{% endblock %}
+{% block header_title %}My Courses - {{ (student.name or 'Student') | title }}{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
@@ -7,7 +7,7 @@
     <!-- Header Section -->
     <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
         <div class="relative z-10">
-            <h1 class="text-2xl sm:text-3xl font-bold mb-2">My Courses: Gr {{ student.student_class }}-{{ student.division }}</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold mb-2">My Courses: Gr {{ student.student_class or 'N/A' }}-{{ student.division or 'N/A' }}</h1>
             <p class="text-blue-100 max-w-2xl">Access all your enrolled courses, syllabus details, and related materials here.</p>
         </div>
         <div class="absolute right-0 bottom-0 opacity-10 transform translate-x-1/4 translate-y-1/4">
