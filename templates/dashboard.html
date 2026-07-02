@@ -28,11 +28,23 @@
                         {% endfor %}
                     {% endif %}
                     
-                    {% if not teacher_homerooms and not teacher_subjects %}
+                    {% if teacher_created_courses %}
+                        {% for course in teacher_created_courses %}
+                            <a href="{{ url_for('course_editor', course_id=course._id) }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/30 text-white border border-orange-500/50 backdrop-blur-sm hover:bg-orange-500/50 transition-colors">
+                                📘 {{ course.name }} (Gr {{ course.grade }}-{{ course.division }})
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if not teacher_homerooms and not teacher_subjects and not teacher_created_courses %}
                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-500/30 text-white border border-red-500/50 backdrop-blur-sm">
-                            ⚠️ No assigned classes
+                            ⚠️ No assigned classes or courses
                         </span>
                     {% endif %}
+                    
+                    <a href="{{ url_for('teacher_courses') }}" class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-white text-blue-600 hover:bg-gray-100 transition shadow-sm ml-2">
+                        + Add New Course
+                    </a>
                 </div>
             </div>
             <div class="mt-4 sm:mt-0 opacity-80 hidden sm:block">

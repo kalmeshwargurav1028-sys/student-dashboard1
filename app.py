@@ -218,7 +218,8 @@ def inject_global_context():
         'active_announcements': [], 
         'role_permissions': {},
         'teacher_homerooms': [],
-        'teacher_subjects': []
+        'teacher_subjects': [],
+        'teacher_created_courses': []
     }
     if not session.get('logged_in'):
         return context
@@ -248,6 +249,7 @@ def inject_global_context():
         subjects = [m for m in mappings if m.get('type') == 'subject']
         context['teacher_homerooms'] = homerooms
         context['teacher_subjects'] = subjects
+        context['teacher_created_courses'] = list(db.courses.find({'teacher_id': str(teacher_id)}).sort('created_at', -1))
         
     try:
         if role == 'admin':
