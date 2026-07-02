@@ -2314,6 +2314,7 @@ def analyze_student(student_id):
         
     data = request.get_json()
     message = data.get('message', '').strip()
+    language = data.get('language', 'English')
     
     performance = float(student.get('performance', 0))
     attendance = float(student.get('attendance', 0))
@@ -2330,6 +2331,7 @@ Follow these absolute operational constraints:
 2. Brutal Conciseness: You live in a compact UI chat box. Answer directly and clearly.
 3. Length Limit: Keep responses concise but helpful. If code is requested, provide only minimal, un-bloated snippets.
 4. Tone: Highly encouraging, friendly, helpful, and educational. Speak directly to the student.
+5. Language: You MUST reply entirely in {language}.
 Student Data: {name} | Performance={performance}/100 | Attendance={attendance}%."""
         
         if message.lower() in ['', 'initial', 'analyze']:
