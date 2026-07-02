@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% block header_title %}Teacher Portal - Course Editor{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 relative pb-20">
+    
+    <!-- Header with Back Button -->
+    <div class="flex items-center gap-4 mb-6">
+        <a href="{{ url_for('teacher_courses') }}" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-500 transition-colors">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+        </a>
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Edit Course: <span id="displayCourseName">{{ course.name }}</span></h1>
+    </div>
+
+    <!-- Course Details Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200">Course Information</h2>
+        </div>
+        <div class="p-6 space-y-5">
+            <div>
+                <label for="editName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Course Name</label>
+                <input type="text" id="editName" value="{{ course.name }}" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                    <label for="editGrade" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Grade</label>
+                    <select id="editGrade" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                        {% for g in ['1st Standard', '2nd Standard', '3rd Standard', '4th Standard', '5th Standard', '6th Standard', '7th Standard', '8th Standard', '9th Standard', '10th Standard', '11th Standard', '12th Standard'] %}
+                            <option value="{{ g }}" {% if course.grade == g %}selected{% endif %}>{{ g }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="editDivision" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Division</label>
+                    <select id="editDivision" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white">
+                        {% for d in ['A', 'B', 'C', 'D'] %}
+                            <option value="{{ d }}" {% if course.division == d %}selected{% endif %}>{{ d }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Syllabus & Content Card -->
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
+            <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200">Syllabus / Content</h2>
+        </div>
+        <div class="p-6">
+            <textarea id="editSyllabus" rows="12" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Enter syllabus details, modules, or general course outline...">{{ course.syllabus }}</textarea>
+            <p class="mt-2 text-sm text-gray-500">This content will be visible to all students enrolled in this course.</p>
+        </div>
+    </div>
+    
+    <!-- Floating Action Bar -->
+    <div class="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 flex justify-end gap-4 px-4 sm:px-6 lg:px-8">
+        <button id="saveBtn" onclick="saveCourse()" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+            Save Changes
+        </button>
+    </div>
+
+</div>
+
+<script>
+    async function saveCourse() {
+        const name = document.getElementById('editName').value;
+        const grade = document.getElementById('editGrade').value;
+        const division = document.getElementById('editDivision').value;
+        const syllabus = document.getElementById('editSyllabus').value;
+        const btn = document.getElementById('saveBtn');
+        const courseId = '{{ course._id }}';
+        
+        if(!name) {
+            alert('Please enter a course name');
+            return;
+        }
+        
+        const originalContent = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
+        
+        try {
+            const res = await fetch(`/api/courses/${courseId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, grade, division, syllabus })
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                document.getElementById('displayCourseName').innerText = name;
+                btn.innerHTML = '<svg class="w-5 h-5 mr-2 text-green-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Saved!';
+                setTimeout(() => {
+                    btn.disabled = false;
+                    btn.innerHTML = originalContent;
+                }, 2000);
+            } else {
+                alert(data.error || 'Failed to save course');
+                btn.disabled = false;
+                btn.innerHTML = originalContent;
+            }
+        } catch(e) {
+            console.error(e);
+            alert('An error occurred');
+            btn.disabled = false;
+            btn.innerHTML = originalContent;
+        }
+    }
+</script>
+{% endblock %}

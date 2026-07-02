@@ -235,6 +235,13 @@
                         <span class="sidebar-text whitespace-nowrap text-sm">Colleague Resources</span>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ url_for('teacher_courses') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if current_path.startswith('/courses') or current_path.startswith('/course/') %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Course Management</span>
+                    </a>
+                </li>
                 {% endif %}
 
                 {% if session.get('role') == 'teacher' %}
@@ -306,6 +313,13 @@
 
                 <li class="px-3 pt-4 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Academics</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_courses', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/courses' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">My Courses</span>
+                    </a>
                 </li>
                 <li>
                     <a href="{{ url_for('student_materials') }}"

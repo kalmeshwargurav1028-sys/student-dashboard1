@@ -4349,5 +4349,133 @@ def mark_messages_read(other_user_id):
     
     return jsonify({'success': True})
 
+# -- Course Management --
+@app.route('/courses', methods=['GET'])
+def teacher_courses():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    teacher_id = str(session.get('user_id'))
+    courses = list(db.courses.find({'teacher_id': teacher_id}).sort('created_at', -1))
+    
+    return render_template('teacher_courses.html', courses=courses)
+
+@app.route('/api/courses', methods=['POST'])
+def create_course():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    teacher_id = str(session.get('user_id'))
+    data = request.get_json()
+    
+    name = data.get('name', '').strip()
+    grade = data.get('grade', '').strip()
+    division = data.get('division', '').strip()
+    
+    if not all([name, grade, division]):
+        return jsonify({'success': False, 'error': 'Name, grade, and division are required.'}), 400
+        
+    course = {
+        'teacher_id': teacher_id,
+        'name': name,
+        'grade': grade,
+        'division': division,
+        'syllabus': data.get('syllabus', ''),
+        'created_at': datetime.now().isoformat(),
+        'updated_at': datetime.now().isoformat()
+    }
+    
+    result = db.courses.insert_one(course)
+    
+    return jsonify({'success': True, 'course_id': str(result.inserted_id)})
+
+@app.route('/course/<course_id>', methods=['GET'])
+def course_editor(course_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+        
+    teacher_id = str(session.get('user_id'))
+    
+    try:
+        course = db.courses.find_one({'_id': ObjectId(course_id)})
+    except:
+        course = None
+        
+    if not course or course.get('teacher_id') != teacher_id:
+        flash('Course not found or access denied.')
+        return redirect(url_for('teacher_courses'))
+        
+    # Find enrolled students automatically based on Grade and Division
+    query = {}
+    if course.get('grade') and course.get('grade') != 'All':
+        query['student_class'] = course.get('grade').replace(' Standard', 'th').replace('st', 'th').replace('nd', 'th').replace('rd', 'th') # Normalize for match if needed, but the original logic uses "10th"
+        # Actually, let's keep it simple and just search by exact match for now
+        # Or better, just get all students and let Jinja display them if we have to
+    
+    # We will let the frontend fetch or we just query here
+    # The grade string from dashboard is usually "1st Standard"
+    
+    return render_template('course_editor.html', course=course)
+
+@app.route('/api/courses/<course_id>', methods=['PUT'])
+def update_course(course_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    teacher_id = str(session.get('user_id'))
+    data = request.get_json()
+    
+    try:
+        course = db.courses.find_one({'_id': ObjectId(course_id)})
+    except:
+        return jsonify({'success': False, 'error': 'Invalid course ID'}), 400
+        
+    if not course or course.get('teacher_id') != teacher_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+    update_data = {
+        'name': data.get('name', course.get('name')).strip(),
+        'grade': data.get('grade', course.get('grade')).strip(),
+        'division': data.get('division', course.get('division')).strip(),
+        'syllabus': data.get('syllabus', course.get('syllabus')),
+        'updated_at': datetime.now().isoformat()
+    }
+    
+    db.courses.update_one({'_id': ObjectId(course_id)}, {'$set': update_data})
+    
+    return jsonify({'success': True})
+
+@app.route('/student/<student_id>/courses', methods=['GET'])
+def student_courses(student_id):
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+        
+    student = db.students.find_one({'id': student_id}, {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('dashboard'))
+        
+    # Find courses matching student's grade and division
+    student_class = student.get('student_class', '')
+    student_division = student.get('division', '')
+    
+    # Format grade to match Course creation format (e.g. "1st Standard")
+    grade_str = student_class
+    if not grade_str.endswith('Standard'):
+        if grade_str.endswith('th') or grade_str.endswith('st') or grade_str.endswith('nd') or grade_str.endswith('rd'):
+            grade_str = grade_str[:-2]
+        if grade_str == '1': grade_str = '1st Standard'
+        elif grade_str == '2': grade_str = '2nd Standard'
+        elif grade_str == '3': grade_str = '3rd Standard'
+        else: grade_str = f"{grade_str}th Standard"
+        
+    # Actually, we might just fetch all courses and let the student see them, or strictly filter.
+    courses = list(db.courses.find({
+        'grade': {'$in': [grade_str, student_class, 'All']},
+        'division': {'$in': [student_division, 'All']}
+    }).sort('created_at', -1))
+    
+    return render_template('student_courses.html', student=student, courses=courses)
+
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True, port=5000)
