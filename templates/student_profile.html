@@ -188,9 +188,9 @@
                             <p class="text-xs text-gray-500 capitalize">{{ teacher.get('subject', 'Faculty Member') }}</p>
                         </div>
                     </div>
-                    <a href="mailto:{{ teacher.email }}?subject=Student Inquiry: {{ student.name }}" class="p-2 bg-white border border-gray-200 rounded-full text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-colors shadow-sm" title="Securely Message Teacher">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    </a>
+                    <button onclick="openChat('{{ teacher._id }}', '{{ teacher.display_name }}')" class="p-2 bg-white border border-gray-200 rounded-full text-indigo-600 hover:bg-indigo-50 hover:text-indigo-800 transition-colors shadow-sm" title="Securely Message Teacher">
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                    </button>
                 </div>
                 {% endfor %}
             </div>
@@ -200,5 +200,131 @@
 
 </div>
 
+
+<!-- Chat Widget Container -->
+<div id="chatWidget" class="fixed bottom-4 right-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 hidden flex-col z-50 overflow-hidden transform transition-all duration-300 scale-95 opacity-0">
+    <!-- Header -->
+    <div class="bg-indigo-600 px-4 py-3 flex items-center justify-between">
+        <h3 id="chatTitle" class="text-white font-bold text-sm">Chat with Teacher</h3>
+        <button onclick="closeChat()" class="text-white hover:text-gray-200 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+    </div>
+    <!-- Messages Area -->
+    <div id="chatMessages" class="p-4 h-64 overflow-y-auto bg-gray-50 flex flex-col gap-3">
+        <!-- Messages will be populated here by JS -->
+    </div>
+    <!-- Input Area -->
+    <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
+        <input type="text" id="chatInput" class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Type a message..." autocomplete="off" onkeypress="handleChatKeypress(event)">
+        <button onclick="sendMessage()" class="inline-flex items-center p-2 border border-transparent rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+// Chat Widget Logic
+let currentChatUserId = null;
+let chatPollingInterval = null;
+const currentUserId = "{{ session.get('user_id') }}";
+
+function openChat(userId, userName) {
+    currentChatUserId = userId;
+    document.getElementById('chatTitle').innerText = 'Chat with ' + userName;
+    const widget = document.getElementById('chatWidget');
+    widget.classList.remove('hidden');
+    setTimeout(() => {
+        widget.classList.remove('scale-95', 'opacity-0');
+        widget.classList.add('scale-100', 'opacity-100');
+    }, 10);
+    
+    fetchMessages();
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
+    chatPollingInterval = setInterval(fetchMessages, 3000);
+}
+
+function closeChat() {
+    const widget = document.getElementById('chatWidget');
+    widget.classList.remove('scale-100', 'opacity-100');
+    widget.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        widget.classList.add('hidden');
+    }, 300);
+    currentChatUserId = null;
+    if (chatPollingInterval) clearInterval(chatPollingInterval);
+}
+
+function fetchMessages() {
+    if (!currentChatUserId) return;
+    
+    fetch('/api/messages/' + currentChatUserId)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderMessages(data.messages);
+                // Mark messages as read
+                fetch('/api/messages/read/' + currentChatUserId, { method: 'POST' });
+            }
+        })
+        .catch(err => console.error(err));
+}
+
+function renderMessages(messages) {
+    const container = document.getElementById('chatMessages');
+    const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
+    
+    container.innerHTML = '';
+    
+    if (messages.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 text-xs mt-4">No messages yet. Say hi!</div>';
+    } else {
+        messages.forEach(msg => {
+            const isMe = msg.sender_id === currentUserId;
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'flex w-full ' + (isMe ? 'justify-end' : 'justify-start');
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ' + 
+                              (isMe ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100');
+            msgDiv.textContent = msg.content;
+            
+            bubbleDiv.appendChild(msgDiv);
+            container.appendChild(bubbleDiv);
+        });
+    }
+    
+    if (isAtBottom) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    if (!content || !currentChatUserId) return;
+    
+    input.value = '';
+    
+    fetch('/api/messages/' + currentChatUserId, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: content })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            fetchMessages();
+        }
+    })
+    .catch(err => console.error(err));
+}
+
+function handleChatKeypress(event) {
+    if (event.key === 'Enter') {
+        sendMessage();
+    }
+}
+</script>
 
 {% endblock %}

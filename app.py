@@ -4275,6 +4275,79 @@ def api_clear_mappings():
     result = db.teacher_mappings.delete_many(query)
     return jsonify({'success': True, 'deleted': result.deleted_count})
 
+# -- API: Messaging --
+@app.route('/api/messages/<other_user_id>', methods=['GET'])
+def get_messages(other_user_id):
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    
+    current_user_id = str(session.get('user_id'))
+    
+    # Messages involving both users
+    messages = list(db.messages.find({
+        '$or': [
+            {'sender_id': current_user_id, 'receiver_id': other_user_id},
+            {'sender_id': other_user_id, 'receiver_id': current_user_id}
+        ]
+    }).sort('timestamp', 1))
+    
+    for msg in messages:
+        msg['_id'] = str(msg['_id'])
+        
+    return jsonify({'success': True, 'messages': messages})
+
+@app.route('/api/messages/<other_user_id>', methods=['POST'])
+def send_message(other_user_id):
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    current_user_id = str(session.get('user_id'))
+    data = request.get_json()
+    content = data.get('content', '').strip()
+    
+    if not content:
+        return jsonify({'success': False, 'error': 'Message content cannot be empty'}), 400
+        
+    msg = {
+        'sender_id': current_user_id,
+        'receiver_id': other_user_id,
+        'content': content,
+        'timestamp': datetime.now().isoformat(),
+        'is_read': False
+    }
+    
+    result = db.messages.insert_one(msg)
+    msg['_id'] = str(result.inserted_id)
+    
+    return jsonify({'success': True, 'message': msg})
+
+@app.route('/api/messages/unread', methods=['GET'])
+def get_unread_messages():
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    current_user_id = str(session.get('user_id'))
+    
+    unread_count = db.messages.count_documents({
+        'receiver_id': current_user_id,
+        'is_read': False
+    })
+    
+    return jsonify({'success': True, 'unread_count': unread_count})
+
+@app.route('/api/messages/read/<other_user_id>', methods=['POST'])
+def mark_messages_read(other_user_id):
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    current_user_id = str(session.get('user_id'))
+    
+    db.messages.update_many(
+        {'sender_id': other_user_id, 'receiver_id': current_user_id, 'is_read': False},
+        {'$set': {'is_read': True}}
+    )
+    
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True, port=5000)
