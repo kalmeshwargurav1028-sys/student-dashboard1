@@ -114,32 +114,6 @@
                     </select>
                 </div>
             </div>
-            
-            <!-- File Upload -->
-            <div class="mt-4">
-                <label class="block text-sm font-bold text-blue-600 mb-2 flex items-center uppercase tracking-wider text-xs">
-                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                    Attach File
-                </label>
-                <div class="border-2 border-dashed border-blue-200 rounded-xl p-6 text-center hover:bg-blue-50 transition-colors relative group bg-gray-50/50" id="dropZone">
-                    <input type="file" id="courseFile" name="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png">
-                    <div id="uploadPrompt">
-                        <svg class="mx-auto h-12 w-12 text-blue-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                        </svg>
-                        <p class="mt-2 text-sm font-bold text-blue-600">Click to upload or drag & drop</p>
-                        <p class="text-xs text-gray-500 mt-1">PDF, DOCX, PPTX, JPG, PNG — max <span class="font-bold">10 MB</span></p>
-                    </div>
-                    <div id="fileInfo" class="hidden relative z-20">
-                        <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <p class="mt-2 text-sm font-bold text-gray-900" id="fileName">filename.pdf</p>
-                        <p class="text-xs text-gray-500 mt-1" id="fileSize">2.4 MB</p>
-                        <button type="button" onclick="removeFile(event)" class="mt-3 text-xs text-red-500 hover:text-red-700 font-medium">Remove file</button>
-                    </div>
-                </div>
-            </div>
         </div>
         <div class="px-6 py-4 bg-gray-50 flex justify-end gap-3 border-t border-gray-100">
             <button onclick="closeCreateModal()" class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Cancel</button>
@@ -170,35 +144,6 @@
         }, 300);
     }
     
-    let selectedFile = null;
-
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (file) {
-            if (file.size > 10 * 1024 * 1024) {
-                alert('File size exceeds 10MB limit.');
-                event.target.value = '';
-                return;
-            }
-            selectedFile = file;
-            document.getElementById('uploadPrompt').classList.add('hidden');
-            document.getElementById('fileInfo').classList.remove('hidden');
-            document.getElementById('fileName').textContent = file.name;
-            document.getElementById('fileSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
-            document.getElementById('courseFile').classList.add('hidden'); // disable clicking while file is selected
-        }
-    }
-
-    function removeFile(event) {
-        event.stopPropagation();
-        selectedFile = null;
-        const fileInput = document.getElementById('courseFile');
-        fileInput.value = '';
-        fileInput.classList.remove('hidden');
-        document.getElementById('fileInfo').classList.add('hidden');
-        document.getElementById('uploadPrompt').classList.remove('hidden');
-    }
-
     async function submitCourse() {
         const name = document.getElementById('courseName').value;
         const grade = document.getElementById('courseGrade').value;
@@ -213,19 +158,11 @@
         btn.disabled = true;
         btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Creating...';
         
-        const formData = new FormData();
-        formData.append('name', name);
-        formData.append('grade', grade);
-        formData.append('division', division);
-        
-        if (selectedFile) {
-            formData.append('file', selectedFile);
-        }
-        
         try {
             const res = await fetch('/api/courses', {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, grade, division })
             });
             const data = await res.json();
             

@@ -41,6 +41,32 @@
                     </select>
                 </div>
             </div>
+            
+            <!-- File Upload -->
+            <div class="mt-4">
+                <label class="block text-sm font-bold text-blue-600 mb-2 flex items-center uppercase tracking-wider text-xs">
+                    <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    Attach Course Material
+                </label>
+                <div class="border-2 border-dashed border-blue-200 rounded-xl p-6 text-center hover:bg-blue-50 transition-colors relative group bg-gray-50/50" id="dropZone">
+                    <input type="file" id="courseFile" name="file" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="handleFileSelect(event)" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png">
+                    <div id="uploadPrompt" class="{% if course.file_id %}hidden{% endif %}">
+                        <svg class="mx-auto h-12 w-12 text-blue-400 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        <p class="mt-2 text-sm font-bold text-blue-600">Click to upload or drag & drop</p>
+                        <p class="text-xs text-gray-500 mt-1">PDF, DOCX, PPTX, JPG, PNG — max <span class="font-bold">10 MB</span></p>
+                    </div>
+                    <div id="fileInfo" class="{% if not course.file_id %}hidden{% endif %} relative z-20">
+                        <svg class="mx-auto h-12 w-12 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p class="mt-2 text-sm font-bold text-gray-900" id="fileName">{{ course.file_name if course.file_name else 'filename.pdf' }}</p>
+                        <p class="text-xs text-gray-500 mt-1" id="fileSize">Attached File</p>
+                        <button type="button" onclick="removeFile(event)" class="mt-3 text-xs text-red-500 hover:text-red-700 font-medium">Remove file</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -51,24 +77,6 @@
         </div>
         <div class="p-6">
             <textarea id="editSyllabus" rows="12" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white mb-4" placeholder="Enter syllabus details, modules, or general course outline...">{{ course.syllabus }}</textarea>
-            
-            {% if course.file_id %}
-            <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between shadow-sm max-w-md">
-                <div class="flex items-center space-x-3">
-                    <div class="p-2 bg-blue-100 dark:bg-gray-700 rounded text-blue-600">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
-                    </div>
-                    <div>
-                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px]" title="{{ course.file_name }}">{{ course.file_name }}</p>
-                        <p class="text-xs text-gray-500">Attached Material</p>
-                    </div>
-                </div>
-                <a href="{{ url_for('download_file', file_id=course.file_id) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-blue-400 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors">
-                    <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    Download
-                </a>
-            </div>
-            {% endif %}
             
             <p class="mt-2 text-sm text-gray-500">This content and any attached files will be visible to all students enrolled in this course.</p>
         </div>
@@ -85,6 +93,38 @@
 </div>
 
 <script>
+    let selectedFile = null;
+    let removeExistingFile = false;
+
+    function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (file) {
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size exceeds 10MB limit.');
+                event.target.value = '';
+                return;
+            }
+            selectedFile = file;
+            removeExistingFile = false;
+            document.getElementById('uploadPrompt').classList.add('hidden');
+            document.getElementById('fileInfo').classList.remove('hidden');
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = (file.size / (1024 * 1024)).toFixed(2) + ' MB';
+            document.getElementById('courseFile').classList.add('hidden'); // disable clicking while file is selected
+        }
+    }
+
+    function removeFile(event) {
+        event.stopPropagation();
+        selectedFile = null;
+        removeExistingFile = true;
+        const fileInput = document.getElementById('courseFile');
+        fileInput.value = '';
+        fileInput.classList.remove('hidden');
+        document.getElementById('fileInfo').classList.add('hidden');
+        document.getElementById('uploadPrompt').classList.remove('hidden');
+    }
+
     async function saveCourse() {
         const name = document.getElementById('editName').value;
         const grade = document.getElementById('editGrade').value;
@@ -102,11 +142,22 @@
         btn.disabled = true;
         btn.innerHTML = '<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...';
         
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('grade', grade);
+        formData.append('division', division);
+        formData.append('syllabus', syllabus);
+        if (removeExistingFile) {
+            formData.append('remove_file', 'true');
+        }
+        if (selectedFile) {
+            formData.append('file', selectedFile);
+        }
+        
         try {
             const res = await fetch(`/api/courses/${courseId}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, grade, division, syllabus })
+                body: formData
             });
             const data = await res.json();
             

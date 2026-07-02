@@ -4368,38 +4368,21 @@ def create_course():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     teacher_id = str(session.get('user_id'))
+    data = request.get_json()
     
-    if request.content_type and request.content_type.startswith('multipart/form-data'):
-        name = request.form.get('name', '').strip()
-        grade = request.form.get('grade', '').strip()
-        division = request.form.get('division', '').strip()
-        syllabus = request.form.get('syllabus', '')
-    else:
-        data = request.get_json() or {}
-        name = data.get('name', '').strip()
-        grade = data.get('grade', '').strip()
-        division = data.get('division', '').strip()
-        syllabus = data.get('syllabus', '')
+    name = data.get('name', '').strip()
+    grade = data.get('grade', '').strip()
+    division = data.get('division', '').strip()
     
     if not all([name, grade, division]):
         return jsonify({'success': False, 'error': 'Name, grade, and division are required.'}), 400
         
-    file_id = None
-    file_name = None
-    if 'file' in request.files:
-        file = request.files['file']
-        if file.filename != '':
-            file_id = str(fs.put(file, filename=file.filename, content_type=file.content_type))
-            file_name = file.filename
-            
     course = {
         'teacher_id': teacher_id,
         'name': name,
         'grade': grade,
         'division': division,
-        'syllabus': syllabus,
-        'file_id': file_id,
-        'file_name': file_name,
+        'syllabus': data.get('syllabus', ''),
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat()
     }
@@ -4442,8 +4425,6 @@ def update_course(course_id):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     teacher_id = str(session.get('user_id'))
-    data = request.get_json()
-    
     try:
         course = db.courses.find_one({'_id': ObjectId(course_id)})
     except:
@@ -4451,14 +4432,48 @@ def update_course(course_id):
         
     if not course or course.get('teacher_id') != teacher_id:
         return jsonify({'success': False, 'error': 'Access denied'}), 403
+
+    if request.content_type and request.content_type.startswith('multipart/form-data'):
+        name = request.form.get('name', course.get('name')).strip()
+        grade = request.form.get('grade', course.get('grade')).strip()
+        division = request.form.get('division', course.get('division')).strip()
+        syllabus = request.form.get('syllabus', course.get('syllabus'))
+        remove_file = request.form.get('remove_file') == 'true'
+    else:
+        data = request.get_json() or {}
+        name = data.get('name', course.get('name')).strip()
+        grade = data.get('grade', course.get('grade')).strip()
+        division = data.get('division', course.get('division')).strip()
+        syllabus = data.get('syllabus', course.get('syllabus'))
+        remove_file = False
         
     update_data = {
-        'name': data.get('name', course.get('name')).strip(),
-        'grade': data.get('grade', course.get('grade')).strip(),
-        'division': data.get('division', course.get('division')).strip(),
-        'syllabus': data.get('syllabus', course.get('syllabus')),
+        'name': name,
+        'grade': grade,
+        'division': division,
+        'syllabus': syllabus,
         'updated_at': datetime.now().isoformat()
     }
+    
+    if remove_file and course.get('file_id'):
+        try:
+            fs.delete(ObjectId(course.get('file_id')))
+        except:
+            pass
+        update_data['file_id'] = None
+        update_data['file_name'] = None
+        
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename != '':
+            if course.get('file_id'):
+                try:
+                    fs.delete(ObjectId(course.get('file_id')))
+                except:
+                    pass
+            file_id = str(fs.put(file, filename=file.filename, content_type=file.content_type))
+            update_data['file_id'] = file_id
+            update_data['file_name'] = file.filename
     
     db.courses.update_one({'_id': ObjectId(course_id)}, {'$set': update_data})
     
