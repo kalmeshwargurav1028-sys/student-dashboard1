@@ -4383,6 +4383,7 @@ def create_course():
         'grade': grade,
         'division': division,
         'syllabus': data.get('syllabus', ''),
+        'is_published': False,
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat()
     }
@@ -4479,6 +4480,50 @@ def update_course(course_id):
     
     return jsonify({'success': True})
 
+@app.route('/api/courses/<course_id>', methods=['DELETE'])
+def delete_course(course_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    teacher_id = str(session.get('user_id'))
+    
+    try:
+        course = db.courses.find_one({'_id': ObjectId(course_id)})
+    except:
+        return jsonify({'success': False, 'error': 'Invalid course ID'}), 400
+        
+    if not course or course.get('teacher_id') != teacher_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+    if course.get('file_id'):
+        try:
+            fs.delete(ObjectId(course.get('file_id')))
+        except:
+            pass
+            
+    db.courses.delete_one({'_id': ObjectId(course_id)})
+    return jsonify({'success': True})
+
+@app.route('/api/courses/<course_id>/publish', methods=['POST'])
+def publish_course(course_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    teacher_id = str(session.get('user_id'))
+    
+    try:
+        course = db.courses.find_one({'_id': ObjectId(course_id)})
+    except:
+        return jsonify({'success': False, 'error': 'Invalid course ID'}), 400
+        
+    if not course or course.get('teacher_id') != teacher_id:
+        return jsonify({'success': False, 'error': 'Access denied'}), 403
+        
+    new_status = not course.get('is_published', False)
+    db.courses.update_one({'_id': ObjectId(course_id)}, {'$set': {'is_published': new_status, 'updated_at': datetime.now().isoformat()}})
+    
+    return jsonify({'success': True, 'is_published': new_status})
+
 @app.route('/student/<student_id>/courses', methods=['GET'])
 def student_courses(student_id):
     if not session.get('logged_in'):
@@ -4506,7 +4551,8 @@ def student_courses(student_id):
     # Actually, we might just fetch all courses and let the student see them, or strictly filter.
     courses = list(db.courses.find({
         'grade': {'$in': [grade_str, student_class, 'All']},
-        'division': {'$in': [student_division, 'All']}
+        'division': {'$in': [student_division, 'All']},
+        'is_published': True
     }).sort('created_at', -1))
     
     return render_template('student_courses.html', student=student, courses=courses)

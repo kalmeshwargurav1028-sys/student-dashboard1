@@ -83,7 +83,17 @@
     </div>
     
     <!-- Floating Action Bar -->
-    <div class="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 flex justify-end gap-4 px-4 sm:px-6 lg:px-8">
+    <div class="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Visibility:</span>
+            <button id="publishBtn" onclick="togglePublish()" class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ease-in-out duration-200 {% if course.is_published %}bg-green-500{% else %}bg-gray-200 dark:bg-gray-700{% endif %}">
+                <span class="sr-only">Publish course</span>
+                <span id="publishToggle" class="inline-block w-4 h-4 transform bg-white rounded-full transition ease-in-out duration-200 {% if course.is_published %}translate-x-6{% else %}translate-x-1{% endif %}"></span>
+            </button>
+            <span id="publishStatus" class="text-sm font-bold {% if course.is_published %}text-green-600{% else %}text-gray-500{% endif %}">
+                {% if course.is_published %}Published to Students{% else %}Draft (Hidden){% endif %}
+            </span>
+        </div>
         <button id="saveBtn" onclick="saveCourse()" class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
             Save Changes
@@ -178,6 +188,49 @@
             alert('An error occurred');
             btn.disabled = false;
             btn.innerHTML = originalContent;
+        }
+    }
+    
+    async function togglePublish() {
+        const btn = document.getElementById('publishBtn');
+        const courseId = '{{ course._id }}';
+        
+        btn.disabled = true;
+        try {
+            const res = await fetch(`/api/courses/${courseId}/publish`, {
+                method: 'POST'
+            });
+            const data = await res.json();
+            
+            if(data.success) {
+                const toggle = document.getElementById('publishToggle');
+                const status = document.getElementById('publishStatus');
+                
+                if (data.is_published) {
+                    btn.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                    btn.classList.add('bg-green-500');
+                    toggle.classList.remove('translate-x-1');
+                    toggle.classList.add('translate-x-6');
+                    status.classList.remove('text-gray-500');
+                    status.classList.add('text-green-600');
+                    status.innerText = 'Published to Students';
+                } else {
+                    btn.classList.remove('bg-green-500');
+                    btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+                    toggle.classList.remove('translate-x-6');
+                    toggle.classList.add('translate-x-1');
+                    status.classList.remove('text-green-600');
+                    status.classList.add('text-gray-500');
+                    status.innerText = 'Draft (Hidden)';
+                }
+            } else {
+                alert(data.error || 'Failed to update publish status');
+            }
+        } catch(e) {
+            console.error(e);
+            alert('An error occurred');
+        } finally {
+            btn.disabled = false;
         }
     }
 </script>
