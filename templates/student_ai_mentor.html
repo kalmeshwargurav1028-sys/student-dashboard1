@@ -65,13 +65,32 @@ document.addEventListener('DOMContentLoaded', function() {
             if ('speechSynthesis' in window) {
                 // Cancel any ongoing speech
                 window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                // Optional: Try to find a good English voice
-                const voices = window.speechSynthesis.getVoices();
-                const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Female') || v.name.includes('Google')));
-                if (englishVoice) utterance.voice = englishVoice;
                 
-                window.speechSynthesis.speak(utterance);
+                // Clean the text: remove markdown like #, -, _, *, ` and extra spaces
+                const cleanText = text.replace(/[#\-_*`~]/g, '').replace(/\n+/g, ' ').trim();
+                
+                const utterance = new SpeechSynthesisUtterance(cleanText);
+                utterance.rate = 0.95; // Slightly slower for better clarity
+                utterance.pitch = 1.05; // Slightly higher pitch for natural tone
+                
+                // Try to find a good English voice
+                let voices = window.speechSynthesis.getVoices();
+                
+                // Ensure voices are loaded (some browsers load them async)
+                if (voices.length === 0) {
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        voices = window.speechSynthesis.getVoices();
+                        speakWithVoice(voices, utterance);
+                    };
+                } else {
+                    speakWithVoice(voices, utterance);
+                }
+                
+                function speakWithVoice(voices, utterance) {
+                    const englishVoice = voices.find(v => v.lang.startsWith('en-') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Samantha')));
+                    if (englishVoice) utterance.voice = englishVoice;
+                    window.speechSynthesis.speak(utterance);
+                }
             }
         }
     }
