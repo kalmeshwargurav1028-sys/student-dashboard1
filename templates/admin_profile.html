@@ -97,6 +97,27 @@
                     </div>
                 </div>
 
+                <!-- System Integrations Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
+                        <i class="fa-solid fa-microchip text-gray-400 mr-2"></i> System Integrations
+                    </h3>
+                    
+                    <form id="apiSettingsForm" onsubmit="saveApiKey(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500 mb-1">Google Gemini API Key (AI Mentor)</label>
+                            <input type="password" id="geminiApiInput" placeholder="AQ.Ab8RN6KY..." value="{{ settings.get('GEMINI_API_KEY', '') }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            <p class="text-[10px] text-gray-400 mt-1">Required to enable the AI Mentor Assistant features.</p>
+                        </div>
+
+                        <div class="pt-2">
+                            <button type="submit" id="saveApiBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
+                                <i class="fa-solid fa-floppy-disk mr-2"></i> Update API Key
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
 
 
             </div>
@@ -156,6 +177,51 @@
                 btn.innerHTML = originalText;
                 btn.classList.replace('bg-red-500', 'bg-blue-600');
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
+                btn.disabled = false;
+            }, 2000);
+        }
+    }
+
+    async function saveApiKey(event) {
+        event.preventDefault();
+        
+        const btn = document.getElementById('saveApiBtn');
+        const apiKey = document.getElementById('geminiApiInput').value;
+        const originalText = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Saving...';
+        btn.disabled = true;
+        
+        try {
+            const formData = new FormData();
+            formData.append('api_key', apiKey);
+            
+            const response = await fetch('/api/save_gemini_key', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved Successfully!';
+                btn.classList.replace('bg-blue-600', 'bg-blue-500');
+                btn.classList.replace('hover:bg-blue-700', 'hover:bg-blue-600');
+                
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-blue-500', 'bg-blue-600');
+                    btn.classList.replace('hover:bg-blue-600', 'hover:bg-blue-700');
+                    btn.disabled = false;
+                }, 2000);
+            } else {
+                throw new Error('Server error');
+            }
+        } catch(e) {
+            btn.innerHTML = '<i class="fa-solid fa-xmark mr-2"></i> Error Saving';
+            btn.classList.replace('bg-blue-600', 'bg-red-500');
+            
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+                btn.classList.replace('bg-red-500', 'bg-blue-600');
                 btn.disabled = false;
             }, 2000);
         }

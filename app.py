@@ -2145,7 +2145,8 @@ def admin_profile():
         flash('Admin profile updated successfully!')
         return redirect(url_for('admin_profile'))
         
-    return render_template('admin_profile.html', admin=user)
+    settings = db.settings.find_one({}, {'_id': 0}) or {}
+    return render_template('admin_profile.html', admin=user, settings=settings)
 
 @app.route('/profile', methods=['GET', 'POST'])
 def profile_form():
@@ -2158,6 +2159,7 @@ def profile_form():
     student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0}) if student_id else None
 
     if request.method == 'POST':
+        pass # Handle profile POST logic
         name = request.form.get('name')
         dob = request.form.get('dob')
         age = request.form.get('age')
@@ -3829,6 +3831,19 @@ def edit_alert(alert_id):
         return redirect(url_for('settings'))
         
     return render_template('settings.html', config_data=config_data)
+
+@app.route('/api/save_gemini_key', methods=['POST'])
+def save_gemini_key():
+    if not session.get('logged_in') or session.get('role') not in ['admin', 'teacher']:
+        return jsonify({'success': False}), 403
+    api_key = request.form.get('api_key', '').strip()
+    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    config_data['GEMINI_API_KEY'] = api_key
+    if db.settings.count_documents({}) == 0:
+        db.settings.insert_one(config_data)
+    else:
+        db.settings.update_one({}, {'$set': config_data})
+    return jsonify({'success': True})
 
 @app.route('/api/smtp_debug')
 def smtp_debug():
