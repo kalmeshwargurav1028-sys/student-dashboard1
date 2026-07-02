@@ -4368,21 +4368,38 @@ def create_course():
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     teacher_id = str(session.get('user_id'))
-    data = request.get_json()
     
-    name = data.get('name', '').strip()
-    grade = data.get('grade', '').strip()
-    division = data.get('division', '').strip()
+    if request.content_type and request.content_type.startswith('multipart/form-data'):
+        name = request.form.get('name', '').strip()
+        grade = request.form.get('grade', '').strip()
+        division = request.form.get('division', '').strip()
+        syllabus = request.form.get('syllabus', '')
+    else:
+        data = request.get_json() or {}
+        name = data.get('name', '').strip()
+        grade = data.get('grade', '').strip()
+        division = data.get('division', '').strip()
+        syllabus = data.get('syllabus', '')
     
     if not all([name, grade, division]):
         return jsonify({'success': False, 'error': 'Name, grade, and division are required.'}), 400
         
+    file_id = None
+    file_name = None
+    if 'file' in request.files:
+        file = request.files['file']
+        if file.filename != '':
+            file_id = str(fs.put(file, filename=file.filename, content_type=file.content_type))
+            file_name = file.filename
+            
     course = {
         'teacher_id': teacher_id,
         'name': name,
         'grade': grade,
         'division': division,
-        'syllabus': data.get('syllabus', ''),
+        'syllabus': syllabus,
+        'file_id': file_id,
+        'file_name': file_name,
         'created_at': datetime.now().isoformat(),
         'updated_at': datetime.now().isoformat()
     }

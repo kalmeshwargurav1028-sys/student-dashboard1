@@ -50,8 +50,27 @@
             <h2 class="text-lg font-bold text-gray-800 dark:text-gray-200">Syllabus / Content</h2>
         </div>
         <div class="p-6">
-            <textarea id="editSyllabus" rows="12" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white" placeholder="Enter syllabus details, modules, or general course outline...">{{ course.syllabus }}</textarea>
-            <p class="mt-2 text-sm text-gray-500">This content will be visible to all students enrolled in this course.</p>
+            <textarea id="editSyllabus" rows="12" class="w-full border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm px-4 py-3 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white mb-4" placeholder="Enter syllabus details, modules, or general course outline...">{{ course.syllabus }}</textarea>
+            
+            {% if course.file_id %}
+            <div class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between shadow-sm max-w-md">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-100 dark:bg-gray-700 rounded text-blue-600">
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-900 dark:text-white truncate max-w-[200px]" title="{{ course.file_name }}">{{ course.file_name }}</p>
+                        <p class="text-xs text-gray-500">Attached Material</p>
+                    </div>
+                </div>
+                <a href="{{ url_for('download_file', file_id=course.file_id) }}" class="inline-flex items-center px-3 py-1.5 text-xs font-medium text-blue-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-700 dark:text-blue-400 dark:border-gray-600 dark:hover:bg-gray-600 transition-colors">
+                    <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download
+                </a>
+            </div>
+            {% endif %}
+            
+            <p class="mt-2 text-sm text-gray-500">This content and any attached files will be visible to all students enrolled in this course.</p>
         </div>
     </div>
     

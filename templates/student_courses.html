@@ -37,9 +37,27 @@
                 <div class="p-6">
                     <h4 class="font-bold text-gray-800 dark:text-gray-200 mb-4 text-lg">Syllabus Overview</h4>
                     {% if course.syllabus %}
-                    <div class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 whitespace-pre-wrap">{{ course.syllabus }}</div>
+                    <div class="prose dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 whitespace-pre-wrap mb-6">{{ course.syllabus }}</div>
                     {% else %}
-                    <p class="text-gray-500 italic">No syllabus has been published for this course yet.</p>
+                    <p class="text-gray-500 italic mb-6">No syllabus has been published for this course yet.</p>
+                    {% endif %}
+                    
+                    {% if course.file_id %}
+                    <div class="mb-6 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg flex items-center justify-between shadow-sm max-w-md">
+                        <div class="flex items-center space-x-3">
+                            <div class="p-2 bg-blue-50 dark:bg-gray-700 rounded text-blue-500">
+                                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" /></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[200px]" title="{{ course.file_name }}">{{ course.file_name }}</p>
+                                <p class="text-xs text-gray-500">Course Material</p>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('download_file', file_id=course.file_id) }}" class="inline-flex items-center p-2 text-sm font-medium text-blue-600 bg-blue-50 rounded-lg hover:bg-blue-100 dark:bg-gray-700 dark:text-blue-400 dark:hover:bg-gray-600 transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download
+                        </a>
+                    </div>
                     {% endif %}
                     
                     <div class="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700 flex flex-wrap gap-4">
