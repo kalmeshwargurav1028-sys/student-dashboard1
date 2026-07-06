@@ -36,7 +36,7 @@
                 </div>
                 
                 <div class="p-6">
-                    <p class="text-gray-700 dark:text-gray-300 mb-4">{{ a.description }}</p>
+                    <p class="text-gray-700 dark:text-gray-300 mb-4">{{ a.description | safe }}</p>
                     {% if a.file_id %}
                     <div class="mb-6">
                         <a href="{{ url_for('get_file', file_id=a.file_id) }}" target="_blank" class="inline-flex items-center px-3 py-1.5 border border-gray-300 shadow-sm text-xs font-medium rounded text-indigo-700 bg-white hover:bg-gray-50 transition-colors">
@@ -189,17 +189,19 @@
                             <!-- Mock Rich Text Toolbar -->
                             <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 px-3 py-2 flex flex-wrap items-center gap-4">
                                 <div class="flex items-center gap-1 border-r border-gray-300 dark:border-gray-600 pr-4">
-                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><strong class="font-serif">B</strong></button>
-                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><em class="font-serif">I</em></button>
-                                    <button type="button" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"><u class="font-serif">U</u></button>
+                                    <button type="button" onclick="formatText('bold')" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" title="Bold"><strong class="font-serif">B</strong></button>
+                                    <button type="button" onclick="formatText('italic')" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" title="Italic"><em class="font-serif">I</em></button>
+                                    <button type="button" onclick="formatText('underline')" class="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors" title="Underline"><u class="font-serif">U</u></button>
                                 </div>
 
-                                <button type="button" class="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 ml-auto font-medium transition-colors">
+                                <button type="button" onclick="insertRubric()" class="flex items-center text-sm text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 ml-auto font-medium transition-colors">
                                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                                     Auto-Generate Rubric
                                 </button>
                             </div>
-                            <textarea name="description" rows="5" class="w-full px-4 py-3 border-none focus:ring-0 bg-transparent text-gray-900 dark:text-white resize-y" placeholder="Please complete all problems from Section 4.3 on page 112. Show your formulas step-by-step. Late submissions will automatically incur a 10% penalty per day." required></textarea>
+                            
+                            <div id="wysiwyg-editor" class="w-full px-4 py-3 min-h-[120px] bg-transparent text-gray-900 dark:text-white focus:outline-none overflow-y-auto" contenteditable="true"></div>
+                            <textarea name="description" id="hidden-desc" class="hidden"></textarea>
                         </div>
                     </div>
                     
@@ -272,13 +274,42 @@
                         }
                         event.currentTarget.classList.remove('border-blue-500', 'bg-blue-50', 'dark:border-blue-400', 'dark:bg-gray-700');
                     }
+
+                    function formatText(cmd) {
+                        document.execCommand(cmd, false, null);
+                        document.getElementById('wysiwyg-editor').focus();
+                    }
+
+                    function insertRubric() {
+                        const rubricHTML = `
+<br><strong>Grading Rubric:</strong>
+<ul style="list-style-type: disc; margin-left: 20px;">
+    <li><strong>Completeness (40%):</strong> All questions answered fully.</li>
+    <li><strong>Accuracy (40%):</strong> Correct application of concepts.</li>
+    <li><strong>Formatting (20%):</strong> Neatness and proper presentation.</li>
+</ul><br>`;
+                        document.execCommand('insertHTML', false, rubricHTML);
+                        document.getElementById('wysiwyg-editor').focus();
+                    }
+
+                    function syncEditor() {
+                        const htmlContent = document.getElementById('wysiwyg-editor').innerHTML;
+                        const hiddenDesc = document.getElementById('hidden-desc');
+                        if (htmlContent.trim() === '') {
+                            // Let HTML5 validation kick in if we need to, but hidden fields bypass it.
+                            // So we just set it empty, and let the backend handle, or alert.
+                            hiddenDesc.value = '';
+                        } else {
+                            hiddenDesc.value = htmlContent;
+                        }
+                    }
                     </script>
                     <div class="flex justify-end items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
                         <button type="button" onclick="document.getElementById('addModal').classList.add('hidden')" class="px-6 py-2.5 text-gray-700 font-medium hover:bg-gray-100 rounded-lg dark:text-gray-300 dark:hover:bg-gray-700 transition-colors flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                             Cancel
                         </button>
-                        <button type="submit" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center">
+                        <button type="submit" onclick="syncEditor()" class="px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors shadow-md hover:shadow-lg flex items-center">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                             Publish Now
                         </button>
@@ -391,7 +422,7 @@
                   </div>
 
                   <h3 class="text-lg font-bold text-gray-900 mb-1 truncate" title="{{ assignment.title }}">{{ assignment.title }}</h3>
-                  <p class="text-sm text-gray-500 mb-3 line-clamp-2">{{ assignment.description }}</p>
+                  <div class="text-sm text-gray-500 mb-3 line-clamp-2 break-words max-h-12 overflow-hidden">{{ assignment.description | safe }}</div>
 
                   <div class="flex flex-wrap gap-3 items-center">
                     <div class="deadline-chip">
