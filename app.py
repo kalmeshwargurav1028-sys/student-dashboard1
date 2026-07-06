@@ -1157,8 +1157,17 @@ def student_home():
     materials_count = db.resources.count_documents({'class': grade, 'section': {'$in': [section, 'All']}})
 
     # Performance & streak
-    performance = int(float(student.get('performance', 0)))
-    streak = int(student.get('streak', 0))
+    try:
+        raw_perf = student.get('performance')
+        performance = int(float(raw_perf)) if raw_perf else 0
+    except (ValueError, TypeError):
+        performance = 0
+
+    try:
+        raw_streak = student.get('streak')
+        streak = int(raw_streak) if raw_streak else 0
+    except (ValueError, TypeError):
+        streak = 0
 
     # Weekly activity (1 = has activity, 0 = none) — based on attendance logs
     current_weekday = today.weekday()  # 0=Mon
