@@ -846,7 +846,7 @@ def login():
                 # Get name from profile if available
                 profile = db.students.find_one({'id': student_id})
                 session['username'] = profile.get('name') if profile else email.split('@')[0]
-                return redirect(url_for('student_profile', student_id=student_id))
+                return redirect(url_for('student_home'))
             
             # Fallback to checking the students profile collection for older entries
             student = db.students.find_one({'email': email})
@@ -859,7 +859,7 @@ def login():
                 session['username'] = student.get('name', email.split('@')[0])
                 session['email'] = email
                 session['photo_url'] = student.get('photo_url', '')
-                return redirect(url_for('student_profile', student_id=student_id))
+                return redirect(url_for('student_home'))
             else:
                 flash('Invalid student credentials. Please check your Email and Student ID.')
         else:
