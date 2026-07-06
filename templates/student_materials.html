@@ -40,7 +40,7 @@
   <!-- Filter Tabs -->
   <div class="flex flex-wrap gap-2 mb-6">
     <button class="filter-tab active" onclick="filterMaterials('all', this)">All</button>
-    <button class="filter-tab" onclick="filterMaterials('Note', this)">📘 Notes</button>
+
     <button class="filter-tab" onclick="filterMaterials('Assignment', this)">📝 Assignments</button>
     <button class="filter-tab" onclick="filterMaterials('Syllabus', this)">📋 Syllabus</button>
   </div>
@@ -120,22 +120,7 @@
           <p class="text-xs text-gray-400 line-clamp-2">{{ mat.description }}</p>
           {% endif %}
 
-          <!-- Submission status for Assignments -->
-          {% if mat.category == 'Assignment' %}
-            {% set my_sub = mat.submissions | selectattr('student_id', 'equalto', session.get('user_id')) | first if mat.submissions else None %}
-            {% if my_sub %}
-            <div class="mt-3 flex items-center gap-2">
-              <span class="file-pill status-done">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
-                Done
-              </span>
-              <a href="{{ my_sub.file_url }}" target="_blank" class="text-xs text-blue-600 hover:underline font-semibold">View Submitted</a>
-              {% if my_sub.grade %}
-              <span class="file-pill bg-purple-50 text-purple-700 border border-purple-200">Grade: {{ my_sub.grade }}</span>
-              {% endif %}
-            </div>
-            {% endif %}
-          {% endif %}
+
         </div>
 
         <!-- Right: Action Buttons -->
