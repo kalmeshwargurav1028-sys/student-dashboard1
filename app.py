@@ -1766,6 +1766,9 @@ def assignments():
             if my_sub:
                 a['status'] = 'submitted'
                 a['my_grade'] = my_sub.get('grade')
+                a['my_submitted_at'] = my_sub.get('submitted_at', '')
+                a['my_remarks'] = my_sub.get('remarks', '')
+                a['my_file_url'] = my_sub.get('file_url', '')
             else:
                 a['status'] = 'pending' if a['days_left'] >= 0 else 'overdue'
                 

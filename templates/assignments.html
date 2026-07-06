@@ -371,6 +371,65 @@
                 </div>
               </div>
             </div>
+
+            <!-- ── Submission Status Table (visible when submitted) ── -->
+            {% if assignment.status == 'submitted' %}
+            <div class="mx-0 border-t border-gray-100 overflow-x-auto">
+              <table class="w-full text-left text-sm">
+                <thead>
+                  <tr class="bg-gray-50 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                    <th class="px-5 py-3 w-44">Updated Date</th>
+                    <th class="px-5 py-3">Status</th>
+                    <th class="px-5 py-3">Remarks</th>
+                    <th class="px-5 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-t border-gray-100 hover:bg-gray-50 transition-colors">
+                    <!-- Updated Date -->
+                    <td class="px-5 py-3 text-gray-600 text-sm font-medium whitespace-nowrap">
+                      {{ assignment.my_submitted_at.split(' ')[0] if assignment.my_submitted_at else '—' }}
+                    </td>
+
+                    <!-- Status / Grade -->
+                    <td class="px-5 py-3">
+                      {% if assignment.my_grade %}
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                        Grade: {{ assignment.my_grade }}
+                      </span>
+                      {% else %}
+                      <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Awaiting Grade
+                      </span>
+                      {% endif %}
+                    </td>
+
+                    <!-- Remarks -->
+                    <td class="px-5 py-3 text-gray-500 italic text-sm">
+                      {{ assignment.my_remarks if assignment.my_remarks else '—' }}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-5 py-3 text-right whitespace-nowrap">
+                      {% if assignment.my_file_url %}
+                      <a href="{{ assignment.my_file_url }}" target="_blank"
+                         class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 font-semibold text-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                        Download
+                      </a>
+                      {% else %}
+                      <span class="text-xs text-gray-400">No file</span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+            <!-- ── End Submission Table ── -->
+
             {% endfor %}
 
             {% if not assignments %}
