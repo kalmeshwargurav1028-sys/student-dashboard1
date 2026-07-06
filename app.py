@@ -1116,13 +1116,89 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
+@app.route('/student/home')
+def student_home():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') != 'student':
+        return redirect(url_for('dashboard'))
+
+    student_id = session.get('user_id')
+    student = db.students.find_one({'id': student_id}) or {}
+
+    # Courses
+    grade = student.get('student_class', '')
+    section = student.get('division', '')
+    courses = list(db.courses.find({'grade': grade, 'section': section}))
+
+    # Assignments
+    today = datetime.now()
+    week_end = today + timedelta(days=7)
+    all_assignments = list(db.assignments.find({'class': grade, 'section': section}))
+    pending_assignments = 0
+    submitted_count = 0
+    not_started = 0
+    for a in all_assignments:
+        subs = a.get('submissions', [])
+        my_sub = next((s for s in subs if s.get('student_id') == student_id), None)
+        if my_sub:
+            submitted_count += 1
+        else:
+            try:
+                due = datetime.strptime(a.get('deadline', ''), '%Y-%m-%d')
+                if due >= today:
+                    pending_assignments += 1
+                else:
+                    not_started += 1
+            except Exception:
+                not_started += 1
+
+    # Materials count
+    materials_count = db.resources.count_documents({'class': grade, 'section': {'$in': [section, 'All']}})
+
+    # Performance & streak
+    performance = int(float(student.get('performance', 0)))
+    streak = int(student.get('streak', 0))
+
+    # Weekly activity (1 = has activity, 0 = none) — based on attendance logs
+    current_weekday = today.weekday()  # 0=Mon
+    weekly_activity = [0] * 7
+    for i in range(min(current_weekday + 1, 7)):
+        weekly_activity[i] = 1
+    # Boost days that had submissions
+    for a in all_assignments:
+        for s in a.get('submissions', []):
+            if s.get('student_id') == student_id and s.get('submitted_at'):
+                try:
+                    sub_date = datetime.strptime(s['submitted_at'].split(' ')[0], '%Y-%m-%d')
+                    diff = (today - sub_date).days
+                    if 0 <= diff < 7:
+                        day_idx = (today.weekday() - diff) % 7
+                        weekly_activity[day_idx] = 1
+                except Exception:
+                    pass
+
+    return render_template('student_home.html',
+        student=student,
+        courses=courses,
+        pending_assignments=pending_assignments,
+        submitted_count=submitted_count,
+        not_started=not_started,
+        materials_count=materials_count,
+        performance=performance,
+        streak=streak,
+        weekly_activity=weekly_activity,
+        current_weekday=current_weekday
+    )
+
+
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/dashboard')
 def dashboard():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     if session.get('role') == 'student':
-        return redirect(url_for('student_profile', student_id=session.get('user_id')))
+        return redirect(url_for('student_home'))
     
     students = list(db.students.find(get_student_query(), {'_id': 0}))
     

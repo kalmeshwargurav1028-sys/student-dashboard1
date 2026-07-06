@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block header_title %}Dashboard — {{ student.name | title }}{% endblock %}
+
+{% block content %}
+<style>
+  .hero-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 60%, #1e40af 100%);
+    border-radius: 22px;
+    padding: 32px 36px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-card::before {
+    content: '';
+    position: absolute;
+    right: -80px; bottom: -80px;
+    width: 320px; height: 320px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 50%;
+  }
+  .hero-card::after {
+    content: '';
+    position: absolute;
+    right: 120px; top: -60px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 50%;
+  }
+
+  .stat-mini-card {
+    background: white;
+    border-radius: 18px;
+    padding: 22px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    border: 1px solid #f1f5f9;
+    transition: box-shadow 0.2s, transform 0.15s;
+  }
+  .stat-mini-card:hover { box-shadow: 0 8px 28px rgba(37,99,235,0.10); transform: translateY(-2px); }
+
+  .progress-ring-wrap { position: relative; width: 110px; height: 110px; flex-shrink: 0; }
+  .progress-ring-wrap svg { transform: rotate(-90deg); }
+  .ring-text {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800;
+    color: #1e40af;
+    line-height: 1.1;
+  }
+  .ring-text span { font-size: 10px; font-weight: 600; color: #94a3b8; margin-top: 2px; }
+
+  .activity-bar {
+    width: 18px;
+    border-radius: 4px 4px 0 0;
+    background: #3b82f6;
+    transition: height 0.6s ease;
+    min-height: 4px;
+  }
+  .activity-bar.dim { background: #bfdbfe; }
+
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+</style>
+
+<div class="max-w-6xl mx-auto py-8 px-4 sm:px-6 lg:px-8 space-y-6">
+
+  <!-- ── Top Row: Hero + Progress ── -->
+  <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+
+    <!-- Hero Card (3/5) -->
+    <div class="hero-card lg:col-span-3">
+      <div class="relative z-10">
+        <!-- Date -->
+        <p class="text-amber-400 text-xs font-bold uppercase tracking-widest mb-3" id="hero-date"></p>
+
+        <!-- Greeting -->
+        <h1 class="text-3xl font-extrabold leading-tight mb-2">
+          <span id="greeting-text"></span>, {{ student.name | title }} 👋
+        </h1>
+        <p class="text-blue-200 text-sm mb-6">
+          You have <strong class="text-white">{{ pending_assignments }}</strong> deadline{{ 's' if pending_assignments != 1 else '' }} this week
+          &bull; Grade {{ student.student_class }} · Section {{ student.division }}
+        </p>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div class="bg-white/10 border border-white/15 rounded-xl p-4 backdrop-blur-sm">
+            <div class="text-2xl font-extrabold">{{ courses | length }}</div>
+            <div class="text-xs text-blue-200 font-medium mt-0.5">Active Courses</div>
+          </div>
+          <div class="bg-white/10 border border-white/15 rounded-xl p-4 backdrop-blur-sm">
+            <div class="text-2xl font-extrabold">{{ student.attendance or 0 }}%</div>
+            <div class="text-xs text-blue-200 font-medium mt-0.5">Attendance</div>
+          </div>
+          <div class="bg-white/10 border border-white/15 rounded-xl p-4 backdrop-blur-sm hidden sm:block">
+            <div class="text-2xl font-extrabold">{{ pending_assignments }}</div>
+            <div class="text-xs text-blue-200 font-medium mt-0.5">Pending Tasks</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Semester Progress Card (2/5) -->
+    <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+      <div class="flex items-center justify-between mb-5">
+        <h2 class="text-base font-bold text-gray-900">Semester progress</h2>
+        {% if streak > 0 %}
+        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-600 border border-amber-200">
+          🔥 {{ streak }}-day streak
+        </span>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-6 mb-6">
+        <!-- Ring -->
+        <div class="progress-ring-wrap">
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="46" stroke="#e2e8f0" stroke-width="10" fill="none"/>
+            <circle cx="55" cy="55" r="46" stroke="#3b82f6" stroke-width="10" fill="none"
+              stroke-dasharray="{{ (performance / 100 * 289) | round }}, 289"
+              stroke-linecap="round"/>
+          </svg>
+          <div class="ring-text">
+            {{ performance }}%
+            <span>AVG SCORE</span>
+          </div>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex-1 space-y-3">
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2">
+              <div class="legend-dot bg-blue-500"></div>
+              <span class="text-gray-600">Completed</span>
+            </div>
+            <span class="font-bold text-gray-900">{{ submitted_count }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2">
+              <div class="legend-dot bg-amber-400"></div>
+              <span class="text-gray-600">In progress</span>
+            </div>
+            <span class="font-bold text-gray-900">{{ pending_assignments }}</span>
+          </div>
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2">
+              <div class="legend-dot bg-gray-300"></div>
+              <span class="text-gray-600">Not started</span>
+            </div>
+            <span class="font-bold text-gray-900">{{ not_started }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weekly Activity Bars -->
+      <div>
+        <div class="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">
+          <span>This week</span><span>Activity</span>
+        </div>
+        <div class="flex items-end gap-1.5 h-12">
+          {% set days = ['M','T','W','T','F','S','S'] %}
+          {% for i in range(7) %}
+          <div class="flex flex-col items-center gap-1 flex-1">
+            <div class="activity-bar w-full {% if i >= current_weekday %}dim{% endif %}"
+                 style="height: {{ (weekly_activity[i] | default(0)) * 40 + 4 }}px"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="flex gap-1.5 mt-1">
+          {% for d in ['M','T','W','T','F','S','S'] %}
+          <div class="flex-1 text-center text-[10px] text-gray-400 font-semibold">{{ d }}</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bottom Row: 4 Stat Cards ── -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+
+    <!-- Active Courses -->
+    <a href="{{ url_for('student_courses') }}" class="stat-mini-card block group">
+      <div class="w-11 h-11 rounded-xl bg-blue-100 flex items-center justify-center mb-3 group-hover:bg-blue-200 transition-colors">
+        <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ courses | length }}</div>
+      <div class="text-sm text-gray-500 mt-1">Active courses</div>
+    </a>
+
+    <!-- Avg Progress -->
+    <div class="stat-mini-card">
+      <div class="w-11 h-11 rounded-xl bg-green-100 flex items-center justify-center mb-3">
+        <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ performance }}%</div>
+      <div class="text-sm text-gray-500 mt-1">Avg. progress</div>
+    </div>
+
+    <!-- Deadlines this week -->
+    <a href="{{ url_for('assignments') }}" class="stat-mini-card block group">
+      <div class="w-11 h-11 rounded-xl bg-red-100 flex items-center justify-center mb-3 group-hover:bg-red-200 transition-colors">
+        <svg class="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ pending_assignments }}</div>
+      <div class="text-sm text-gray-500 mt-1">Deadlines this week</div>
+    </a>
+
+    <!-- Materials -->
+    <a href="{{ url_for('student_materials') }}" class="stat-mini-card block group">
+      <div class="w-11 h-11 rounded-xl bg-purple-100 flex items-center justify-center mb-3 group-hover:bg-purple-200 transition-colors">
+        <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </div>
+      <div class="text-3xl font-extrabold text-gray-900">{{ materials_count }}</div>
+      <div class="text-sm text-gray-500 mt-1">Study materials</div>
+    </a>
+
+  </div>
+</div>
+
+<script>
+// Greeting based on time
+const hour = new Date().getHours();
+document.getElementById('greeting-text').textContent =
+  hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
+// Date display
+const now = new Date();
+const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+document.getElementById('hero-date').textContent = now.toLocaleDateString('en-GB', opts).toUpperCase();
+</script>
+{% endblock %}
