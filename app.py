@@ -805,6 +805,58 @@ def get_file(file_id):
         print(f"GridFS error: {e}")
         return "File not found", 404
 
+def initiate_2fa(email, session_data):
+    otp = generate_otp()
+    expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
+    session['otp_code'] = otp
+    session['otp_expiry'] = expiry
+    session['otp_email'] = email
+    import json
+    session['pending_2fa_data'] = json.dumps(session_data)
+    result = send_otp_email(email, otp)
+    if result is not True:
+        flash(f'Failed to send OTP email: {result}')
+    return redirect(url_for('verify_2fa', email=email))
+
+@app.route('/verify_2fa', methods=['GET', 'POST'])
+def verify_2fa():
+    email = request.args.get('email') or request.form.get('email')
+    if request.method == 'POST':
+        otp = request.form.get('otp')
+        
+        session_otp = session.get('otp_code')
+        session_email = session.get('otp_email')
+        expiry_str = session.get('otp_expiry')
+        
+        if session_otp and session_otp == otp and session_email == email:
+            if expiry_str and datetime.strptime(expiry_str, '%Y-%m-%d %H:%M:%S.%f') > datetime.now():
+                import json
+                session_data_str = session.get('pending_2fa_data')
+                if session_data_str:
+                    session_data = json.loads(session_data_str)
+                    session['logged_in'] = True
+                    for key, value in session_data.items():
+                        if key != 'redirect_url':
+                            session[key] = value
+                    
+                    session.pop('otp_code', None)
+                    session.pop('otp_email', None)
+                    session.pop('otp_expiry', None)
+                    session.pop('pending_2fa_data', None)
+                    
+                    flash('Successfully logged in!')
+                    return redirect(session_data.get('redirect_url', url_for('dashboard')))
+                else:
+                    flash('Session data missing. Please log in again.')
+                    return redirect(url_for('login'))
+            else:
+                flash('OTP has expired. Please try logging in again.')
+                return redirect(url_for('login'))
+        else:
+            flash('Incorrect verification code.')
+            
+    return render_template('verify_2fa.html', email=email)
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -822,12 +874,14 @@ def login():
             admin = db.admins.find_one({'email': email})
             password = request.form.get('password', '')
             if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
-                session['logged_in'] = True
-                session['role'] = 'admin'
-                session['user_id'] = str(admin['_id'])
-                session['username'] = admin.get('name', 'Admin')
-                session['email'] = email
-                return redirect(url_for('admin_dashboard'))
+                session_data = {
+                    'role': 'admin',
+                    'user_id': str(admin['_id']),
+                    'username': admin.get('name', 'Admin'),
+                    'email': email,
+                    'redirect_url': url_for('admin_dashboard')
+                }
+                return initiate_2fa(email, session_data)
             else:
                 flash('Invalid admin credentials. Please try again.')
                 
@@ -839,27 +893,30 @@ def login():
             
             if auth_user and (check_password_hash(auth_user.get('password', ''), student_id_or_password) or auth_user.get('password') == student_id_or_password):
                 student_id = auth_user.get('student_id')
-                session['logged_in'] = True
-                session['role'] = 'student'
-                session['user_id'] = student_id
-                session['email'] = email
-                # Get name from profile if available
                 profile = db.students.find_one({'id': student_id})
-                session['username'] = profile.get('name') if profile else email.split('@')[0]
-                return redirect(url_for('student_home'))
+                session_data = {
+                    'role': 'student',
+                    'user_id': student_id,
+                    'email': email,
+                    'username': profile.get('name') if profile else email.split('@')[0],
+                    'redirect_url': url_for('student_home')
+                }
+                return initiate_2fa(email, session_data)
             
             # Fallback to checking the students profile collection for older entries
             student = db.students.find_one({'email': email})
             
             if student and (student.get('password') == student_id_or_password or student.get('id') == student_id_or_password):
                 student_id = student.get('id')
-                session['logged_in'] = True
-                session['role'] = 'student'
-                session['user_id'] = student_id
-                session['username'] = student.get('name', email.split('@')[0])
-                session['email'] = email
-                session['photo_url'] = student.get('photo_url', '')
-                return redirect(url_for('student_home'))
+                session_data = {
+                    'role': 'student',
+                    'user_id': student_id,
+                    'username': student.get('name', email.split('@')[0]),
+                    'email': email,
+                    'photo_url': student.get('photo_url', ''),
+                    'redirect_url': url_for('student_home')
+                }
+                return initiate_2fa(email, session_data)
             else:
                 flash('Invalid student credentials. Please check your Email and Student ID.')
         else:
@@ -879,17 +936,19 @@ def login():
                         flash(f'Failed to send OTP email: {result}')
                     return redirect(url_for('verify_otp', email=email))
                     
-                session['logged_in'] = True
-                session['role'] = user.get('custom_role', 'teacher')
-                session['assigned_class'] = user.get('assigned_class', 'all')
-                session['user_id'] = str(user['_id'])
                 first = user.get('first_name') or ''
                 last = user.get('last_name') or ''
                 name = f"{first} {last}".strip()
-                session['username'] = name if name else email.split('@')[0]
-                session['email'] = email
-                session['photo_url'] = user.get('photo_url')
-                return redirect(url_for('dashboard'))
+                session_data = {
+                    'role': user.get('custom_role', 'teacher'),
+                    'assigned_class': user.get('assigned_class', 'all'),
+                    'user_id': str(user['_id']),
+                    'username': name if name else email.split('@')[0],
+                    'email': email,
+                    'photo_url': user.get('photo_url'),
+                    'redirect_url': url_for('dashboard')
+                }
+                return initiate_2fa(email, session_data)
             else:
                 flash('Invalid credentials. Please try again.')
             
@@ -910,12 +969,14 @@ def admin_portal():
             
         admin = db.admins.find_one({'email': email})
         if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
-            session['logged_in'] = True
-            session['role'] = 'admin'
-            session['user_id'] = str(admin['_id'])
-            session['username'] = admin.get('name', 'Admin')
-            session['email'] = email
-            return redirect(url_for('admin_dashboard'))
+            session_data = {
+                'role': 'admin',
+                'user_id': str(admin['_id']),
+                'username': admin.get('name', 'Admin'),
+                'email': email,
+                'redirect_url': url_for('admin_dashboard')
+            }
+            return initiate_2fa(email, session_data)
         else:
             flash('Invalid admin credentials. Please try again.')
             
