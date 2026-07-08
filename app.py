@@ -736,9 +736,11 @@ def send_otp_email(email, otp, is_reset=False):
         if is_reset else
         'Your OTP Code - Indus Portal'
     )
+    timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     body = (
         f'Your verification code is: {otp}\n\n'
         f'This code expires in 5 minutes.\n\n'
+        f'Requested at: {timestamp_str}\n\n'
         f'Regards,\nIndus Portal'
     )
     print(f'\n[OTP] Sending to {email} via {smtp_server}:{smtp_port} as {smtp_user}\n')
