@@ -846,7 +846,7 @@ def verify_2fa():
                     session.pop('otp_expiry', None)
                     session.pop('pending_2fa_data', None)
                     
-                    flash('Successfully logged in!')
+
                     return redirect(session_data.get('redirect_url', url_for('dashboard')))
                 else:
                     flash('Session data missing. Please log in again.')
@@ -1096,7 +1096,7 @@ def verify_otp():
                     name = f"{first} {last}".strip()
                     session['username'] = name if name else email.split('@')[0]
                     session['email'] = email
-                    flash('Verified and logged in successfully!')
+
                     return redirect(url_for('dashboard'))
                 else:
                     flash('User not found.')
