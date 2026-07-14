@@ -405,30 +405,39 @@ async function submitDirectMessage(event) {
     const formData = new FormData(form);
     const btn = document.getElementById('dmSubmitBtn');
     
-    btn.disabled = true;
-    btn.innerText = 'Sending...';
+    const msgType = formData.get('message_type');
+    const message = formData.get('message');
     
+    // Get the phone number from the subtitle
+    const subtitle = document.getElementById('dmModalSubtitle').innerText;
+    const phone = subtitle.replace('Sending to: ', '').trim();
+    
+    if (!phone || phone === 'No number on file') {
+        alert("Cannot send message because there is no phone number on file for this parent.");
+        return;
+    }
+    
+    if (formData.get('attachment') && formData.get('attachment').size > 0) {
+        alert("Note: Web browsers cannot automatically pass files into WhatsApp or SMS. Please re-attach your file after the app opens.");
+    }
+    
+    if (msgType === 'whatsapp') {
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+    } else {
+        window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_self');
+    }
+    
+    // Optionally still log it to the backend for record-keeping
     try {
-        const response = await fetch('/api/send_direct_message', {
+        await fetch('/api/send_direct_message', {
             method: 'POST',
             body: formData
         });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            alert('Message simulated successfully! (Note: Actual delivery requires a connected third-party API)');
-            closeDirectMessageModal();
-        } else {
-            alert('Error: ' + data.error);
-            btn.disabled = false;
-            btn.innerText = 'Send Message';
-        }
-    } catch (error) {
-        alert('An error occurred. Please try again.');
-        btn.disabled = false;
-        btn.innerText = 'Send Message';
+    } catch (e) {
+        console.error("Failed to log message to backend", e);
     }
+    
+    closeDirectMessageModal();
 }
 
 // Total Students Modal Logic
