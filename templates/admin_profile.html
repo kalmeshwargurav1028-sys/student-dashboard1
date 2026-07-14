@@ -21,12 +21,18 @@
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     <!-- Avatar Section -->
                     <div class="p-6 text-center border-b border-gray-100">
-                        <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-600 text-white text-4xl font-bold border-4 border-white shadow-sm mb-4">
-                            {{ admin.name[0] | upper if admin.name else 'A' }}
+                        <div class="relative inline-block mb-4">
+                            {% if admin.get('photo_url') %}
+                            <img src="{{ admin.get('photo_url') }}" class="w-24 h-24 rounded-full object-cover border-4 border-white shadow-sm mx-auto">
+                            {% else %}
+                            <div class="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-600 text-white text-4xl font-bold border-4 border-white shadow-sm">
+                                {{ admin.name[0] | upper if admin.name else 'A' }}
+                            </div>
+                            {% endif %}
                         </div>
                         <h2 class="text-xl font-bold text-gray-900">{{ admin.name }}</h2>
                         <p class="text-sm text-gray-500 flex items-center justify-center mt-1">
-                            <i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> Super Admin
+                            <i class="fa-solid fa-crown text-amber-500 mr-1.5"></i> {{ 'Super Admin' if admin.get('role', 'admin') == 'admin' else 'Teacher' }}
                         </p>
                         <p class="text-xs text-gray-400 mt-1">{{ admin.email }}</p>
                     </div>
@@ -34,25 +40,46 @@
                     <!-- Personal Information Form -->
                     <div class="p-6 bg-gray-50/30">
                         <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
-                            <i class="fa-regular fa-id-card text-gray-400 mr-2"></i> Personal Information
+                            <i class="fa-regular fa-id-card text-gray-400 mr-2"></i> Update Profile
                         </h3>
                         
-                        <form id="personalInfoForm" onsubmit="savePersonalInfo(event)" class="space-y-4">
+                        <form method="POST" action="{{ url_for('admin_profile') }}" enctype="multipart/form-data" class="space-y-4">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">First Name</label>
+                                    <input type="text" name="first_name" value="{{ admin.get('first_name', admin.name.split(' ')[0] if admin.name else '') }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-500 mb-1">Last Name</label>
+                                    <input type="text" name="last_name" value="{{ admin.get('last_name', admin.name.split(' ')[1] if admin.name and ' ' in admin.name else '') }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                </div>
+                            </div>
+
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Email Address</label>
-                                <div class="w-full bg-gray-100 rounded-md py-2 px-3 text-sm text-gray-700">
+                                <div class="w-full bg-gray-100 rounded-md py-2 px-3 text-sm text-gray-700 cursor-not-allowed">
                                     {{ admin.email }}
                                 </div>
                             </div>
                             
                             <div>
                                 <label class="block text-xs font-medium text-gray-500 mb-1">Phone Number</label>
-                                <input type="text" id="phoneInput" name="phone" value="{{ admin.phone if admin.get('phone') else '+91 9876543210' }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                                <input type="text" name="phone" value="{{ admin.phone if admin.get('phone') else '' }}" placeholder="+91 9876543210" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Profile Photo</label>
+                                <input type="file" name="photo" accept="image/*" class="w-full border border-gray-200 bg-white rounded-md py-1.5 px-3 text-sm text-gray-700 focus:outline-none file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-xs font-medium text-gray-500 mb-1">Bio / About Me</label>
+                                <textarea name="bio" rows="3" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500" placeholder="Tell us a little about yourself...">{{ admin.get('bio', '') }}</textarea>
                             </div>
 
                             <div class="pt-2">
-                                <button type="submit" id="saveProfileBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
-                                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save Information
+                                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
+                                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save Profile
                                 </button>
                             </div>
                         </form>
@@ -97,25 +124,22 @@
                     </div>
                 </div>
 
-                <!-- System Integrations Panel -->
+                <!-- Professional Details Panel -->
                 <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
                     <h3 class="text-sm font-bold text-gray-800 mb-5 flex items-center">
-                        <i class="fa-solid fa-microchip text-gray-400 mr-2"></i> System Integrations
+                        <i class="fa-solid fa-graduation-cap text-gray-400 mr-2"></i> Professional Details
                     </h3>
                     
-                    <form id="apiSettingsForm" onsubmit="saveApiKey(event)" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-500 mb-1">Google Gemini API Key (AI Mentor)</label>
-                            <input type="password" id="geminiApiInput" placeholder="AQ.Ab8RN6KY..." value="{{ settings.get('GEMINI_API_KEY', '') }}" class="w-full border border-gray-200 rounded-md py-2 px-3 text-sm text-gray-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                            <p class="text-[10px] text-gray-400 mt-1">Required to enable the AI Mentor Assistant features.</p>
-                        </div>
-
-                        <div class="pt-2">
-                            <button type="submit" id="saveApiBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md text-sm transition-colors flex items-center justify-center">
-                                <i class="fa-solid fa-floppy-disk mr-2"></i> Update API Key
-                            </button>
-                        </div>
-                    </form>
+                    <div class="bg-gray-50 rounded-lg p-5 border border-gray-100">
+                        <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">About Me</h4>
+                        <p class="text-sm text-gray-700 leading-relaxed italic">
+                            {% if admin.get('bio') %}
+                                "{{ admin.get('bio') }}"
+                            {% else %}
+                                No bio provided yet. Update your profile to add a bio.
+                            {% endif %}
+                        </p>
+                    </div>
                 </div>
 
 
@@ -139,92 +163,5 @@
         }
     }
 
-    async function savePersonalInfo(event) {
-        event.preventDefault();
-        
-        const btn = document.getElementById('saveProfileBtn');
-        const phone = document.getElementById('phoneInput').value;
-        try {
-            const formData = new FormData();
-            formData.append('phone', phone);
-            
-            const response = await fetch('{{ url_for("super_admin_update_profile") }}', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved Successfully!';
-                btn.classList.replace('bg-blue-600', 'bg-blue-500');
-                btn.classList.replace('hover:bg-blue-700', 'hover:bg-blue-600');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.replace('bg-blue-500', 'bg-blue-600');
-                    btn.classList.replace('hover:bg-blue-600', 'hover:bg-blue-700');
-                    btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                    btn.disabled = false;
-                }, 2000);
-            } else {
-                throw new Error('Server returned ' + response.status);
-            }
-        } catch(e) {
-            console.error('Failed to save profile', e);
-            btn.innerHTML = '<i class="fa-solid fa-xmark mr-2"></i> Error Saving';
-            btn.classList.replace('bg-blue-600', 'bg-red-500');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.replace('bg-red-500', 'bg-blue-600');
-                btn.classList.remove('opacity-75', 'cursor-not-allowed');
-                btn.disabled = false;
-            }, 2000);
-        }
-    }
-
-    async function saveApiKey(event) {
-        event.preventDefault();
-        
-        const btn = document.getElementById('saveApiBtn');
-        const apiKey = document.getElementById('geminiApiInput').value;
-        const originalText = btn.innerHTML;
-        
-        btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Saving...';
-        btn.disabled = true;
-        
-        try {
-            const formData = new FormData();
-            formData.append('api_key', apiKey);
-            
-            const response = await fetch('/api/save_gemini_key', {
-                method: 'POST',
-                body: formData
-            });
-            
-            if (response.ok) {
-                btn.innerHTML = '<i class="fa-solid fa-check mr-2"></i> Saved Successfully!';
-                btn.classList.replace('bg-blue-600', 'bg-blue-500');
-                btn.classList.replace('hover:bg-blue-700', 'hover:bg-blue-600');
-                
-                setTimeout(() => {
-                    btn.innerHTML = originalText;
-                    btn.classList.replace('bg-blue-500', 'bg-blue-600');
-                    btn.classList.replace('hover:bg-blue-600', 'hover:bg-blue-700');
-                    btn.disabled = false;
-                }, 2000);
-            } else {
-                throw new Error('Server error');
-            }
-        } catch(e) {
-            btn.innerHTML = '<i class="fa-solid fa-xmark mr-2"></i> Error Saving';
-            btn.classList.replace('bg-blue-600', 'bg-red-500');
-            
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.classList.replace('bg-red-500', 'bg-blue-600');
-                btn.disabled = false;
-            }, 2000);
-        }
-    }
 </script>
 {% endblock %}
