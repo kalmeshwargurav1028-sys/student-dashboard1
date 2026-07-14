@@ -1337,7 +1337,21 @@ def dashboard():
         'monthly_attendance': monthly_attendance
     }
     
-    return render_template('dashboard.html', students=students, analytics=analytics)
+    # Fetch upcoming assignments and recent activity
+    from datetime import datetime
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    
+    upcoming_assignments = []
+    recent_activity = []
+    
+    if session.get('role') in ('admin', 'teacher'):
+        upcoming_assignments = list(db.assignments.find({
+            'due_date': {'$gte': today_str}
+        }).sort('due_date', 1).limit(4))
+        
+        recent_activity = list(db.announcements.find().sort('date_sent', -1).limit(4))
+    
+    return render_template('dashboard.html', students=students, analytics=analytics, upcoming_assignments=upcoming_assignments, recent_activity=recent_activity)
 
 @app.route('/student/<student_id>/ai_mentor')
 def student_ai_mentor(student_id):

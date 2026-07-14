@@ -70,6 +70,27 @@
                     </div>
                 </div>
             </a>
+            
+            <a href="{{ url_for('attendance') }}" class="block">
+                <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
+                    <div class="p-5">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 bg-green-100 rounded-md p-3">
+                                <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                            <div class="ml-5 w-0 flex-1">
+                                <dl>
+                                    <dt class="text-sm font-medium text-gray-500 truncate">Today's Attendance</dt>
+                                    <dd class="flex items-baseline gap-3">
+                                        <div class="text-xl font-semibold text-green-600" title="Present">{{ analytics.present_count }} <span class="text-sm text-gray-500 font-normal">P</span></div>
+                                        <div class="text-xl font-semibold text-red-500" title="Absent">{{ analytics.absent_count }} <span class="text-sm text-gray-500 font-normal">A</span></div>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </a>
         </div>
     </div>
     {% endif %}
@@ -112,35 +133,55 @@
             </div>
         </div>
 
-        <!-- Today's Classes & Pending Tasks -->
+        <!-- Upcoming Deadlines -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
             <h2 class="text-xl font-bold text-gray-900 mb-5 flex items-center">
                 <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                Today's Schedule
+                Upcoming Deadlines
             </h2>
-            <div class="flex-1 overflow-y-auto">
-                <ul class="space-y-4">
-                    {% if teacher_subjects or teacher_homerooms %}
-                        <li class="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-100">
-                            <div class="flex-shrink-0 w-2 h-full bg-blue-500 rounded-full mr-3 min-h-[40px]"></div>
-                            <div>
-                                <p class="text-xs font-bold text-gray-500 uppercase">Period 1 (08:30 AM)</p>
-                                <p class="text-sm font-bold text-gray-900">Homeroom Session</p>
-                                <p class="text-xs text-gray-600">Check attendance and announcements</p>
-                            </div>
-                        </li>
+            <div class="flex-1 overflow-y-auto max-h-64 mb-4">
+                <ul class="space-y-3">
+                    {% if upcoming_assignments %}
+                        {% for assignment in upcoming_assignments %}
                         <li class="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-100">
                             <div class="flex-shrink-0 w-2 h-full bg-indigo-500 rounded-full mr-3 min-h-[40px]"></div>
-                            <div>
-                                <p class="text-xs font-bold text-gray-500 uppercase">Period 2 (09:15 AM)</p>
-                                <p class="text-sm font-bold text-gray-900">Subject Class</p>
-                                <p class="text-xs text-gray-600">Scheduled instruction time</p>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-gray-500 uppercase">Due: {{ assignment.due_date }}</p>
+                                <p class="text-sm font-bold text-gray-900">{{ assignment.title }}</p>
+                                <p class="text-xs text-gray-600">Class: {{ assignment.class_name if assignment.class_name else assignment.class }} - {{ assignment.section }}</p>
                             </div>
                         </li>
+                        {% endfor %}
                     {% else %}
-                        <div class="text-center py-8 text-gray-400">
-                            <svg class="mx-auto h-12 w-12 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            <p class="text-sm">No classes scheduled for today.</p>
+                        <div class="text-center py-4 text-gray-400">
+                            <svg class="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <p class="text-sm">No upcoming deadlines.</p>
+                        </div>
+                    {% endif %}
+                </ul>
+            </div>
+            
+            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                Recent Activity
+            </h2>
+            <div class="flex-1 overflow-y-auto max-h-64">
+                <ul class="space-y-3">
+                    {% if recent_activity %}
+                        {% for activity in recent_activity %}
+                        <li class="flex items-start p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <div class="flex-shrink-0 w-2 h-full bg-green-500 rounded-full mr-3 min-h-[40px]"></div>
+                            <div>
+                                <p class="text-xs font-bold text-gray-500 uppercase">{{ activity.date_sent }}</p>
+                                <p class="text-sm font-bold text-gray-900">{{ activity.title }}</p>
+                                <p class="text-xs text-gray-600">Audience: {{ activity.audience }}</p>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-gray-400">
+                            <svg class="mx-auto h-8 w-8 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            <p class="text-sm">No recent activity.</p>
                         </div>
                     {% endif %}
                 </ul>
