@@ -408,7 +408,10 @@
                 <!-- Live Date and Time -->
                 <div class="hidden md:flex flex-col text-right mr-4 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
-                    <span id="nav-date" class="text-xs"></span>
+                    <div class="relative cursor-pointer group" onclick="document.getElementById('hidden-calendar').showPicker()">
+                        <span id="nav-date" class="text-xs group-hover:text-blue-500 transition-colors" title="Click to open calendar"></span>
+                        <input type="date" id="hidden-calendar" class="absolute opacity-0 w-0 h-0 top-0 left-0 -z-10">
+                    </div>
                 </div>
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ session.get('username') }}</span>
                 {% if session.get('role') != 'student' %}
@@ -470,9 +473,14 @@
             const now = new Date();
             const timeEl = document.getElementById('nav-time');
             const dateEl = document.getElementById('nav-date');
+            const calInput = document.getElementById('hidden-calendar');
             if (timeEl && dateEl) {
                 timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            }
+            if (calInput && !calInput.value) {
+                // Set initial value for calendar input (YYYY-MM-DD format)
+                calInput.value = now.toISOString().split('T')[0];
             }
         }
 

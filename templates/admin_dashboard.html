@@ -83,37 +83,7 @@
                     </div>
                 </div>
                 
-                <!-- Students Stats -->
-                <div class="bg-gradient-to-br from-purple-50 to-fuchsia-100 overflow-hidden shadow-sm rounded-xl border border-purple-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-purple-100">
-                            🎓
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-purple-800 truncate">Total Students</dt>
-                                <dd class="flex items-baseline"><div class="text-2xl font-black text-purple-900">{{ stats.total_students }}</div></dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
-                            🚀
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-blue-800 truncate">Active Students</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-black text-blue-900">{{ stats.active_students }}</div>
-                                    <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">Past 15 mins</span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
@@ -239,65 +209,7 @@
                 </div>
             </div>
 
-            <!-- Students Table -->
-            <div class="bg-white shadow-sm rounded-xl border border-purple-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-purple-100 bg-purple-50 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-purple-800">🎓 Student Activity</h3>
-                </div>
-                <div class="max-h-64 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-white sticky top-0 z-10">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Student</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Last Active</th>
-                                <th scope="col" class="relative px-6 py-4"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-50">
-                            {% for s in active_students %}
-                            <tr class="hover:bg-purple-50/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ s.email }}</div>
-                                    <div class="text-xs font-medium text-gray-500 mt-1">Grade: {{ s.grade }} - Section: {{ s.section }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-400">Just now</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for s in inactive_students %}
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ s.email }}</div>
-                                    <div class="text-xs font-medium text-gray-500 mt-1">Grade: {{ s.grade }} - Section: {{ s.section }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-500">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ s.last_active }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not active_students and not inactive_students %}
-                            <tr><td colspan="4" class="px-6 py-8 text-center text-gray-400 font-bold">No students registered.</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+
         </div>
 
     </div> <!-- Close view-dashboard -->

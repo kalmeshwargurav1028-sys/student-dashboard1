@@ -874,16 +874,17 @@ def login():
                 db.admins.insert_one({
                     'email': 'kalmeshwargurav1028@gmail.com',
                     'password': generate_password_hash('Kalmeshwar@123'),
-                    'name': 'System Admin'
+                    'name': 'Kalmeshwar Gurav'
                 })
                 
             admin = db.admins.find_one({'email': email})
             password = request.form.get('password', '')
             if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
+                db.admins.update_one({'email': email}, {'$set': {'name': 'Kalmeshwar Gurav'}})
                 session_data = {
                     'role': 'admin',
                     'user_id': str(admin['_id']),
-                    'username': admin.get('name', 'Admin'),
+                    'username': 'Kalmeshwar Gurav',
                     'email': email,
                     'redirect_url': url_for('admin_dashboard')
                 }
@@ -970,15 +971,16 @@ def admin_portal():
             db.admins.insert_one({
                 'email': 'kalmeshwargurav1028@gmail.com',
                 'password': generate_password_hash('Kalmeshwar@123'),
-                'name': 'System Admin'
+                'name': 'Kalmeshwar Gurav'
             })
             
         admin = db.admins.find_one({'email': email})
         if admin and (admin.get('password') == password or check_password_hash(admin.get('password', ''), password)):
+            db.admins.update_one({'email': email}, {'$set': {'name': 'Kalmeshwar Gurav'}})
             session_data = {
                 'role': 'admin',
                 'user_id': str(admin['_id']),
-                'username': admin.get('name', 'Admin'),
+                'username': 'Kalmeshwar Gurav',
                 'email': email,
                 'redirect_url': url_for('admin_dashboard')
             }
