@@ -28,9 +28,9 @@
 
     {% if session.get('logged_in') %}
     <!-- Sidebar -->
-    <aside id="sidebar" class="bg-[#2563eb] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-600 dark:border-gray-950">
+    <aside id="sidebar" class="bg-[#2563eb] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-700 dark:border-gray-950 shadow-xl">
         <!-- Sidebar Header -->
-        <div class="h-16 flex items-center justify-between px-4 bg-blue-600 dark:bg-gray-900 border-b border-blue-400 dark:border-gray-700">
+        <div class="h-16 flex items-center justify-between px-4 bg-[#2157d0] dark:bg-gray-900 border-b border-blue-700/50 dark:border-gray-700">
             <a href="{{ url_for('dashboard') }}" class="text-xl font-bold flex items-center gap-2 whitespace-nowrap overflow-hidden" id="sidebar-logo-text">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto flex-shrink-0" alt="Logo">
                 <span class="sidebar-text transition-opacity duration-300">Indus Portal</span>
@@ -380,7 +380,7 @@
         
         <!-- Top Header for Mobile/Context -->
         {% if session.get('logged_in') %}
-        <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 shrink-0 border-b border-transparent dark:border-gray-700 transition-colors">
+        <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8 z-10 shrink-0 border-b border-gray-100 dark:border-gray-700 transition-colors">
             <div class="flex items-center">
                 <!-- Notification Bell -->
                 <div class="relative">
