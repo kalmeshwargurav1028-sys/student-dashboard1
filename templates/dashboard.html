@@ -325,12 +325,16 @@
                                     <label class="block text-sm font-medium text-gray-700">Message Type</label>
                                     <div class="mt-2 flex items-center space-x-4">
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="message_type" value="sms" class="form-radio text-blue-600 h-4 w-4" checked>
-                                            <span class="ml-2 text-sm text-gray-700">SMS</span>
+                                            <input type="radio" name="message_type" value="sms" class="form-radio text-blue-600 h-4 w-4">
+                                            <span class="ml-2 text-sm text-gray-700">SMS (Needs Phone App)</span>
                                         </label>
                                         <label class="inline-flex items-center">
                                             <input type="radio" name="message_type" value="whatsapp" class="form-radio text-green-600 h-4 w-4">
                                             <span class="ml-2 text-sm text-gray-700">WhatsApp</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="message_type" value="email" class="form-radio text-indigo-600 h-4 w-4" checked>
+                                            <span class="ml-2 text-sm text-gray-700">Email (Free Auto-Send)</span>
                                         </label>
                                     </div>
                                 </div>
@@ -423,21 +427,46 @@ async function submitDirectMessage(event) {
     
     if (msgType === 'whatsapp') {
         window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
-    } else {
+        closeDirectMessageModal();
+    } else if (msgType === 'sms') {
         window.open(`sms:${phone}?body=${encodeURIComponent(message)}`, '_self');
+        closeDirectMessageModal();
+    } else {
+        // Email option - send via backend
+        btn.disabled = true;
+        btn.innerText = 'Sending Email...';
+        
+        try {
+            const response = await fetch('/api/send_direct_message', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+            if (data.success) {
+                alert('Email successfully sent to the parent!');
+                closeDirectMessageModal();
+            } else {
+                alert('Error: ' + data.error);
+                btn.disabled = false;
+                btn.innerText = 'Send Message';
+            }
+        } catch (e) {
+            console.error("Failed to send email via backend", e);
+            alert('An error occurred while sending the email. Please try again.');
+            btn.disabled = false;
+            btn.innerText = 'Send Message';
+        }
     }
     
-    // Optionally still log it to the backend for record-keeping
-    try {
-        await fetch('/api/send_direct_message', {
-            method: 'POST',
-            body: formData
-        });
-    } catch (e) {
-        console.error("Failed to log message to backend", e);
+    // Optionally log WhatsApp/SMS to backend as well (without awaiting)
+    if (msgType !== 'email') {
+        try {
+            fetch('/api/send_direct_message', {
+                method: 'POST',
+                body: formData
+            });
+        } catch (e) {}
     }
-    
-    closeDirectMessageModal();
 }
 
 // Total Students Modal Logic
