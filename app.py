@@ -209,7 +209,7 @@ def has_permission(permission_name):
         pass
     # Defaults for built-in roles
     if role == 'teacher':
-        defaults = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True, 'manage_grades': True}
+        defaults = {'view_dashboard': True, 'manage_students': True, 'edit_materials': True, 'modify_attendance': True, 'manage_grades': True, 'send_announcements': True}
         return defaults.get(permission_name, False)
     return False
 
@@ -432,7 +432,7 @@ def assign_user_role(user_id):
 
 @app.route('/api/announcements', methods=['POST'])
 def create_announcement():
-    if not session.get('logged_in') or session.get('role') != 'admin':
+    if not session.get('logged_in') or not has_permission('send_announcements'):
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
         
     try:
