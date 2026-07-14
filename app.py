@@ -496,7 +496,7 @@ def get_notifications():
     if not session.get('logged_in'):
         return jsonify([])
     role = session.get('role', 'student')
-    user_id = session.get('user_id')
+    user_id = str(session.get('user_id'))
     
     target_roles = [role, 'all']
     if role == 'admin':
@@ -541,9 +541,13 @@ def clear_all_notifications():
         user_id = str(session.get('user_id'))
         role = session.get('role', 'student')
         
+        target_roles = [role, 'all']
+        if role == 'admin':
+            target_roles.extend(['teacher', 'student'])
+            
         # Find all unread notifications for this user
         query = {
-            'role_target': {'$in': [role, 'all']},
+            'role_target': {'$in': target_roles},
             'read_by': {'$ne': user_id},
             'type': {'$ne': 'error'}
         }

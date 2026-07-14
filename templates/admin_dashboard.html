@@ -296,37 +296,7 @@
     </div>
     
 
-    <!-- System Files & Media -->
-    <div class="mt-8 bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
-            <h3 class="text-lg font-bold text-gray-800">📁 System Files & Media</h3>
-            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{{ materials|length }} files</span>
-        </div>
-        <div class="p-6">
-            {% if materials %}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% for m in materials %}
-                <div class="border border-gray-200 rounded-lg p-4 flex items-start space-x-4 hover:shadow-md transition-shadow bg-white">
-                    <div class="flex-shrink-0 bg-blue-50 p-3 rounded-lg text-blue-500">
-                        <i class="fa-solid fa-file-pdf text-2xl"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ m.get('title') }}">{{ m.get('title') }}</p>
-                        <p class="text-xs text-gray-500 truncate">{{ m.get('filename') }}</p>
-                        <p class="text-xs text-gray-400 mt-1">Grade: {{ m.get('class', 'N/A') }} - Section: {{ m.get('section', 'N/A') }}</p>
-                        <p class="text-xs text-gray-500 mt-1 font-medium">Sent by: {{ m.get('teacher_name', 'Admin') }}</p>
-                    </div>
-                    <div>
-                        <a href="{{ m.get('file_url') or url_for('get_file', file_id=m.get('file_id')|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            {% else %}
-            <p class="text-sm text-gray-500 text-center py-4">No materials uploaded yet.</p>
-            {% endif %}
-        </div>
-    </div>
+
     </div> <!-- Close view-dashboard -->
 
     <!-- Role Management View -->
