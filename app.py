@@ -478,6 +478,8 @@ def delete_announcement(ann_id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
 def log_notification(title, message, type='info', role_target='admin', target_user_id=None):
+    if target_user_id:
+        target_user_id = str(target_user_id)
     try:
         db.notifications.insert_one({
             'title': title,
@@ -507,9 +509,8 @@ def get_notifications():
             {'role_target': {'$in': target_roles}},
             {'target_user_id': user_id}
         ],
-        'read_by': {'$ne': user_id},
-        'type': {'$ne': 'error'}
-    }).sort('timestamp', -1).limit(10))
+        'read_by': {'$ne': user_id}
+    }).sort('timestamp', -1).limit(20))
     
     # Fallback to hide old notifications that were globally marked 'read': True
     notifs = [n for n in notifs if not n.get('read', False)]
@@ -547,9 +548,11 @@ def clear_all_notifications():
             
         # Find all unread notifications for this user
         query = {
-            'role_target': {'$in': target_roles},
-            'read_by': {'$ne': user_id},
-            'type': {'$ne': 'error'}
+            '$or': [
+                {'role_target': {'$in': target_roles}},
+                {'target_user_id': user_id}
+            ],
+            'read_by': {'$ne': user_id}
         }
         
         # Add the user_id to read_by array for all matching documents
