@@ -772,6 +772,40 @@ def send_otp_email(email, otp, is_reset=False):
         print(f'[OTP] ✗ Failed to deliver to {email}: {error_msg}')
         return error_msg
 
+def send_generic_email(email, subject, body):
+    """Send a generic email via configured SMTP."""
+    try:
+        cfg = _get_smtp_config()
+    except RuntimeError as e:
+        print(f'[EMAIL] Configuration error: {e}')
+        raise ValueError(str(e))
+
+    smtp_server = cfg['server']
+    smtp_port   = cfg['port']
+    smtp_user   = cfg['username']
+    smtp_pass   = cfg['password']
+
+    print(f'\n[EMAIL] Sending to {email} via {smtp_server}:{smtp_port} as {smtp_user}\n')
+
+    try:
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From']    = smtp_user
+        msg['To']      = email
+
+        server = smtplib.SMTP(smtp_server, smtp_port, timeout=20)
+        server.ehlo()
+        server.starttls()
+        server.ehlo()
+        server.login(smtp_user, smtp_pass)
+        server.sendmail(smtp_user, email, msg.as_string())
+        server.quit()
+        print(f'[EMAIL] ✓ Delivered to {email}')
+        return True
+    except Exception as e:
+        print(f'[EMAIL] ✗ Failed to deliver to {email}: {str(e)}')
+        raise e
+
 @app.before_request
 def update_last_active():
     if session.get('logged_in'):
@@ -4536,10 +4570,10 @@ def send_direct_message():
         try:
             subject = f"Message from {session.get('username')} regarding {student.get('name')}"
             body = f"{message}\n\n[This is an automated message from the Teacher Dashboard.]"
-            send_sendgrid_email(parent_email, subject, body)
+            send_generic_email(parent_email, subject, body)
         except Exception as e:
-            print(f"Direct Email Mocked/Failed: {str(e)}")
-            # We continue even if it failed so it simulates a success in the UI for the user if credentials aren't set up
+            print(f"Direct Email Failed: {str(e)}")
+            return jsonify({'success': False, 'error': 'Failed to send email. Ensure SMTP is configured.'}), 500
         
     # Log the simulated/actual send
     db.parent_alerts.insert_one({
