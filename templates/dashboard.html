@@ -256,7 +256,7 @@
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
                                         <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Parent Phone</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody class="bg-white divide-y divide-gray-200">
@@ -268,14 +268,20 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.division }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.parent_phone or student.phone or 'N/A' }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                    {% if student.parent_phone or student.phone %}
-                                                        <button onclick="openDirectMessageModal('{{ student.id }}', '{{ student.name }}', '{{ student.parent_phone or student.phone }}')" class="text-blue-600 hover:text-blue-900 transition-colors bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hover:bg-blue-100 flex items-center justify-center ml-auto">
-                                                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                                                            Message Parent
-                                                        </button>
-                                                    {% else %}
-                                                        <span class="text-gray-400">No Number</span>
-                                                    {% endif %}
+                                                    <div class="flex gap-2 justify-end">
+                                                        <a href="{{ url_for('profile_form', id=student.id) }}" class="text-indigo-600 hover:text-indigo-900 transition-colors bg-indigo-50 px-3 py-1 rounded-md border border-indigo-100 hover:bg-indigo-100 flex items-center justify-center">
+                                                            <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                            Edit
+                                                        </a>
+                                                        {% if student.parent_phone or student.phone %}
+                                                            <button onclick="openDirectMessageModal('{{ student.id }}', '{{ student.name }}', '{{ student.parent_phone or student.phone }}')" class="text-blue-600 hover:text-blue-900 transition-colors bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hover:bg-blue-100 flex items-center justify-center">
+                                                                <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                                Message
+                                                            </button>
+                                                        {% else %}
+                                                            <span class="text-gray-400 px-3 py-1">No Number</span>
+                                                        {% endif %}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         {% endfor %}
