@@ -258,7 +258,7 @@
             </div>
             <div>
                 <h4 class="font-bold text-gray-900 text-sm mb-0.5">{{ a.title }}</h4>
-                <p class="text-xs text-gray-500 font-medium mb-2">{{ a.subject }} • Due: {{ a.due_date }}</p>
+                <p class="text-xs text-gray-500 font-medium mb-2">{{ a.subject }} • Due: {{ a.due_date or a.deadline }}</p>
                 <a href="{{ url_for('assignments') }}" class="text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors inline-flex items-center">
                     Submit Work <svg class="w-3 h-3 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                 </a>

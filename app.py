@@ -1306,14 +1306,15 @@ def student_home():
         is_submitted = any(str(sub.get('student_id')) == student_id for sub in a.get('submissions', []))
         if not is_submitted:
             try:
-                due_date_obj = datetime.strptime(a['due_date'], '%Y-%m-%d')
+                date_str = a.get('due_date') or a.get('deadline', '')
+                due_date_obj = datetime.strptime(date_str, '%Y-%m-%d')
                 days_left = (due_date_obj.date() - today.date()).days
                 if 0 <= days_left <= 7:
                     a['days_left'] = days_left
                     upcoming_assignments.append(a)
             except Exception:
                 pass
-    upcoming_assignments.sort(key=lambda x: x['days_left'])
+    upcoming_assignments.sort(key=lambda x: x.get('days_left', 999))
     upcoming_assignments = upcoming_assignments[:3]
 
     return render_template('student_home.html',
