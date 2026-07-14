@@ -1893,13 +1893,25 @@ def assignments():
         if role == 'student':
             # Handle submission
             assignment_id = request.form.get('assignment_id')
+            
+            file = request.files.get('submission_file')
+            file_id = None
+            filename = None
+            if file and file.filename:
+                from werkzeug.utils import secure_filename
+                filename = secure_filename(file.filename)
+                file_id = str(fs.put(file, filename=filename, content_type=file.content_type))
+            
             db.assignments.update_one(
                 {'_id': ObjectId(assignment_id)},
                 {'$push': {'submissions': {
                     'student_id': session.get('user_id'),
                     'student_name': session.get('username'),
                     'submitted_at': now.strftime('%Y-%m-%d %H:%M'),
-                    'grade': None
+                    'grade': None,
+                    'file_id': file_id,
+                    'filename': filename,
+                    'ai_feedback': None
                 }}}
             )
             flash('Assignment submitted!')
@@ -4886,6 +4898,87 @@ def student_courses(student_id):
                 c['teacher_name'] = 'Course Teacher'
     
     return render_template('student_courses.html', student=student, courses=courses)
+
+@app.route('/api/ai_grade_assignment/<assignment_id>/<student_id>', methods=['POST'])
+def ai_grade_assignment(assignment_id, student_id):
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    assignment = db.assignments.find_one({'_id': ObjectId(assignment_id)})
+    if not assignment:
+        return jsonify({'success': False, 'error': 'Assignment not found'}), 404
+        
+    submission = next((s for s in assignment.get('submissions', []) if str(s.get('student_id')) == student_id), None)
+    if not submission:
+        return jsonify({'success': False, 'error': 'Submission not found'}), 404
+        
+    file_id = submission.get('file_id')
+    if not file_id:
+        return jsonify({'success': False, 'error': 'No file attached to this submission.'}), 400
+        
+    try:
+        file_data = fs.get(ObjectId(file_id)).read()
+        filename = submission.get('filename', '')
+        
+        # Configure Gemini
+        client, api_key = configure_gemini()
+        if not api_key:
+            return jsonify({'success': False, 'error': 'Gemini API Key not configured.'}), 500
+            
+        import google.generativeai as genai
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        prompt = f"""
+You are an expert, empathetic teacher. Please evaluate this student's submission.
+Assignment Title: {assignment.get('title')}
+Description/Instructions: {assignment.get('description')}
+Max Score Points: {assignment.get('max_points', 100)}
+
+Please review the attached work. Based on the instructions, provide a grade out of {assignment.get('max_points', 100)} (e.g., '85/100') and provide short, constructive feedback.
+You MUST format your entire response as a valid JSON object EXACTLY like this (do not use markdown formatting or code blocks):
+{{"grade": "YOUR_GRADE_HERE", "feedback": "YOUR_FEEDBACK_HERE"}}
+"""
+        
+        # Determine mime type
+        mime_type = 'application/pdf'
+        if filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            mime_type = 'image/jpeg'
+            
+        content_parts = [
+            prompt,
+            {"mime_type": mime_type, "data": file_data}
+        ]
+        
+        response = model.generate_content(content_parts)
+        response_text = response.text.strip()
+        
+        # Remove any potential markdown formatting blocks like ```json ... ```
+        if response_text.startswith("```json"):
+            response_text = response_text[7:]
+        if response_text.startswith("```"):
+            response_text = response_text[3:]
+        if response_text.endswith("```"):
+            response_text = response_text[:-3]
+            
+        import json
+        result = json.loads(response_text.strip())
+        grade = result.get('grade')
+        feedback = result.get('feedback')
+        
+        # Save to DB
+        db.assignments.update_one(
+            {'_id': ObjectId(assignment_id), 'submissions.student_id': student_id},
+            {'$set': {
+                'submissions.$.grade': grade,
+                'submissions.$.ai_feedback': feedback
+            }}
+        )
+        
+        return jsonify({'success': True, 'grade': grade, 'feedback': feedback})
+        
+    except Exception as e:
+        print(f"AI Auto-Grade Error: {str(e)}")
+        return jsonify({'success': False, 'error': f"AI Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', debug=True, port=5000)

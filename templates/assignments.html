@@ -59,17 +59,36 @@
                             <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                                 {% for sub in a.submissions %}
                                 <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors">
-                                    <td class="py-3 px-4 text-gray-900 dark:text-white">{{ sub.student_name }}</td>
+                                    <td class="py-3 px-4 text-gray-900 dark:text-white">
+                                        {{ sub.student_name }}
+                                        {% if sub.file_id %}
+                                            <div class="mt-1">
+                                                <a href="{{ url_for('get_file', file_id=sub.file_id) }}" target="_blank" class="text-xs text-blue-600 hover:text-blue-800 flex items-center">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                                    View Work
+                                                </a>
+                                            </div>
+                                        {% endif %}
+                                    </td>
                                     <td class="py-3 px-4 text-sm text-gray-500">{{ sub.submitted_at }}</td>
-                                    <td class="py-3 px-4 text-gray-900 dark:text-white font-medium">{{ sub.grade or 'Not Graded' }}</td>
+                                    <td class="py-3 px-4 text-gray-900 dark:text-white font-medium" id="grade-{{ a._id }}-{{ sub.student_id }}">{{ sub.grade or 'Not Graded' }}</td>
                                     <td class="py-3 px-4 text-right">
-                                        <form action="{{ url_for('assignments') }}" method="POST" class="flex justify-end items-center space-x-2">
-                                            <input type="hidden" name="action" value="grade">
-                                            <input type="hidden" name="assignment_id" value="{{ a._id }}">
-                                            <input type="hidden" name="student_id" value="{{ sub.student_id }}">
-                                            <input type="text" name="grade" placeholder="e.g. A, 95/100" class="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required>
-                                            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">Save Grade</button>
-                                        </form>
+                                        <div class="flex flex-col items-end gap-2">
+                                            <form action="{{ url_for('assignments') }}" method="POST" class="flex justify-end items-center space-x-2">
+                                                <input type="hidden" name="action" value="grade">
+                                                <input type="hidden" name="assignment_id" value="{{ a._id }}">
+                                                <input type="hidden" name="student_id" value="{{ sub.student_id }}">
+                                                <input type="text" name="grade" id="grade-input-{{ a._id }}-{{ sub.student_id }}" placeholder="e.g. A, 95/100" class="w-24 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white" required value="{{ sub.grade or '' }}">
+                                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm transition-colors">Save Grade</button>
+                                            </form>
+                                            
+                                            {% if sub.file_id %}
+                                                <button type="button" onclick="autoGrade('{{ a._id }}', '{{ sub.student_id }}')" class="flex items-center gap-1 text-xs px-3 py-1 bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white rounded font-medium shadow-sm transition-all" id="btn-ai-{{ a._id }}-{{ sub.student_id }}">
+                                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                                    Auto-Grade with AI 🤖
+                                                </button>
+                                            {% endif %}
+                                        </div>
                                     </td>
                                 </tr>
                                 {% else %}
@@ -447,11 +466,12 @@
                       Ask Teacher
                     </button>
                     {% endif %}
-                    <form action="{{ url_for('assignments') }}" method="POST" class="w-full">
+                    <form action="{{ url_for('assignments') }}" method="POST" enctype="multipart/form-data" class="w-full flex flex-col gap-2">
                       <input type="hidden" name="assignment_id" value="{{ assignment._id }}">
+                      <input type="file" name="submission_file" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-1" required>
                       <button type="submit" class="btn-submit-asgn w-full justify-center">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                        Submit
+                        Submit Work
                       </button>
                     </form>
                   {% else %}
@@ -548,6 +568,42 @@
       document.querySelectorAll('#assignmentsList [data-status]').forEach(card => {
         card.style.display = (status === 'all' || card.dataset.status === status) ? '' : 'none';
       });
+    }
+    
+    async function autoGrade(assignmentId, studentId) {
+        const btn = document.getElementById(`btn-ai-${assignmentId}-${studentId}`);
+        const gradeText = document.getElementById(`grade-${assignmentId}-${studentId}`);
+        const gradeInput = document.getElementById(`grade-input-${assignmentId}-${studentId}`);
+        
+        btn.disabled = true;
+        btn.innerHTML = `<svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Grading...`;
+        
+        try {
+            const response = await fetch(`/api/ai_grade_assignment/${assignmentId}/${studentId}`, { method: 'POST' });
+            const data = await response.json();
+            
+            if (data.success) {
+                gradeText.innerText = data.grade;
+                gradeInput.value = data.grade;
+                btn.innerHTML = `✅ Graded!`;
+                btn.classList.replace('from-purple-500', 'from-green-500');
+                btn.classList.replace('to-indigo-500', 'to-emerald-500');
+                
+                // Show feedback in an alert for now
+                if (data.feedback) {
+                    alert("AI Feedback:\n" + data.feedback);
+                }
+            } else {
+                alert("Error: " + data.error);
+                btn.innerHTML = `Auto-Grade with AI 🤖`;
+            }
+        } catch (error) {
+            console.error(error);
+            alert("Failed to connect to the AI grading service.");
+            btn.innerHTML = `Auto-Grade with AI 🤖`;
+        }
+        
+        btn.disabled = false;
     }
     </script>
     {% endif %}
