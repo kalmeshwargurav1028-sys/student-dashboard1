@@ -285,7 +285,7 @@
       
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <!-- AI Mentor Button -->
-        <a href="{{ url_for('student_ai_mentor') }}" class="group block relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+        <a href="{{ url_for('student_ai_mentor', student_id=session.get('user_id')) }}" class="group block relative overflow-hidden rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
             <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl group-hover:scale-150 transition-transform duration-500"></div>
             <div class="relative z-10 text-white">
                 <div class="bg-white/20 w-10 h-10 rounded-lg flex items-center justify-center mb-4 backdrop-blur-sm">

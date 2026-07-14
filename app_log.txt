@@ -1,1 +1,8 @@
-bash: line 1: python: command not found
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 119-765-236
+(31043) wsgi starting up on http://0.0.0.0:5000
+(31043) accepted ('127.0.0.1', 52262)
+127.0.0.1 - - [14/Jul/2026 16:05:44] "POST /login HTTP/1.1" 400 360 0.003337
+127.0.0.1 - - [14/Jul/2026 16:05:44] "GET /student/home HTTP/1.1" 302 375 0.000336
+127.0.0.1 - - [14/Jul/2026 16:05:44] "GET /login HTTP/1.1" 200 14508 0.003943
