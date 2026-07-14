@@ -269,16 +269,10 @@
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.parent_phone or student.phone or 'N/A' }}</td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     {% if student.parent_phone or student.phone %}
-                                                        <div class="flex gap-3 justify-end">
-                                                            <a href="https://wa.me/{{ student.parent_phone or student.phone }}" target="_blank" class="text-green-600 hover:text-green-800 flex items-center">
-                                                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.347-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.876 1.213 3.074.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
-                                                                WhatsApp
-                                                            </a>
-                                                            <a href="sms:{{ student.parent_phone or student.phone }}" class="text-blue-600 hover:text-blue-800 flex items-center">
-                                                                <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                                                                SMS
-                                                            </a>
-                                                        </div>
+                                                        <button onclick="openDirectMessageModal('{{ student.id }}', '{{ student.name }}', '{{ student.parent_phone or student.phone }}')" class="text-blue-600 hover:text-blue-900 transition-colors bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hover:bg-blue-100 flex items-center justify-center ml-auto">
+                                                            <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                            Message Parent
+                                                        </button>
                                                     {% else %}
                                                         <span class="text-gray-400">No Number</span>
                                                     {% endif %}
@@ -299,6 +293,60 @@
             <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button type="button" onclick="closeTotalStudentsModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm">Close</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Direct Message Modal -->
+<div id="directMessageModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeDirectMessageModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+            <form id="directMessageForm" onsubmit="submitDirectMessage(event)" enctype="multipart/form-data">
+                <input type="hidden" id="dmStudentId" name="student_id">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="dmModalTitle">Message Parent</h3>
+                            <p class="text-sm text-gray-500 mt-1" id="dmModalSubtitle">Sending to: </p>
+                            
+                            <div class="mt-4 space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700">Message Type</label>
+                                    <div class="mt-2 flex items-center space-x-4">
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="message_type" value="sms" class="form-radio text-blue-600 h-4 w-4" checked>
+                                            <span class="ml-2 text-sm text-gray-700">SMS</span>
+                                        </label>
+                                        <label class="inline-flex items-center">
+                                            <input type="radio" name="message_type" value="whatsapp" class="form-radio text-green-600 h-4 w-4">
+                                            <span class="ml-2 text-sm text-gray-700">WhatsApp</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label for="dmMessage" class="block text-sm font-medium text-gray-700">Message</label>
+                                    <textarea id="dmMessage" name="message" rows="4" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="Type your message here..."></textarea>
+                                </div>
+                                
+                                <div>
+                                    <label for="dmAttachment" class="block text-sm font-medium text-gray-700">Attach Photo or File (Optional)</label>
+                                    <input type="file" id="dmAttachment" name="attachment" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="submit" id="dmSubmitBtn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">Send Message</button>
+                    <button type="button" onclick="closeDirectMessageModal()" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -326,6 +374,57 @@
 </div>
 
 <script>
+// Direct Message Modal Logic
+function openDirectMessageModal(studentId, studentName, phone) {
+    document.getElementById('dmStudentId').value = studentId;
+    document.getElementById('dmModalTitle').innerText = 'Message ' + studentName + "'s Parent";
+    document.getElementById('dmModalSubtitle').innerText = 'Sending to: ' + (phone || 'No number on file');
+    
+    // Reset form
+    document.getElementById('directMessageForm').reset();
+    document.getElementById('dmSubmitBtn').disabled = false;
+    document.getElementById('dmSubmitBtn').innerText = 'Send Message';
+    
+    document.getElementById('directMessageModal').classList.remove('hidden');
+}
+
+function closeDirectMessageModal() {
+    document.getElementById('directMessageModal').classList.add('hidden');
+}
+
+async function submitDirectMessage(event) {
+    event.preventDefault();
+    
+    const form = document.getElementById('directMessageForm');
+    const formData = new FormData(form);
+    const btn = document.getElementById('dmSubmitBtn');
+    
+    btn.disabled = true;
+    btn.innerText = 'Sending...';
+    
+    try {
+        const response = await fetch('/api/send_direct_message', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('Message simulated successfully! (Note: Actual delivery requires a connected third-party API)');
+            closeDirectMessageModal();
+        } else {
+            alert('Error: ' + data.error);
+            btn.disabled = false;
+            btn.innerText = 'Send Message';
+        }
+    } catch (error) {
+        alert('An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerText = 'Send Message';
+    }
+}
+
 // Total Students Modal Logic
 function openTotalStudentsModal(e) {
     if(e) e.preventDefault();

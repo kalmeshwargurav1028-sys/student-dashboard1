@@ -4500,6 +4500,51 @@ def api_clear_mappings():
     result = db.teacher_mappings.delete_many(query)
     return jsonify({'success': True, 'deleted': result.deleted_count})
 
+# -- API: Direct Messaging --
+@app.route('/api/send_direct_message', methods=['POST'])
+def send_direct_message():
+    if not session.get('logged_in'):
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+        
+    student_id = request.form.get('student_id')
+    message = request.form.get('message')
+    msg_type = request.form.get('message_type')
+    attachment = request.files.get('attachment')
+    
+    if not student_id or not message:
+        return jsonify({'success': False, 'error': 'Missing required fields'}), 400
+        
+    student = db.students.find_one({'id': student_id})
+    if not student:
+        return jsonify({'success': False, 'error': 'Student not found'}), 404
+        
+    parent_phone = student.get('parent_phone') or student.get('phone')
+    if not parent_phone:
+        return jsonify({'success': False, 'error': 'No parent phone number found'}), 400
+        
+    # Simulate saving attachment
+    attachment_name = None
+    if attachment and attachment.filename:
+        import os
+        from werkzeug.utils import secure_filename
+        filename = secure_filename(attachment.filename)
+        # Assuming we have an uploads directory setup in real life, but for now just mock it
+        attachment_name = filename
+        
+    # Log the simulated send
+    db.parent_alerts.insert_one({
+        'student_id': student_id,
+        'parent_name': student.get('parent_name', 'Parent'),
+        'parent_phone': parent_phone,
+        'alert_type': f"Direct {msg_type.upper()}",
+        'message': message,
+        'attachment': attachment_name,
+        'timestamp': datetime.now().isoformat(),
+        'sent_by': session.get('username')
+    })
+    
+    return jsonify({'success': True, 'message': 'Message sent successfully'})
+
 # -- API: Messaging --
 @app.route('/api/messages/<other_user_id>', methods=['GET'])
 def get_messages(other_user_id):
