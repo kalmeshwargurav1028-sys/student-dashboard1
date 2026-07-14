@@ -274,7 +274,7 @@
                                                             Edit
                                                         </a>
                                                         {% if student.parent_phone or student.phone %}
-                                                            <button onclick="openDirectMessageModal('{{ student.id }}', '{{ student.name }}', '{{ student.parent_phone or student.phone }}')" class="text-blue-600 hover:text-blue-900 transition-colors bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hover:bg-blue-100 flex items-center justify-center">
+                                                            <button onclick="openDirectMessageModal('{{ student.id }}', '{{ student.name|escape }}', '{{ student.parent_phone or student.phone }}', '{{ student.parent_email or student.email or '' }}')" class="text-blue-600 hover:text-blue-900 transition-colors bg-blue-50 px-3 py-1 rounded-md border border-blue-100 hover:bg-blue-100 flex items-center justify-center">
                                                                 <svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                                                                 Message
                                                             </button>
@@ -325,15 +325,15 @@
                                     <label class="block text-sm font-medium text-gray-700">Message Type</label>
                                     <div class="mt-2 flex items-center space-x-4">
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="message_type" value="sms" class="form-radio text-blue-600 h-4 w-4">
+                                            <input type="radio" name="message_type" value="sms" class="form-radio text-blue-600 h-4 w-4" onchange="toggleAttachmentField()">
                                             <span class="ml-2 text-sm text-gray-700">SMS (Needs Phone App)</span>
                                         </label>
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="message_type" value="whatsapp" class="form-radio text-green-600 h-4 w-4">
+                                            <input type="radio" name="message_type" value="whatsapp" class="form-radio text-green-600 h-4 w-4" onchange="toggleAttachmentField()">
                                             <span class="ml-2 text-sm text-gray-700">WhatsApp</span>
                                         </label>
                                         <label class="inline-flex items-center">
-                                            <input type="radio" name="message_type" value="email" class="form-radio text-indigo-600 h-4 w-4" checked>
+                                            <input type="radio" name="message_type" value="email" class="form-radio text-indigo-600 h-4 w-4" checked onchange="toggleAttachmentField()">
                                             <span class="ml-2 text-sm text-gray-700">Email (Free Auto-Send)</span>
                                         </label>
                                     </div>
@@ -344,7 +344,7 @@
                                     <textarea id="dmMessage" name="message" rows="4" required class="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md p-2 border" placeholder="Type your message here..."></textarea>
                                 </div>
                                 
-                                <div>
+                                <div id="dmAttachmentContainer">
                                     <label for="dmAttachment" class="block text-sm font-medium text-gray-700">Attach Photo or File (Optional)</label>
                                     <input type="file" id="dmAttachment" name="attachment" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
                                 </div>
@@ -385,15 +385,36 @@
 
 <script>
 // Direct Message Modal Logic
-function openDirectMessageModal(studentId, studentName, phone) {
+function toggleAttachmentField() {
+    const isEmail = document.querySelector('input[name="message_type"][value="email"]').checked;
+    const attachmentContainer = document.getElementById('dmAttachmentContainer');
+    if (isEmail) {
+        attachmentContainer.style.display = 'block';
+    } else {
+        attachmentContainer.style.display = 'none';
+        document.getElementById('dmAttachment').value = ''; // clear file
+    }
+}
+
+function openDirectMessageModal(studentId, studentName, phone, email) {
     document.getElementById('dmStudentId').value = studentId;
     document.getElementById('dmModalTitle').innerText = 'Message ' + studentName + "'s Parent";
-    document.getElementById('dmModalSubtitle').innerText = 'Sending to: ' + (phone || 'No number on file');
+    
+    let subtitleHtml = 'Sending to: ' + (phone || 'No phone number');
+    if (email) {
+        subtitleHtml += '<br>Email: ' + email;
+    } else {
+        subtitleHtml += '<br>Email: No email on file';
+    }
+    
+    document.getElementById('dmModalSubtitle').innerHTML = subtitleHtml;
     
     // Reset form
     document.getElementById('directMessageForm').reset();
     document.getElementById('dmSubmitBtn').disabled = false;
     document.getElementById('dmSubmitBtn').innerText = 'Send Message';
+    
+    toggleAttachmentField();
     
     document.getElementById('directMessageModal').classList.remove('hidden');
 }
@@ -414,15 +435,11 @@ async function submitDirectMessage(event) {
     
     // Get the phone number from the subtitle
     const subtitle = document.getElementById('dmModalSubtitle').innerText;
-    const phone = subtitle.replace('Sending to: ', '').trim();
+    const phone = subtitle.split('\n')[0].replace('Sending to: ', '').trim();
     
-    if (!phone || phone === 'No number on file') {
+    if (msgType !== 'email' && (!phone || phone === 'No phone number')) {
         alert("Cannot send message because there is no phone number on file for this parent.");
         return;
-    }
-    
-    if (formData.get('attachment') && formData.get('attachment').size > 0) {
-        alert("Note: Web browsers cannot automatically pass files into WhatsApp or SMS. Please re-attach your file after the app opens.");
     }
     
     if (msgType === 'whatsapp') {
