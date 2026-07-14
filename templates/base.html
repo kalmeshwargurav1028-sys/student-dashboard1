@@ -330,13 +330,6 @@
             </ul>
         </nav>
         
-        <!-- User Profile -->
-        <div class="p-4 bg-blue-600 dark:bg-gray-900 border-t border-blue-400 dark:border-gray-700">
-            <a href="{{ url_for('logout') }}" class="flex items-center text-blue-200 dark:text-gray-300 hover:text-white group">
-                <svg class="h-6 w-6 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                <span class="sidebar-text text-sm whitespace-nowrap">Logout</span>
-            </a>
-        </div>
     </aside>
     {% endif %}
 
@@ -392,12 +385,10 @@
                     </button>
                     <!-- Profile Dropdown -->
                     <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-50">
-                        {% if session.get('role') == 'admin' %}
+                        {% if session.get('role') != 'student' %}
                             <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
-                        {% elif session.get('role') == 'teacher' %}
-                            <a href="{{ url_for('profile_form') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
                         {% else %}
-                            <a href="{{ url_for('profile_form') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                            <a href="{{ url_for('student_profile', student_id=session.get('user_id')) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
                         {% endif %}
                         <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700">Logout</a>
                     </div>
