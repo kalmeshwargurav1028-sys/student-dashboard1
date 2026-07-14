@@ -83,42 +83,7 @@
                     </a>
                 {% endif %}
 
-                {# ── MY CLASSES (MAPPINGS) ─────────────────────────────── #}
-                {% if session.get('role') == 'teacher' %}
-                <li class="px-3 pt-4 pb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">My Classes</span>
-                </li>
-                
-                {% if teacher_homerooms %}
-                    {% for hr in teacher_homerooms %}
-                    <li>
-                        <a href="{{ url_for('attendance', target_class=hr.grade, mode='universal') }}"
-                           class="flex items-center px-4 py-2 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 text-sm">
-                            <span class="mr-3 text-lg">🏠</span>
-                            <span class="sidebar-text whitespace-nowrap">Homeroom Gr {{ hr.grade }}-{{ hr.section }}</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                {% endif %}
 
-                {% if teacher_subjects %}
-                    {% for sub in teacher_subjects %}
-                    <li>
-                        <a href="{{ url_for('gradebook') }}?class={{ sub.grade }}&section={{ sub.section }}"
-                           class="flex items-center px-4 py-2 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 text-sm">
-                            <span class="mr-3 text-lg">📚</span>
-                            <span class="sidebar-text whitespace-nowrap truncate w-40" title="{{ sub.subject }} (Gr {{ sub.grade }}-{{ sub.section }})">{{ sub.subject }} (Gr {{ sub.grade }}-{{ sub.section }})</span>
-                        </a>
-                    </li>
-                    {% endfor %}
-                {% endif %}
-                
-                {% if not teacher_homerooms and not teacher_subjects %}
-                    <li>
-                        <div class="px-6 py-2 text-xs text-blue-300 dark:text-gray-500 italic sidebar-text">No assigned classes</div>
-                    </li>
-                {% endif %}
-                {% endif %}
 
                 {# ── CLASSROOM ─────────────────────────────────────────── #}
                 <li class="px-3 pt-4 pb-1">
