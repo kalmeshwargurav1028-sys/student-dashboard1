@@ -378,24 +378,30 @@
                         <input type="date" id="hidden-calendar" class="absolute opacity-0 w-0 h-0 top-0 left-0 -z-10">
                     </div>
                 </div>
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ session.get('username') }}</span>
-                {% if session.get('role') != 'student' %}
-                <a href="{{ url_for('admin_profile') }}" class="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full">
-                {% else %}
-                <div class="block">
-                {% endif %}
-                    {% if session.get('photo_url') %}
-                    <img src="{{ session.get('photo_url') }}" alt="Profile Photo" class="h-9 w-9 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800">
-                    {% else %}
-                    <div class="h-9 w-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-white dark:border-gray-800">
-                        {{ session.get('username')[0]|upper if session.get('username') else 'A' }}
+                
+                <div class="relative">
+                    <button type="button" onclick="toggleProfileDropdown()" class="flex items-center gap-3 focus:outline-none rounded-full">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ session.get('username') }}</span>
+                        {% if session.get('photo_url') %}
+                        <img src="{{ session.get('photo_url') }}" alt="Profile Photo" class="h-9 w-9 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800">
+                        {% else %}
+                        <div class="h-9 w-9 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-md border-2 border-white dark:border-gray-800">
+                            {{ session.get('username')[0]|upper if session.get('username') else 'A' }}
+                        </div>
+                        {% endif %}
+                    </button>
+                    <!-- Profile Dropdown -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-50">
+                        {% if session.get('role') == 'admin' %}
+                            <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                        {% elif session.get('role') == 'teacher' %}
+                            <a href="{{ url_for('profile') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                        {% else %}
+                            <a href="{{ url_for('profile') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                        {% endif %}
+                        <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700">Logout</a>
                     </div>
-                    {% endif %}
-                {% if session.get('role') != 'student' %}
-                </a>
-                {% else %}
                 </div>
-                {% endif %}
             </div>
         </header>
         {% endif %}
@@ -485,6 +491,7 @@
         
         // Notifications Logic
         let notifDropdownOpen = false;
+        let profileDropdownOpen = false;
         
         function toggleNotifs() {
             const dropdown = document.getElementById('notifDropdown');
@@ -496,13 +503,30 @@
             }
         }
         
+        function toggleProfileDropdown() {
+            const dropdown = document.getElementById('profileDropdown');
+            profileDropdownOpen = !profileDropdownOpen;
+            if(profileDropdownOpen) {
+                dropdown.classList.remove('hidden');
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+        
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
             const bell = document.getElementById('bellBtn');
-            const dropdown = document.getElementById('notifDropdown');
-            if(bell && dropdown && notifDropdownOpen && !bell.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.classList.add('hidden');
+            const notifDropdown = document.getElementById('notifDropdown');
+            if(bell && notifDropdown && notifDropdownOpen && !bell.contains(e.target) && !notifDropdown.contains(e.target)) {
+                notifDropdown.classList.add('hidden');
                 notifDropdownOpen = false;
+            }
+            
+            const profileBtn = document.querySelector('button[onclick="toggleProfileDropdown()"]');
+            const profileDropdown = document.getElementById('profileDropdown');
+            if(profileBtn && profileDropdown && profileDropdownOpen && !profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                profileDropdown.classList.add('hidden');
+                profileDropdownOpen = false;
             }
         });
         
