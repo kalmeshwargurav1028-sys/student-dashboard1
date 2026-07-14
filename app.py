@@ -1293,6 +1293,29 @@ def student_home():
                 except Exception:
                     pass
 
+    # Gamification: Calculate Level and XP
+    # Base XP = (Submitted Assignments * 50) + (Streak * 10) + (Performance * 5)
+    total_xp = (submitted_count * 50) + (streak * 10) + (performance * 5)
+    current_level = (total_xp // 200) + 1
+    xp_for_next_level = current_level * 200
+    xp_progress = int(((total_xp % 200) / 200) * 100)
+    
+    # Upcoming Assignments Widget (Due in next 7 days, limit 3)
+    upcoming_assignments = []
+    for a in all_assignments:
+        is_submitted = any(str(sub.get('student_id')) == student_id for sub in a.get('submissions', []))
+        if not is_submitted:
+            try:
+                due_date_obj = datetime.strptime(a['due_date'], '%Y-%m-%d')
+                days_left = (due_date_obj.date() - today.date()).days
+                if 0 <= days_left <= 7:
+                    a['days_left'] = days_left
+                    upcoming_assignments.append(a)
+            except Exception:
+                pass
+    upcoming_assignments.sort(key=lambda x: x['days_left'])
+    upcoming_assignments = upcoming_assignments[:3]
+
     return render_template('student_home.html',
         student=student,
         courses=courses,
@@ -1303,6 +1326,10 @@ def student_home():
         performance=performance,
         streak=streak,
         weekly_activity=weekly_activity,
+        total_xp=total_xp,
+        current_level=current_level,
+        xp_progress=xp_progress,
+        upcoming_assignments=upcoming_assignments,
         current_weekday=current_weekday
     )
 
