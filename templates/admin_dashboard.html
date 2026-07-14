@@ -10,86 +10,155 @@
 
     </div>
 
-        <!-- Dashboard View -->
+    <!-- Dashboard View -->
     <div id="view-dashboard" class="view-section">
+    <!-- Analytics Overview -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-gray-900 mb-4">User Activity Stats</h2>
         
-        <p class="text-lg text-gray-400 mb-6">System overview and user activity tracking</p>
-        
-        <!-- Stats Row -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <div class="bg-[#222222] rounded-xl p-5 border border-[#333]">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-gray-400 text-sm font-medium">Total<br>admins</h3>
-                    <i class="fa-solid fa-users-cog text-gray-500 text-xl"></i>
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
+            <!-- Admins Stats -->
+            <div class="bg-gradient-to-br from-red-50 to-rose-100 overflow-hidden shadow-sm rounded-xl border border-red-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-red-100">
+                        💎
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-red-800 truncate">Total Admins</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-red-900">{{ stats.total_admins }}</div></dd>
+                        </dl>
+                    </div>
                 </div>
-                <div class="text-3xl text-white font-normal mb-3">{{ stats.total_admins }}</div>
-                <div class="text-[#4d94ff] text-sm">{{ stats.active_admins }} active · past 15 min</div>
             </div>
-            <div class="bg-[#222222] rounded-xl p-5 border border-[#333]">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-gray-400 text-sm font-medium">Total<br>teachers</h3>
-                    <i class="fa-solid fa-chalkboard-teacher text-gray-500 text-xl"></i>
+            
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
+                        🛡️
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-blue-800 truncate">Active Admins</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-blue-900">{{ stats.active_admins }}</div>
+                                <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
                 </div>
-                <div class="text-3xl text-white font-normal mb-3">{{ stats.total_teachers }}</div>
-                <div class="text-gray-500 text-sm">{{ stats.active_teachers }} active · past 15 min</div>
             </div>
-            <div class="bg-[#222222] rounded-xl p-5 border border-[#333]">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-gray-400 text-sm font-medium">Total<br>students</h3>
-                    <i class="fa-solid fa-user-graduate text-gray-500 text-xl"></i>
-                </div>
-                <div class="text-3xl text-white font-normal mb-3">{{ stats.total_students }}</div>
-                <div class="text-gray-500 text-sm">{{ stats.active_students }} active · past 15 min</div>
-            </div>
-            <div class="bg-[#222222] rounded-xl p-5 border border-[#333]">
-                <div class="flex justify-between items-start mb-2">
-                    <h3 class="text-gray-400 text-sm font-medium">Total<br>users</h3>
-                    <i class="fa-solid fa-users text-gray-500 text-xl"></i>
-                </div>
-                <div class="text-3xl text-white font-normal mb-3">{{ stats.total_admins + stats.total_teachers + stats.total_students }}</div>
-                <div class="text-[#4d94ff] text-sm">{{ stats.active_admins + stats.active_teachers + stats.active_students }} active now</div>
-            </div>
-        </div>
 
-        <!-- Users Tabs and Table -->
-        <div class="rounded-xl overflow-hidden border border-[#333] mb-8">
-            <div class="flex bg-[#333]">
-                <button class="flex-1 py-4 text-white bg-[#1e1e1e] text-center text-lg font-medium border-r border-[#444]">Admins</button>
-                <button class="flex-1 py-4 text-white bg-[#2e2e2e] text-center text-lg font-medium border-r border-[#444]">Teachers</button>
-                <button class="flex-1 py-4 text-white bg-[#2e2e2e] text-center text-lg font-medium">Students</button>
+            <!-- Teachers Stats -->
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
+                        👨‍🏫
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-blue-800 truncate">Total Teachers</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-blue-900">{{ stats.total_teachers }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
             </div>
-            <div class="bg-[#2a2a2a]">
-                <table class="min-w-full text-left text-sm text-gray-300">
-                    <thead class="border-b border-[#444] bg-[#333]">
+            
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
+                        ✅
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-blue-800 truncate">Active Teachers</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-blue-900">{{ stats.active_teachers }}</div>
+                                <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Students Stats -->
+            <div class="bg-gradient-to-br from-purple-50 to-fuchsia-100 overflow-hidden shadow-sm rounded-xl border border-purple-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-purple-100">
+                        🎓
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-purple-800 truncate">Total Students</dt>
+                            <dd class="flex items-baseline"><div class="text-2xl font-black text-purple-900">{{ stats.total_students }}</div></dd>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5 hover:shadow-md transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
+                        🚀
+                    </div>
+                    <div class="ml-5 w-0 flex-1">
+                        <dl>
+                            <dt class="text-sm font-bold text-blue-800 truncate">Active Students</dt>
+                            <dd class="flex items-baseline">
+                                <div class="text-2xl font-black text-blue-900">{{ stats.active_students }}</div>
+                                <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full">Past 15 mins</span>
+                            </dd>
+                        </dl>
+                    </div>
+                </div>
+            </div></div>
+    </div>
+
+    <!-- Active Users Tables -->
+    <div class="grid grid-cols-1 gap-8">
+        
+        <!-- Admins Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-red-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-red-100 bg-red-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-red-800">💎 Admin Activity</h3>
+                <span class="text-xs font-bold text-red-600 bg-white px-2 py-1 rounded-full border border-red-200">Admins Only View</span>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
                         <tr>
-                            <th class="px-6 py-3 font-medium uppercase tracking-wider text-gray-400">ADMIN</th>
-                            <th class="px-6 py-3 font-medium uppercase tracking-wider text-gray-400">STATUS</th>
-                            <th class="px-6 py-3 font-medium uppercase tracking-wider text-gray-400">LAST ACTIVE</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Admin</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-[#444]">
+                    <tbody class="bg-white divide-y divide-gray-100">
                         {% for t in active_admins %}
-                        <tr class="hover:bg-[#333] transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="text-white font-medium text-base">{{ t.name }}</div>
-                                <div class="text-sm text-gray-500">{{ t.email }}</div>
+                        <tr class="hover:bg-red-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="bg-[#002b5e] text-[#4d94ff] px-4 py-1 rounded-full text-sm font-medium">Active</span>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-gray-400">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
                         </tr>
                         {% endfor %}
                         {% for t in inactive_admins %}
-                        <tr class="hover:bg-[#333] transition-colors">
-                            <td class="px-6 py-4">
-                                <div class="text-white font-medium text-base">{{ t.name }}</div>
-                                <div class="text-sm text-gray-500">{{ t.email }}</div>
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
                             </td>
-                            <td class="px-6 py-4">
-                                <span class="bg-[#1a1a1a] text-gray-400 px-4 py-1 rounded-full text-sm font-medium">Inactive</span>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
                             </td>
-                            <td class="px-6 py-4 text-gray-400">{{ t.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -97,43 +166,167 @@
             </div>
         </div>
 
-        <!-- System Files and Media -->
-        <div class="bg-[#2a2a2a] rounded-xl border border-[#444] overflow-hidden">
-            <div class="px-6 py-4 border-b border-[#444] flex justify-between items-center bg-[#222]">
-                <div class="flex items-center space-x-3">
-                    <i class="fa-solid fa-server text-gray-400"></i>
-                    <h3 class="text-xl font-medium text-white">System files and media</h3>
-                    <div class="bg-[#111] text-gray-400 text-sm px-4 py-1 rounded-full ml-4">
-                        {{ materials|length }} files
-                    </div>
-                </div>
-                <button class="border border-gray-500 text-gray-300 hover:text-white hover:border-white px-5 py-2 rounded-lg text-sm flex items-center space-x-2 transition-colors">
-                    <i class="fa-solid fa-file-arrow-up"></i>
-                    <span>Upload</span>
-                </button>
+        <!-- Teachers Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-blue-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-blue-800">👨‍🏫 Teacher Activity</h3>
             </div>
-            <div class="p-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {% for m in materials %}
-                    <div class="bg-[#222] border border-[#333] rounded-xl p-4 flex items-start space-x-4">
-                        <div class="bg-[#3a1a1a] p-3 rounded-lg flex items-center justify-center border border-[#5a2a2a]">
-                            <span class="text-red-500 text-xs font-bold border border-red-500 rounded px-1.5 py-0.5">PDF</span>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <p class="text-white font-medium text-lg truncate">{{ m.get('title') }}</p>
-                            <p class="text-gray-400 text-sm truncate">{{ m.get('filename') }}</p>
-                            <p class="text-gray-500 text-xs mt-1">Grade: {{ m.get('class', 'N/A') }} - Section: {{ m.get('section', 'N/A') }}</p>
-                            <p class="text-gray-500 text-xs mt-1">Sent by: {{ m.get('teacher_name', 'System') }}</p>
-                        </div>
-                        <a href="{{ m.get('file_url') or url_for('get_file', file_id=m.get('file_id')|string) }}" target="_blank" class="text-gray-400 hover:text-white border border-[#444] p-3 rounded-lg transition-colors">
-                            <i class="fa-solid fa-file-pdf"></i>
-                        </a>
-                    </div>
-                    {% endfor %}
-                </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Teacher</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Role</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
+                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for t in active_teachers %}
+                        <tr class="hover:bg-blue-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for t in inactive_teachers %}
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
+                                <div class="text-xs text-gray-500">{{ t.email }}</div>
+                            </td>
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </span>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ t.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not active_teachers and not inactive_teachers %}
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-500 font-bold">No teachers registered.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
+        <!-- Students Table -->
+        <div class="bg-white shadow-sm rounded-xl border border-purple-100 overflow-hidden">
+            <div class="px-6 py-4 border-b border-purple-100 bg-purple-50 flex items-center justify-between">
+                <h3 class="text-lg font-bold text-purple-800">🎓 Student Activity</h3>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-white sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Student</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Last Active</th>
+                            <th scope="col" class="relative px-6 py-3 bg-gray-50"><span class="sr-only">Actions</span></th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-100">
+                        {% for s in active_students %}
+                        <tr class="hover:bg-purple-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-500">Just now</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                                <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% for s in inactive_students %}
+                        <tr class="hover:bg-gray-50 opacity-80 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
+                                <div class="text-xs text-gray-500">{{ s.email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-800 border border-gray-200">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ s.last_active }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
+                                <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if not active_students and not inactive_students %}
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-gray-500 font-bold">No students registered.</td></tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    
+
+    <!-- System Files & Media -->
+    <div class="mt-8 bg-white shadow-sm rounded-xl border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex justify-between items-center">
+            <h3 class="text-lg font-bold text-gray-800">📁 System Files & Media</h3>
+            <span class="text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">{{ materials|length }} files</span>
+        </div>
+        <div class="p-6">
+            {% if materials %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for m in materials %}
+                <div class="border border-gray-200 rounded-lg p-4 flex items-start space-x-4 hover:shadow-md transition-shadow bg-white">
+                    <div class="flex-shrink-0 bg-blue-50 p-3 rounded-lg text-blue-500">
+                        <i class="fa-solid fa-file-pdf text-2xl"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-900 truncate" title="{{ m.get('title') }}">{{ m.get('title') }}</p>
+                        <p class="text-xs text-gray-500 truncate">{{ m.get('filename') }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Grade: {{ m.get('class', 'N/A') }} - Section: {{ m.get('section', 'N/A') }}</p>
+                        <p class="text-xs text-gray-500 mt-1 font-medium">Sent by: {{ m.get('teacher_name', 'Admin') }}</p>
+                    </div>
+                    <div>
+                        <a href="{{ m.get('file_url') or url_for('get_file', file_id=m.get('file_id')|string) }}" target="_blank" class="text-blue-600 hover:text-blue-800 bg-blue-50 px-2 py-1 rounded text-xs font-medium">View</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500 text-center py-4">No materials uploaded yet.</p>
+            {% endif %}
+        </div>
+    </div>
     </div> <!-- Close view-dashboard -->
 
     <!-- Role Management View -->
