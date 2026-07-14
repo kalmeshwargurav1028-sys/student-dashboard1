@@ -1427,6 +1427,11 @@ def student_profile(student_id):
             photo_url = url_for('get_file', file_id=str(file_id))
             
             db.students.update_one({'id': student_id}, {'$set': {'photo_url': photo_url}})
+            
+            # If the logged-in student is updating their own photo, update the session so the navbar reflects the change instantly
+            if session.get('role') == 'student' and session.get('user_id') == student_id:
+                session['photo_url'] = photo_url
+                
             flash('Profile photo updated successfully! It will now appear on your ID card.')
             return redirect(url_for('student_profile', student_id=student_id))
         
