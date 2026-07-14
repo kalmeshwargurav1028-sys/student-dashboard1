@@ -405,6 +405,11 @@
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% if session.get('role') == 'student' %}Student Portal{% elif session.get('role') == 'admin' %}Admin Portal{% else %}Teacher Portal{% endif %}{% endblock %}</h2>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Live Date and Time -->
+                <div class="hidden md:flex flex-col text-right mr-4 text-gray-500 dark:text-gray-400">
+                    <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
+                    <span id="nav-date" class="text-xs"></span>
+                </div>
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ session.get('username') }}</span>
                 {% if session.get('role') != 'student' %}
                 <a href="{{ url_for('admin_profile') }}" class="block focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 rounded-full">
@@ -459,12 +464,26 @@
 
     <script>
 
-        // Sidebar functionality
+        // Sidebar and Time functionality
+
+        function updateDateTime() {
+            const now = new Date();
+            const timeEl = document.getElementById('nav-time');
+            const dateEl = document.getElementById('nav-date');
+            if (timeEl && dateEl) {
+                timeEl.innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                dateEl.innerText = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const sidebar = document.getElementById('sidebar');
             const toggleBtn = document.getElementById('sidebar-toggle');
             const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            
+            // Start clock
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
             
             // Initial notification fetch
             if(document.getElementById('notifBadge')) {

@@ -1501,6 +1501,8 @@ def admin_dashboard():
             'email': s.get('email'),
             'student_id': s.get('student_id'),
             'name': profile.get('name', s.get('email')),
+            'grade': profile.get('class', 'N/A'),
+            'section': profile.get('section', 'N/A'),
             'last_active': last_active_str or 'Never'
         }
         

@@ -260,6 +260,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
                                     <div class="text-xs text-gray-400 mt-0.5">{{ s.email }}</div>
+                                    <div class="text-xs font-medium text-gray-500 mt-1">Grade: {{ s.grade }} - Section: {{ s.section }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700">
@@ -269,7 +270,6 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-400">Just now</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                    <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -278,6 +278,7 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="text-sm font-bold text-gray-900">{{ s.name }} ({{ s.student_id }})</div>
                                     <div class="text-xs text-gray-400 mt-0.5">{{ s.email }}</div>
+                                    <div class="text-xs font-medium text-gray-500 mt-1">Grade: {{ s.grade }} - Section: {{ s.section }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-500">
@@ -287,7 +288,6 @@
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ s.last_active }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <button onclick="openResetModal('student', '{{ s.id }}', '{{ s.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                    <a href="{{ url_for('promotion_certificate', student_id=s.id) }}" target="_blank" class="text-amber-600 hover:text-amber-900 bg-amber-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm ml-2">Certificate</a>
                                 </td>
                             </tr>
                             {% endfor %}
