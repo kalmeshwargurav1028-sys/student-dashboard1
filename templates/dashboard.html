@@ -53,7 +53,7 @@
         
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 mb-8">
-            <a href="{{ url_for('gradebook') }}" class="block">
+            <a href="#" onclick="openTotalStudentsModal(event)" class="block">
                 <div class="bg-white overflow-hidden shadow rounded-lg border border-gray-100 hover:shadow-md transition-shadow cursor-pointer">
                     <div class="p-5">
                         <div class="flex items-center">
@@ -197,6 +197,52 @@
     </div>
 </div>
 
+<!-- Total Students Modal -->
+<div id="totalStudentsModal" class="fixed inset-0 z-50 hidden overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeTotalStudentsModal()"></div>
+        <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+        <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div class="sm:flex sm:items-start">
+                    <div class="mt-3 text-center sm:mt-0 sm:text-left w-full">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">My Students Details</h3>
+                        <div class="mt-4 max-h-96 overflow-y-auto shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    {% if students %}
+                                        {% for student in students %}
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ student.name }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.student_class }}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ student.division }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No students found.</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="closeTotalStudentsModal()" class="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:w-auto sm:text-sm">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Chat Widget Container -->
 <div id="chatWidget" class="fixed bottom-4 right-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 hidden flex-col z-50 overflow-hidden transform transition-all duration-300 scale-95 opacity-0">
     <!-- Header -->
@@ -220,6 +266,16 @@
 </div>
 
 <script>
+// Total Students Modal Logic
+function openTotalStudentsModal(e) {
+    if(e) e.preventDefault();
+    document.getElementById('totalStudentsModal').classList.remove('hidden');
+}
+
+function closeTotalStudentsModal() {
+    document.getElementById('totalStudentsModal').classList.add('hidden');
+}
+
 // Announcement Modal Logic
 function openAnnouncementModal(e) {
     if(e) e.preventDefault();
