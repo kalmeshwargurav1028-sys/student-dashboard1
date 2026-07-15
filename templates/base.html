@@ -125,12 +125,7 @@
                 {% if role_permissions.get('edit_materials') %}
                 <li>
                     {% if session.get('role') == 'teacher' %}
-                    <!-- Share Resource moved to Quick Actions for Teachers -->
-                    <a href="{{ url_for('teacher_my_resources') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 mt-1 {% if '/teacher/my-resources' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">My Shared Resources</span>
-                    </a>
+                    <!-- Share Resource and My Shared Resources moved to Quick Actions for Teachers -->
                     {% else %}
                     <a href="{{ url_for('materials') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/materials' in current_path and '/student' not in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -152,20 +147,7 @@
                 </li>
 
                 {% if session.get('role') == 'teacher' %}
-                <li>
-                    <a href="{{ url_for('colleague_resources') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/shared-resources' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Colleague Resources</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('teacher_courses') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if current_path.startswith('/courses') or current_path.startswith('/course/') %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Course Management</span>
-                    </a>
-                </li>
+                <!-- Colleague Resources and Course Management moved to Quick Actions for Teachers -->
                 {% endif %}
 
                 {% if session.get('role') == 'admin' %}
