@@ -776,10 +776,20 @@
             container.insertAdjacentHTML('beforeend', toastHtml);
             const newToast = container.lastElementChild;
             
+            // Trigger animation to show the toast
+            requestAnimationFrame(() => {
+                // small delay to ensure transition applies
+                setTimeout(() => {
+                    newToast.classList.remove('translate-x-full', 'opacity-0');
+                    newToast.classList.add('translate-x-0', 'opacity-100');
+                }, 10);
+            });
+            
             // Auto remove
             setTimeout(() => {
-                newToast.classList.add('opacity-0');
-                setTimeout(() => newToast.remove(), 300);
+                newToast.classList.remove('translate-x-0', 'opacity-100');
+                newToast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => newToast.remove(), 500);
             }, 5000);
         };
 
