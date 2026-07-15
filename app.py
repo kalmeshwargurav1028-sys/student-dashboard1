@@ -1343,6 +1343,8 @@ def dashboard():
         return redirect(url_for('login'))
     if session.get('role') == 'student':
         return redirect(url_for('student_home'))
+    if session.get('role') == 'admin':
+        return redirect(url_for('admin_dashboard'))
     
     students = list(db.students.find(get_student_query(), {'_id': 0}))
     
