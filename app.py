@@ -1317,6 +1317,37 @@ def student_home():
                 pass
     upcoming_assignments.sort(key=lambda x: x.get('days_left', 999))
     upcoming_assignments = upcoming_assignments[:3]
+    # Fetch Today's Schedule
+    today_name = datetime.now().strftime('%A')
+    schedule_query = {'day': today_name}
+    if student and student.get('student_class'):
+        schedule_query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
+    else:
+        schedule_query['class_name'] = '__no_class__'
+    today_schedule = list(db.timetable.find(schedule_query, {'_id': 0}))
+    today_schedule = sorted(today_schedule, key=lambda x: x.get('time', ''))
+
+    # Fetch Recent Grades from assignments
+    recent_grades = []
+    for a in all_assignments:
+        for s in a.get('submissions', []):
+            if str(s.get('student_id')) == str(student_id) and s.get('marks') is not None:
+                # Calculate percentage
+                try:
+                    marks = float(s.get('marks', 0))
+                    total = float(a.get('total_marks', 100) or 100)
+                    perc = int((marks / total) * 100)
+                except:
+                    perc = 0
+                recent_grades.append({
+                    'title': a.get('title'),
+                    'marks': s.get('marks'),
+                    'percentage': perc,
+                    'submitted_at': s.get('submitted_at', '')
+                })
+    # Sort by most recently submitted
+    recent_grades.sort(key=lambda x: x.get('submitted_at', ''), reverse=True)
+    recent_grades = recent_grades[:3]
 
     return render_template('student_home.html',
         student=student,
@@ -1332,7 +1363,9 @@ def student_home():
         current_level=current_level,
         xp_progress=xp_progress,
         upcoming_assignments=upcoming_assignments,
-        current_weekday=current_weekday
+        current_weekday=current_weekday,
+        today_schedule=today_schedule,
+        recent_grades=recent_grades
     )
 
 
