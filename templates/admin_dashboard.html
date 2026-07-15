@@ -230,7 +230,7 @@
             <table class="min-w-full divide-y divide-gray-200">
                 {% set custom_roles = [] %}
                 {% for role in global_config.keys() %}
-                    {% if role != '_id' and role != 'admin' %}
+                    {% if role != '_id' and role != 'admin' and role != 'student' %}
                         {% set _ = custom_roles.append(role) %}
                     {% endif %}
                 {% endfor %}
