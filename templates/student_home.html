@@ -28,27 +28,59 @@
 <div class="flex justify-center w-full min-h-full bg-[#F8FAFC]">
   <div class="w-full py-8 px-8 sm:px-10 lg:px-12 space-y-8">
 
-    <!-- Header Section -->
-    <div class="flex justify-between items-start mb-2">
-    <div>
-      <h1 class="text-3xl font-bold text-blue-900 mb-1 tracking-tight">
-        <span id="greeting-text"></span>,<br>
-        {{ student.name | title }}
-      </h1>
-      <p class="text-gray-500 font-medium">Grade {{ student.student_class }} - section {{ student.division }}</p>
+    <!-- Student Summary Banner -->
+    <div class="bg-[#1e5a97] rounded-xl p-6 sm:p-8 shadow-sm text-white mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-medium mb-4 tracking-wide">
+                <span id="greeting-text"></span>, {{ student.name | title }}
+            </h1>
+            <div class="flex flex-wrap gap-3 items-center">
+                <span class="inline-block px-4 py-1.5 rounded-lg text-sm bg-white/20 hover:bg-white/30 transition-colors cursor-default">
+                    Grade {{ student.student_class }} - Section {{ student.division }}
+                </span>
+                
+                {% if streak > 0 %}
+                <span class="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-sm bg-amber-500/20 text-amber-200 border border-amber-500/30 font-semibold shadow-inner">
+                    <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.214.33-.403.713-.57 1.116-.334.804-.614 1.768-.84 2.734a31.365 31.365 0 00-.613 3.58 2.64 2.64 0 01-.945-1.067c-.328-.68-.398-1.534-.398-2.654A1 1 0 005.05 6.05 6.981 6.981 0 003 11a7 7 0 1011.95-4.95c-.592-.591-.98-.985-1.348-1.467-.363-.476-.724-1.063-1.207-2.03zM12.12 15.12A3 3 0 017 13s.879.5 2.5.5c0-1 .5-4 1.25-4.5.5 1 .786 1.293 1.371 1.879A2.99 2.99 0 0113 13a2.99 2.99 0 01-.879 2.121z" clip-rule="evenodd" />
+                    </svg>
+                    {{ streak }} Day Streak
+                </span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Date, Time and Profile Link -->
+        <div class="flex items-center gap-6 shrink-0">
+            <!-- Date and Time -->
+            <div class="hidden md:flex flex-col text-right">
+                <span id="nav-time" class="text-sm font-bold text-white tracking-wide"></span>
+                <div class="relative cursor-pointer group" onclick="document.getElementById('hidden-calendar').showPicker()">
+                    <span id="nav-date" class="text-xs text-blue-200 group-hover:text-white transition-colors" title="Click to open calendar"></span>
+                    <input type="date" id="hidden-calendar" class="absolute opacity-0 w-0 h-0 top-0 left-0 -z-10">
+                </div>
+            </div>
+
+            <!-- Profile Link -->
+            <a href="{{ url_for('student_profile', student_id=session.get('user_id')) }}" class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl border border-white/10">
+                <div class="flex flex-col items-end">
+                    <span class="text-sm font-semibold text-white">My Profile</span>
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">Manage Settings</span>
+                </div>
+                <div class="relative h-10 w-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center shrink-0">
+                    {% if session.get('photo_url') %}
+                    <img src="{{ session.get('photo_url') }}" 
+                         alt="" 
+                         class="h-full w-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    {% endif %}
+                    <svg class="h-6 w-6 text-white/70 {% if session.get('photo_url') %}hidden{% endif %}" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+            </a>
+        </div>
     </div>
-    {% if streak > 0 %}
-    <div class="flex flex-col items-center text-gray-500 font-medium text-right mt-1">
-      <div class="flex items-center justify-center gap-1">
-        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        <span>{{ streak }} day</span>
-      </div>
-      <span>streak</span>
-    </div>
-    {% endif %}
-  </div>
 
   <!-- Today's Schedule -->
   <div class="card p-6">
