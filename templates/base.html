@@ -241,13 +241,6 @@
                     </a>
                 </li>
 
-                <li>
-                    <a href="{{ url_for('timetable') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/timetable' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Timetable</span>
-                    </a>
-                </li>
 
                 <li>
                     <a href="{{ url_for('student_online_tests') }}"
@@ -328,7 +321,7 @@
                 
                 <div class="relative">
                     <button type="button" onclick="toggleProfileDropdown()" class="flex items-center gap-3 focus:outline-none rounded-full">
-                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ session.get('username') }}</span>
+                        <!-- Username removed as requested -->
                         {% if session.get('photo_url') %}
                         <img src="{{ session.get('photo_url') }}" alt="Profile Photo" class="h-9 w-9 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800">
                         {% else %}
