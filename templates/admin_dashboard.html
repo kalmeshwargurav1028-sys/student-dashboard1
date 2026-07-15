@@ -743,12 +743,12 @@ async function saveExistingRoles() {
             btn.innerText = 'Saved!';
             setTimeout(() => { closeSaveRoleModal(); window.location.reload(); }, 1000);
         } else {
-            alert('Error saving permissions: ' + data.error);
+            showToast('Error saving permissions: ' + data.error, 'error');
             btn.innerText = 'Apply to existing roles';
             btn.disabled = false;
         }
     } catch(err) {
-        alert('Failed to connect to the server.');
+        showToast('Failed to connect to the server.', 'error');
     }
 }
 
@@ -777,13 +777,13 @@ async function saveNewRole() {
                 body: JSON.stringify(payload)
             });
             
-            alert(`Role '${newRoleName}' created and configured successfully!`);
+            showToast(`Role '${newRoleName}' created and configured successfully!`);
             window.location.reload();
         } else {
-            alert('Error creating role: ' + dataAdd.error);
+            showToast('Error creating role: ' + dataAdd.error, 'error');
         }
     } catch(e) {
-        alert('Failed to create custom role.');
+        showToast('Failed to create custom role.', 'error');
     }
 }
 </script>
@@ -1098,7 +1098,7 @@ async function saveNewRole() {
         const newPassword = document.getElementById('newPassword').value;
         
         if(!newPassword) {
-            alert('Please enter a password');
+            showToast('Please enter a password');
             return;
         }
         
@@ -1115,13 +1115,13 @@ async function saveNewRole() {
             const result = await response.json();
             
             if(result.success) {
-                alert('Password successfully reset! You can now tell them their new password.');
+                showToast('Password successfully reset! You can now tell them their new password.');
                 closeResetModal();
             } else {
-                alert('Error: ' + result.error);
+                showToast('Error: ' + result.error, 'error');
             }
         } catch (e) {
-            alert('Failed to reset password.');
+            showToast('Failed to reset password.', 'error');
         }
     }
     
@@ -1176,10 +1176,10 @@ async function saveNewRole() {
             if(data.success) {
                 window.location.reload();
             } else {
-                alert('Error: ' + data.error);
+                showToast('Error: ' + data.error, 'error');
             }
         } catch(err) {
-            alert('Failed to publish announcement.');
+            showToast('Failed to publish announcement.', 'error');
         }
     }
     
@@ -1194,10 +1194,10 @@ async function saveNewRole() {
             if(data.success) {
                 document.getElementById('ann-row-' + id).remove();
             } else {
-                alert('Error: ' + data.error);
+                showToast('Error: ' + data.error, 'error');
             }
         } catch(err) {
-            alert('Failed to delete announcement.');
+            showToast('Failed to delete announcement.', 'error');
         }
     }
 
@@ -1219,11 +1219,11 @@ async function saveNewRole() {
                 event.target.parentNode.appendChild(badge);
                 setTimeout(() => badge.remove(), 2000);
             } else {
-                alert('Error: ' + data.error);
+                showToast('Error: ' + data.error, 'error');
                 window.location.reload();
             }
         } catch(e) {
-            alert('Failed to change user role.');
+            showToast('Failed to change user role.', 'error');
         }
     }
 
@@ -1598,12 +1598,12 @@ async function saveExistingRoles() {
             btn.innerText = 'Saved!';
             setTimeout(() => { closeSaveRoleModal(); window.location.reload(); }, 1000);
         } else {
-            alert('Error saving permissions: ' + data.error);
+            showToast('Error saving permissions: ' + data.error, 'error');
             btn.innerText = 'Apply to existing roles';
             btn.disabled = false;
         }
     } catch(err) {
-        alert('Failed to connect to the server.');
+        showToast('Failed to connect to the server.', 'error');
     }
 }
 
@@ -1632,13 +1632,13 @@ async function saveNewRole() {
                 body: JSON.stringify(payload)
             });
             
-            alert(`Role '${newRoleName}' created and configured successfully!`);
+            showToast(`Role '${newRoleName}' created and configured successfully!`);
             window.location.reload();
         } else {
-            alert('Error creating role: ' + dataAdd.error);
+            showToast('Error creating role: ' + dataAdd.error, 'error');
         }
     } catch(e) {
-        alert('Failed to create custom role.');
+        showToast('Failed to create custom role.', 'error');
     }
 }
 </script>

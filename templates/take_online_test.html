@@ -92,7 +92,7 @@
         
         if (timeLeft <= 0) {
             clearInterval(interval);
-            alert("Time is up! Submitting your test automatically.");
+            showToast("Time is up! Submitting your test automatically.");
             document.getElementById('test-form').submit();
         }
     }, 1000);

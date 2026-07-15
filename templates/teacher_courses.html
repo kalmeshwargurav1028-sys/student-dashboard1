@@ -161,7 +161,7 @@
         const btn = document.getElementById('submitBtn');
         
         if(!name) {
-            alert('Please enter a course name');
+            showToast('Please enter a course name');
             return;
         }
         
@@ -179,13 +179,13 @@
             if(data.success) {
                 window.location.href = `/course/${data.course_id}`;
             } else {
-                alert(data.error || 'Failed to create course');
+                showToast(data.error || 'Failed to create course', 'error');
                 btn.disabled = false;
                 btn.innerText = 'Create Course';
             }
         } catch(e) {
             console.error(e);
-            alert('An error occurred');
+            showToast('An error occurred', 'error');
             btn.disabled = false;
             btn.innerText = 'Create Course';
         }
@@ -205,11 +205,11 @@
             if(data.success) {
                 window.location.reload();
             } else {
-                alert(data.error || 'Failed to delete course');
+                showToast(data.error || 'Failed to delete course', 'error');
             }
         } catch(e) {
             console.error(e);
-            alert('An error occurred');
+            showToast('An error occurred', 'error');
         }
     }
 </script>

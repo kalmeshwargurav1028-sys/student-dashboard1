@@ -297,12 +297,12 @@ async function sendQuickAlert(studentId, alertType, btn) {
                     : 'px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg transition-colors';
             }, 3000);
         } else {
-            alert('Failed: ' + data.error);
+            showToast('Failed: ' + data.error, 'error');
             btn.textContent = original;
             btn.disabled = false;
         }
     } catch(e) {
-        alert('Network error. Please try again.');
+        showToast('Network error. Please try again.', 'error');
         btn.textContent = original;
         btn.disabled = false;
     }
@@ -401,7 +401,7 @@ function openEditAlertModal(id) {
 async function submitEditAlert() {
     const id = document.getElementById('editAlertId').value;
     const msg = document.getElementById('editAlertMessage').value;
-    if (!msg) return alert("Message cannot be empty");
+    if (!msg) return showToast("Message cannot be empty");
 
     try {
         const res = await fetch('/api/alerts/edit/' + id, {
@@ -413,10 +413,10 @@ async function submitEditAlert() {
         if (data.success) {
             location.reload();
         } else {
-            alert('Error editing alert: ' + data.error);
+            showToast('Error editing alert: ' + data.error, 'error');
         }
     } catch (e) {
-        alert('Error connecting to server.');
+        showToast('Error connecting to server.', 'error');
     }
 }
 
@@ -428,10 +428,10 @@ async function deleteAlert(id) {
         if (data.success) {
             location.reload();
         } else {
-            alert('Error deleting alert: ' + data.error);
+            showToast('Error deleting alert: ' + data.error, 'error');
         }
     } catch (e) {
-        alert('Error connecting to server.');
+        showToast('Error connecting to server.', 'error');
     }
 }
 </script>

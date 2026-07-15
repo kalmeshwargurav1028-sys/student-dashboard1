@@ -110,7 +110,7 @@
         const file = event.target.files[0];
         if (file) {
             if (file.size > 10 * 1024 * 1024) {
-                alert('File size exceeds 10MB limit.');
+                showToast('File size exceeds 10MB limit.');
                 event.target.value = '';
                 return;
             }
@@ -144,7 +144,7 @@
         const courseId = '{{ course._id }}';
         
         if(!name) {
-            alert('Please enter a course name');
+            showToast('Please enter a course name');
             return;
         }
         
@@ -179,13 +179,13 @@
                     btn.innerHTML = originalContent;
                 }, 2000);
             } else {
-                alert(data.error || 'Failed to save course');
+                showToast(data.error || 'Failed to save course', 'error');
                 btn.disabled = false;
                 btn.innerHTML = originalContent;
             }
         } catch(e) {
             console.error(e);
-            alert('An error occurred');
+            showToast('An error occurred', 'error');
             btn.disabled = false;
             btn.innerHTML = originalContent;
         }
@@ -224,11 +224,11 @@
                     status.innerText = 'Draft (Hidden)';
                 }
             } else {
-                alert(data.error || 'Failed to update publish status');
+                showToast(data.error || 'Failed to update publish status', 'error');
             }
         } catch(e) {
             console.error(e);
-            alert('An error occurred');
+            showToast('An error occurred', 'error');
         } finally {
             btn.disabled = false;
         }

@@ -410,7 +410,7 @@ function handleDrop(event) {
 function submitForm(statusValue) {
     const input = document.getElementById('file-upload');
     const hasFile = (input.files && input.files.length > 0) || input._droppedFile;
-    if (!hasFile) { alert('Please attach a file before submitting.'); goToStep(1); return; }
+    if (!hasFile) { showToast('Please attach a file before submitting.'); goToStep(1); return; }
     let sf = document.getElementById('status-field');
     if (!sf) {
         sf = document.createElement('input');

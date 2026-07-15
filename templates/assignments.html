@@ -591,15 +591,15 @@
                 
                 // Show feedback in an alert for now
                 if (data.feedback) {
-                    alert("AI Feedback:\n" + data.feedback);
+                    showToast("AI Feedback:\n" + data.feedback);
                 }
             } else {
-                alert("Error: " + data.error);
+                showToast("Error: " + data.error, 'error');
                 btn.innerHTML = `Auto-Grade with AI 🤖`;
             }
         } catch (error) {
             console.error(error);
-            alert("Failed to connect to the AI grading service.");
+            showToast("Failed to connect to the AI grading service.", 'error');
             btn.innerHTML = `Auto-Grade with AI 🤖`;
         }
         

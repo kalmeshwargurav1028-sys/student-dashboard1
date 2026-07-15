@@ -438,7 +438,7 @@ async function submitDirectMessage(event) {
     const phone = subtitle.split('\n')[0].replace('Sending to: ', '').trim();
     
     if (msgType !== 'email' && (!phone || phone === 'No phone number')) {
-        alert("Cannot send message because there is no phone number on file for this parent.");
+        showToast("Cannot send message because there is no phone number on file for this parent.");
         return;
     }
     
@@ -460,16 +460,16 @@ async function submitDirectMessage(event) {
             });
             const data = await response.json();
             if (data.success) {
-                alert('Email successfully sent to the parent!');
+                showToast('Email successfully sent to the parent!');
                 closeDirectMessageModal();
             } else {
-                alert('Error: ' + data.error);
+                showToast('Error: ' + data.error, 'error');
                 btn.disabled = false;
                 btn.innerText = 'Send Message';
             }
         } catch (e) {
             console.error("Failed to send email via backend", e);
-            alert('An error occurred while sending the email. Please try again.');
+            showToast('An error occurred while sending the email. Please try again.', 'error');
             btn.disabled = false;
             btn.innerText = 'Send Message';
         }
@@ -519,7 +519,7 @@ async function submitAnnouncement() {
     const body = document.getElementById('annBody').value.trim();
     
     if(!title || !body || !expiry_date) {
-        alert('Please fill in all fields.');
+        showToast('Please fill in all fields.');
         return;
     }
     
@@ -533,12 +533,12 @@ async function submitAnnouncement() {
         if(data.success) {
             closeAnnouncementModal();
             // Show a quick success alert or toast (using native alert for simplicity)
-            alert('Announcement posted successfully!');
+            showToast('Announcement posted successfully!');
         } else {
-            alert('Error: ' + data.error);
+            showToast('Error: ' + data.error, 'error');
         }
     } catch(err) {
-        alert('Failed to post announcement.');
+        showToast('Failed to post announcement.', 'error');
         console.error(err);
     }
 }

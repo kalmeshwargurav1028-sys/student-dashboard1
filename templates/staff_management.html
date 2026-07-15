@@ -72,7 +72,7 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button onclick="alert('Feature coming soon!')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-indigo-100 mr-2">Edit</button>
+                            <button onclick="showToast('Feature coming soon!')" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-indigo-100 mr-2">Edit</button>
                             <button onclick="deleteStaff('{{ staff._id }}')" class="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-md text-xs font-bold shadow-sm border border-red-100">Delete</button>
                         </td>
                     </tr>
@@ -297,10 +297,10 @@ async function deleteStaff(id) {
         if (res.ok && data.success) {
             location.reload();
         } else {
-            alert('Error deleting staff member: ' + (data.error || 'Unknown error'));
+            showToast('Error deleting staff member: ' + (data.error || 'Unknown error', 'error'));
         }
     } catch (e) {
-        alert('Database connection failed or network error. Please try again later.');
+        showToast('Database connection failed or network error. Please try again later.', 'error');
     }
 }
 </script>
