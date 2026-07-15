@@ -80,9 +80,11 @@
 
 
                 {# ── CLASSROOM ─────────────────────────────────────────── #}
+                {% if session.get('role') != 'teacher' %}
                 <li class="px-3 pt-4 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Classroom</span>
                 </li>
+                {% endif %}
 
                 {% if session.get('role') != 'teacher' %}
                 <li>
@@ -142,9 +144,11 @@
 
 
                 {# ── ACADEMIC ──────────────────────────────────────────── #}
+                {% if session.get('role') != 'teacher' %}
                 <li class="px-3 pt-4 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Academic</span>
                 </li>
+                {% endif %}
 
                 {% if session.get('role') == 'teacher' %}
                 <!-- Colleague Resources and Course Management moved to Quick Actions for Teachers -->
