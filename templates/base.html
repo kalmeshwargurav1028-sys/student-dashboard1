@@ -707,7 +707,7 @@
     </script>
 
     <!-- Toast Notifications Container -->
-    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-3 pointer-events-none">
+    <div id="toast-container" class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -715,7 +715,7 @@
                 {% set border_color = 'border-l-4 border-blue-500' if category != 'error' else 'border-l-4 border-red-500' %}
                 {% set text_color = 'text-gray-800 dark:text-gray-200' %}
                 {% set icon_color = 'text-blue-500' if category != 'error' else 'text-red-500' %}
-                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 {{ bg_color }} {{ border_color }} shadow-xl rounded-r-lg p-4 transition-all duration-300" role="alert">
+                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 {{ bg_color }} {{ border_color }} shadow-xl rounded-r-lg p-4 transition-all duration-500 transform translate-x-0 opacity-100" role="alert">
                     <div class="flex-shrink-0 {{ icon_color }} mt-0.5">
                         {% if category == 'error' %}
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -761,7 +761,7 @@
                 : '<svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>';
             
             const toastHtml = `
-                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 ${bgColor} ${borderColor} shadow-xl rounded-r-lg p-4 transition-all duration-300" role="alert">
+                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 ${bgColor} ${borderColor} shadow-xl rounded-r-lg p-4 transition-all duration-500 transform translate-x-full opacity-0" role="alert">
                     <div class="flex-shrink-0 ${iconColor} mt-0.5">
                         ${svgIcon}
                     </div>
@@ -790,17 +790,18 @@
             }, 5000);
         };
 
-        // Trigger toast animations for exit
-        (function() {
+        // Trigger toast animations for exit for pre-rendered flushed messages
+        document.addEventListener('DOMContentLoaded', function() {
             const toasts = document.querySelectorAll('.toast-message');
             toasts.forEach((toast, index) => {
                 // Auto-remove after 5 seconds
                 setTimeout(() => {
-                    toast.classList.add('opacity-0');
-                    setTimeout(() => toast.remove(), 300);
+                    toast.classList.remove('translate-x-0', 'opacity-100');
+                    toast.classList.add('translate-x-full', 'opacity-0');
+                    setTimeout(() => toast.remove(), 500);
                 }, 5000 + (index * 150));
             });
-        })();
+        });
     </script>
 </body>
 </html>
