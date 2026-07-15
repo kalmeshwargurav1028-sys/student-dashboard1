@@ -78,9 +78,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Clean the text: remove markdown like #, -, _, *, ` and extra spaces
                 const cleanText = text.replace(/[#\-_*`~]/g, '').replace(/\n+/g, ' ').trim();
                 
-                const utterance = new SpeechSynthesisUtterance(cleanText);
-                utterance.rate = 0.95; // Slightly slower for better clarity
-                utterance.pitch = 1.05; // Slightly higher pitch for natural tone
+                // Split text into chunks (sentences) to prevent voice breaking/cutting off on long texts
+                const chunks = cleanText.match(/[^.!?]+[.!?]*/g) || [cleanText];
                 
                 // Try to find a good English voice
                 let voices = window.speechSynthesis.getVoices();
@@ -89,16 +88,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (voices.length === 0) {
                     window.speechSynthesis.onvoiceschanged = () => {
                         voices = window.speechSynthesis.getVoices();
-                        speakWithVoice(voices, utterance);
+                        speakChunks(voices, chunks);
                     };
                 } else {
-                    speakWithVoice(voices, utterance);
+                    speakChunks(voices, chunks);
                 }
                 
-                function speakWithVoice(voices, utterance) {
+                function speakChunks(voices, chunks) {
                     try {
                         const selectedLang = languageSelect.value;
                         let bestVoice;
+                        let targetLang = 'en-US';
                         
                         // Helper to find a voice by prefix
                         const findVoice = (prefix) => {
@@ -108,21 +108,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         };
                         
                         if (selectedLang === 'Hindi') {
-                            utterance.lang = 'hi-IN';
+                            targetLang = 'hi-IN';
                             bestVoice = findVoice('hi');
                         } else if (selectedLang === 'Kannada') {
-                            utterance.lang = 'kn-IN';
+                            targetLang = 'kn-IN';
                             bestVoice = findVoice('kn');
                         } else if (selectedLang === 'Marathi') {
-                            utterance.lang = 'mr-IN';
+                            targetLang = 'mr-IN';
                             bestVoice = findVoice('mr');
                             // Fallback to Hindi for Marathi (both use Devanagari script)
                             if (!bestVoice) {
-                                utterance.lang = 'hi-IN';
+                                targetLang = 'hi-IN';
                                 bestVoice = findVoice('hi');
                             }
                         } else {
-                            utterance.lang = 'en-US';
+                            targetLang = 'en-US';
                             bestVoice = voices.find(v => 
                                 v.name.includes('Google US English') || 
                                 v.name.includes('Microsoft Zira') || 
@@ -137,11 +137,21 @@ document.addEventListener('DOMContentLoaded', function() {
                             bestVoice = voices[0];
                         }
                         
-                        if (bestVoice) {
-                            utterance.voice = bestVoice;
-                        }
-                        
-                        window.speechSynthesis.speak(utterance);
+                        chunks.forEach(chunk => {
+                            const trimmedChunk = chunk.trim();
+                            if (!trimmedChunk) return;
+                            
+                            const utterance = new SpeechSynthesisUtterance(trimmedChunk);
+                            utterance.rate = 0.95; // Slightly slower for better clarity
+                            utterance.pitch = 1.05; // Slightly higher pitch for natural tone
+                            utterance.lang = targetLang;
+                            
+                            if (bestVoice) {
+                                utterance.voice = bestVoice;
+                            }
+                            
+                            window.speechSynthesis.speak(utterance);
+                        });
                     } catch (e) {
                         console.error('Speech synthesis error:', e);
                     }
