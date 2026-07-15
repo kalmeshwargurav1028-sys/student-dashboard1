@@ -392,7 +392,7 @@
                 <td class="px-6 py-4 text-center">
     
                     <select class="border border-blue-200 text-[#1E4E8C] text-sm rounded-lg py-1 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[140px] perm-scope" data-role="teacher" data-perm="manage_students">
-                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All</option>
+                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All classes</option>
                         <option value="assigned_classes" {{ 'selected' if t_val == 'assigned_classes' else '' }}>Assigned classes</option>
                         <option value="none" {{ 'selected' if not t_val else '' }}>-</option>
                     </select>
@@ -423,7 +423,7 @@
                 <td class="px-6 py-4 text-center">
     
                     <select class="border border-blue-200 text-[#1E4E8C] text-sm rounded-lg py-1 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[140px] perm-scope" data-role="teacher" data-perm="modify_attendance">
-                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All</option>
+                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All classes</option>
                         <option value="assigned_classes" {{ 'selected' if t_val == 'assigned_classes' else '' }}>Assigned classes</option>
                         <option value="none" {{ 'selected' if not t_val else '' }}>-</option>
                     </select>
@@ -481,7 +481,7 @@
                 <td class="px-6 py-4 text-center">
     
                     <select class="border border-blue-200 text-[#1E4E8C] text-sm rounded-lg py-1 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[140px] perm-scope" data-role="teacher" data-perm="edit_materials">
-                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All</option>
+                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All classes</option>
                         <option value="assigned_classes" {{ 'selected' if t_val == 'assigned_classes' else '' }}>Assigned classes</option>
                         <option value="none" {{ 'selected' if not t_val else '' }}>-</option>
                     </select>
@@ -539,7 +539,7 @@
                 <td class="px-6 py-4 text-center">
     
                     <select class="border border-blue-200 text-[#1E4E8C] text-sm rounded-lg py-1 px-3 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white min-w-[140px] perm-scope" data-role="teacher" data-perm="send_announcements">
-                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All</option>
+                        <option value="all" {{ 'selected' if t_val == 'all' or t_val == True else '' }}>All classes</option>
                         <option value="assigned_classes" {{ 'selected' if t_val == 'assigned_classes' else '' }}>Assigned classes</option>
                         <option value="none" {{ 'selected' if not t_val else '' }}>-</option>
                     </select>
@@ -802,7 +802,7 @@ async function saveNewRole() {
                 <i class="fa-regular fa-clock mr-2"></i> Last edited by {{ session.get('username') }}, just now
             </div>
             <button onclick="openSaveRoleModal()" class="px-6 py-2.5 bg-[#5B50C1] hover:bg-[#4a41a3] text-white font-medium rounded-lg shadow-sm transition-colors">
-                Save changes
+                Save
             </button>
         </div>
     </div>
