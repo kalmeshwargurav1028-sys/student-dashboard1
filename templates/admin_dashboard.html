@@ -1194,15 +1194,7 @@ async function saveNewRole() {
             alert('Failed to delete announcement.');
         }
     }
-        } catch(e) {
-            alert('Failed to create custom role.');
-        }
-    }
 
-        } catch(e) {
-            alert('Failed to delete custom role.');
-        }
-    }
 
     async function changeUserRole(userId, newRole, userName) {
         try {
@@ -1229,15 +1221,7 @@ async function saveNewRole() {
         }
     }
 
-        } catch(err) {
-            alert('Failed to connect to the server.');
-            const btn = document.querySelector('button[onclick="saveRolePermissions()"]');
-            if(btn) {
-                btn.innerText = 'Save Changes';
-                btn.disabled = false;
-            }
-        }
-    }
+
 
     // ===========================================================================
     // ADMIN ANALYTICS — Syllabus Pace, Roster Conflicts, Faculty Analytics
