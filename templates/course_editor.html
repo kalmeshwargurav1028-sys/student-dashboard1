@@ -2,7 +2,7 @@
 {% block header_title %}Teacher Portal - Course Editor{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6 relative pb-20">
+<div class="max-w-4xl mx-auto px-8 sm:px-10 lg:px-12 py-8 space-y-6 relative pb-20">
     
     <!-- Header with Back Button -->
     <div class="flex items-center gap-4 mb-6">
@@ -83,7 +83,7 @@
     </div>
     
     <!-- Floating Action Bar -->
-    <div class="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 flex justify-between items-center px-4 sm:px-6 lg:px-8">
+    <div class="fixed bottom-0 left-0 lg:left-64 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 flex justify-between items-center px-8 sm:px-10 lg:px-12">
         <div class="flex items-center gap-3">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Visibility:</span>
             <button id="publishBtn" onclick="togglePublish()" class="relative inline-flex items-center h-6 rounded-full w-11 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ease-in-out duration-200 {% if course.is_published %}bg-green-500{% else %}bg-gray-200 dark:bg-gray-700{% endif %}">
