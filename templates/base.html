@@ -314,7 +314,7 @@
                     </div>
                 </div>
 
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% if session.get('role') == 'student' %}Student Portal{% elif session.get('role') == 'admin' %}Admin Portal{% else %}Teacher Portal{% endif %}{% endblock %}</h2>
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% if session.get('role') == 'student' %}Student Portal{% elif session.get('role') == 'admin' %}{% else %}Teacher Portal{% endif %}{% endblock %}</h2>
             </div>
             <div class="flex items-center gap-3">
                 <!-- Live Date and Time -->
@@ -715,7 +715,7 @@
                 {% set border_color = 'border-l-4 border-blue-500' if category != 'error' else 'border-l-4 border-red-500' %}
                 {% set text_color = 'text-gray-800 dark:text-gray-200' %}
                 {% set icon_color = 'text-blue-500' if category != 'error' else 'text-red-500' %}
-                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 {{ bg_color }} {{ border_color }} shadow-xl rounded-r-lg p-4 transform transition-all duration-300 translate-x-full opacity-0" role="alert">
+                <div class="toast-message pointer-events-auto flex items-start w-80 sm:w-96 {{ bg_color }} {{ border_color }} shadow-xl rounded-r-lg p-4 transition-all duration-300" role="alert">
                     <div class="flex-shrink-0 {{ icon_color }} mt-0.5">
                         {% if category == 'error' %}
                         <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -745,20 +745,13 @@
     </div>
 
     <script>
-        // Trigger toast animations immediately after they are inserted in the DOM
+        // Trigger toast animations for exit
         (function() {
             const toasts = document.querySelectorAll('.toast-message');
             toasts.forEach((toast, index) => {
-                // Stagger the entrance animation
-                setTimeout(() => {
-                    toast.classList.remove('translate-x-full', 'opacity-0');
-                    toast.classList.add('translate-x-0', 'opacity-100');
-                }, 100 + (index * 150));
-                
                 // Auto-remove after 5 seconds
                 setTimeout(() => {
-                    toast.classList.remove('translate-x-0', 'opacity-100');
-                    toast.classList.add('translate-x-full', 'opacity-0');
+                    toast.classList.add('opacity-0');
                     setTimeout(() => toast.remove(), 300);
                 }, 5000 + (index * 150));
             });

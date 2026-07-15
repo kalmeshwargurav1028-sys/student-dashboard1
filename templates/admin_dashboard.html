@@ -154,20 +154,22 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-search text-gray-400"></i>
                 </div>
-                <input type="text" placeholder="Search by name, email..." class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search by name, email..." class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
             </div>
             
             <div class="flex items-center gap-3 w-full sm:w-auto">
-                <select class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+                <select id="roleFilter" onchange="filterUsers()" class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
                     <option value="all">All Roles</option>
                     <option value="admin">Admins</option>
                     <option value="teacher">Teachers</option>
+                    <option value="student">Students</option>
                 </select>
                 
-                <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
-                    <i class="fa-regular fa-calendar mr-2 text-gray-400"></i>
-                    Last 7 Days
-                </button>
+                <select id="dateFilter" onchange="filterUsers()" class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+                    <option value="7">Last 1 Week</option>
+                    <option value="30">Last 1 Month</option>
+                    <option value="all">All Time</option>
+                </select>
             </div>
         </div>
 
@@ -1052,6 +1054,66 @@
             const db = document.getElementById('view-dashboard');
             if (db) db.classList.remove('hidden');
         }
+    }
+
+    function filterUsers() {
+        const searchText = (document.getElementById('userSearchInput').value || '').toLowerCase();
+        const roleFilter = document.getElementById('roleFilter').value; // 'all', 'admin', 'teacher', 'student'
+        const dateFilter = document.getElementById('dateFilter').value; // '7', '30', 'all'
+
+        // Get all tables in the dashboard view
+        const tables = document.querySelectorAll('#view-dashboard .grid table');
+        
+        tables.forEach(table => {
+            // Determine the table's role based on its heading or structure
+            // Admin table has 'Admins Only View' badge or 'Admin Activity' heading
+            const isAdminTable = table.closest('div').innerHTML.includes('Admin Activity');
+            const isTeacherTable = table.closest('div').innerHTML.includes('Teacher Activity');
+            
+            // If the table role doesn't match the filter, hide the whole table container
+            const container = table.closest('div.bg-white.shadow-sm');
+            let showTable = true;
+            
+            if (roleFilter === 'admin' && !isAdminTable) showTable = false;
+            if (roleFilter === 'teacher' && !isTeacherTable) showTable = false;
+            if (roleFilter === 'student') showTable = false; // No student table in dashboard
+            
+            if (!showTable) {
+                container.style.display = 'none';
+                return;
+            } else {
+                container.style.display = 'block';
+            }
+
+            const rows = table.querySelectorAll('tbody tr');
+            rows.forEach(row => {
+                if(row.children.length === 1 && row.textContent.includes('No ')) return; // Skip empty state rows
+                
+                const textContent = row.textContent.toLowerCase();
+                
+                // Text search
+                const matchesSearch = textContent.includes(searchText);
+                
+                // Date filter (simple implementation based on text content)
+                let matchesDate = true;
+                if (dateFilter !== 'all') {
+                    const lastActiveText = (row.querySelector('td:nth-child(3)') || row.querySelector('td:nth-last-child(2)') || row).textContent.toLowerCase();
+                    if (dateFilter === '7' || dateFilter === '30') {
+                        // Very rough approximation since we don't have actual Date objects in the DOM
+                        // We assume "Just now", "mins ago", "hours ago", "days ago"
+                        if (lastActiveText.includes('month') || lastActiveText.includes('year')) {
+                            matchesDate = false;
+                        }
+                    }
+                }
+                
+                if (matchesSearch && matchesDate) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
     }
 </script>
 {% endblock %}
