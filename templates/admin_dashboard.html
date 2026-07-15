@@ -778,7 +778,7 @@ async function saveNewRole() {
             });
             
             showToast(`Role '${newRoleName}' created and configured successfully!`);
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showToast('Error creating role: ' + dataAdd.error, 'error');
         }
@@ -1174,7 +1174,7 @@ async function saveNewRole() {
             });
             const data = await res.json();
             if(data.success) {
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 showToast('Error: ' + data.error, 'error');
             }
@@ -1220,7 +1220,7 @@ async function saveNewRole() {
                 setTimeout(() => badge.remove(), 2000);
             } else {
                 showToast('Error: ' + data.error, 'error');
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1500);
             }
         } catch(e) {
             showToast('Failed to change user role.', 'error');
@@ -1633,7 +1633,7 @@ async function saveNewRole() {
             });
             
             showToast(`Role '${newRoleName}' created and configured successfully!`);
-            window.location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showToast('Error creating role: ' + dataAdd.error, 'error');
         }

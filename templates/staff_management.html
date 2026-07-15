@@ -295,7 +295,7 @@ async function deleteStaff(id) {
         const res = await fetch('/api/staff/delete/' + id, { method: 'POST' });
         const data = await res.json();
         if (res.ok && data.success) {
-            location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showToast('Error deleting staff member: ' + (data.error || 'Unknown error', 'error'));
         }

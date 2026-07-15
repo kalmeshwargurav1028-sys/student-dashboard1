@@ -203,7 +203,7 @@
             const data = await res.json();
             
             if(data.success) {
-                window.location.reload();
+                setTimeout(() => window.location.reload(), 1500);
             } else {
                 showToast(data.error || 'Failed to delete course', 'error');
             }

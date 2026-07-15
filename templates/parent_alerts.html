@@ -411,7 +411,7 @@ async function submitEditAlert() {
         });
         const data = await res.json();
         if (data.success) {
-            location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showToast('Error editing alert: ' + data.error, 'error');
         }
@@ -426,7 +426,7 @@ async function deleteAlert(id) {
         const res = await fetch('/api/alerts/delete/' + id, { method: 'POST' });
         const data = await res.json();
         if (data.success) {
-            location.reload();
+            setTimeout(() => window.location.reload(), 1500);
         } else {
             showToast('Error deleting alert: ' + data.error, 'error');
         }
