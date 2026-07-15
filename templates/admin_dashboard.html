@@ -12,9 +12,41 @@
 
         <!-- Dashboard View -->
     <div id="view-dashboard" class="view-section">
+
+        <!-- Quick Actions Panel -->
+        <div class="mb-8 bg-white shadow-sm rounded-xl border border-gray-100 p-4">
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{{ url_for('profile_form') }}" class="flex flex-col items-center justify-center p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-emerald-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-user-plus text-emerald-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-emerald-800">Add User</span>
+                </a>
+                <a href="#announcements" onclick="window.location.hash='announcements'; showView('announcements');" class="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-amber-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bullhorn text-amber-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-amber-800">New Announcement</span>
+                </a>
+                <a href="#reports" onclick="window.location.hash='reports'; showView('reports');" class="flex flex-col items-center justify-center p-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-indigo-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-chart-pie text-indigo-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-indigo-800">View Reports</span>
+                </a>
+                <a href="#roles" onclick="window.location.hash='roles'; showView('roles');" class="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-purple-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-shield-halved text-purple-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-purple-800">Role Config</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Analytics Overview -->
         <div class="mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">User Activity Stats</h2>
+            <h2 class="text-lg font-bold text-gray-900 mb-4">User Activity Stats</h2>
             
             <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 mb-8">
                 <!-- Admins Stats -->
@@ -49,8 +81,37 @@
                     </div>
                 </div>
                 
-                <!-- Spacer for 3 column grid to look like image, actually image has 3 top 3 bottom -->
+                <!-- Students Stats -->
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
+                            🎓
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-bold text-emerald-800 truncate">Total Students</dt>
+                                <dd class="flex items-baseline"><div class="text-2xl font-black text-emerald-900">{{ stats.total_students }}</div></dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
                 
+                <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
+                            ⚡
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-bold text-emerald-800 truncate">Active Students</dt>
+                                <dd class="flex items-baseline">
+                                    <div class="text-2xl font-black text-emerald-900">{{ stats.active_students }}</div>
+                                    <span class="ml-2 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full shadow-sm">Past 15 mins</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
                 <!-- Teachers Stats -->
                 <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5">
                     <div class="flex items-center">
@@ -84,6 +145,29 @@
                 </div>
                 
 
+            </div>
+        </div>
+
+        <!-- Filters and Search -->
+        <div class="mb-4 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
+            <div class="relative w-full sm:w-64">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-search text-gray-400"></i>
+                </div>
+                <input type="text" placeholder="Search by name, email..." class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+            </div>
+            
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <select class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
+                    <option value="all">All Roles</option>
+                    <option value="admin">Admins</option>
+                    <option value="teacher">Teachers</option>
+                </select>
+                
+                <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 whitespace-nowrap">
+                    <i class="fa-regular fa-calendar mr-2 text-gray-400"></i>
+                    Last 7 Days
+                </button>
             </div>
         </div>
 
