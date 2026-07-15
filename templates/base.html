@@ -84,6 +84,7 @@
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Classroom</span>
                 </li>
 
+                {% if session.get('role') != 'teacher' %}
                 <li>
                     <a href="{{ url_for('timetable') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/timetable' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -99,8 +100,9 @@
                         <span class="sidebar-text whitespace-nowrap text-sm">Assignments</span>
                     </a>
                 </li>
+                {% endif %}
 
-                {% if role_permissions.get('modify_attendance') or session.get('role') == 'teacher' %}
+                {% if (role_permissions.get('modify_attendance') or session.get('role') == 'admin') and session.get('role') != 'teacher' %}
                 <li>
                     <a href="{{ url_for('attendance') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/attendance' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -123,11 +125,7 @@
                 {% if role_permissions.get('edit_materials') %}
                 <li>
                     {% if session.get('role') == 'teacher' %}
-                    <a href="{{ url_for('share_resource') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/share-resource' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Share Resource</span>
-                    </a>
+                    <!-- Share Resource moved to Quick Actions for Teachers -->
                     <a href="{{ url_for('teacher_my_resources') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 mt-1 {% if '/teacher/my-resources' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
                         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
@@ -144,20 +142,7 @@
                 {% endif %}
 
                 {% if session.get('role') == 'teacher' %}
-                <li>
-                    <a href="{{ url_for('teacher_online_tests') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/online_tests' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Online Tests</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('daily_logs') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/daily_logs' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Daily Logs</span>
-                    </a>
-                </li>
+                <!-- Online Tests and Daily Logs moved to Quick Actions for Teachers -->
                 {% endif %}
 
 
@@ -202,16 +187,7 @@
                 {% endif %}
                 
                 {% if session.get('role') == 'teacher' %}
-                <li class="px-3 pt-4 pb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Reporting</span>
-                </li>
-                <li>
-                    <a href="{{ url_for('teacher_daily_report') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/teacher/daily_report' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Daily Report</span>
-                    </a>
-                </li>
+                <!-- Reporting section moved to Quick Actions for Teachers -->
                 {% endif %}
 
                 {% else %}
