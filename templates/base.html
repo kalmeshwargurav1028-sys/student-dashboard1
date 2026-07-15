@@ -272,6 +272,7 @@
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% if session.get('role') == 'student' %}Student Portal{% elif session.get('role') == 'admin' %}{% else %}Teacher Portal{% endif %}{% endblock %}</h2>
             </div>
             <div class="flex items-center gap-3">
+                {% if session.get('role') != 'teacher' %}
                 <!-- Live Date and Time -->
                 <div class="hidden md:flex flex-col text-right mr-4 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
@@ -302,6 +303,7 @@
                         <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700">Logout</a>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </header>
         {% endif %}
