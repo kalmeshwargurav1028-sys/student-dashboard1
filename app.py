@@ -943,6 +943,7 @@ def login():
                     'user_id': student_id,
                     'email': email,
                     'username': profile.get('name') if profile else email.split('@')[0],
+                    'photo_url': profile.get('photo_url', '') if profile else '',
                     'redirect_url': url_for('student_home')
                 }
                 return initiate_2fa(email, session_data)
