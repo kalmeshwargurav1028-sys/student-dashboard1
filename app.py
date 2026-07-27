@@ -125,15 +125,16 @@ def configure_elevenlabs():
     try:
         config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
         api_key = os.environ.get('ELEVENLABS_API_KEY') or config_data.get('ELEVENLABS_API_KEY') or "sk_77f91f7dbf82af1eaf8851cec2d8be8a23a5fe3d9131eabd"
-        voice_id = os.environ.get('ELEVENLABS_VOICE_ID') or config_data.get('ELEVENLABS_VOICE_ID') or "NOpBlnGInO9m6vDvFkFC"
-        model_id = os.environ.get('ELEVENLABS_MODEL_ID') or config_data.get('ELEVENLABS_MODEL_ID') or "eleven_v3"
+        voice_id = os.environ.get('ELEVENLABS_VOICE_ID') or config_data.get('ELEVENLABS_VOICE_ID') or "Xb7hH8MSUJpSbSDYk0k2"
+        model_id = os.environ.get('ELEVENLABS_MODEL_ID') or config_data.get('ELEVENLABS_MODEL_ID') or "eleven_turbo_v2_5"
         if api_key:
             from elevenlabs.client import ElevenLabs
             client_el = ElevenLabs(api_key=api_key)
             return client_el, api_key, voice_id, model_id
     except Exception as e:
         print(f"Warning: Failed to configure ElevenLabs during startup. Error: {e}")
-    return None, None, "NOpBlnGInO9m6vDvFkFC", "eleven_v3"
+    return None, None, "Xb7hH8MSUJpSbSDYk0k2", "eleven_turbo_v2_5"
+
 
 
 
@@ -2695,6 +2696,17 @@ def elevenlabs_tts():
         if not clean_text:
             return jsonify({'error': 'Empty text content'}), 400
 
+        # Limit text length to 350 chars for sub-second ultra-fast speech generation
+        if len(clean_text) > 350:
+            sentences = re.split(r'(?<=[.!?]) +', clean_text)
+            truncated = ""
+            for s in sentences:
+                if len(truncated) + len(s) <= 350:
+                    truncated += (" " if truncated else "") + s
+                else:
+                    break
+            clean_text = truncated or clean_text[:350]
+
         client_el, api_key, default_voice, default_model = configure_elevenlabs()
         if not client_el:
             return jsonify({'error': 'ElevenLabs API key not configured'}), 500
@@ -2702,7 +2714,7 @@ def elevenlabs_tts():
         voice_id = data.get('voice_id') or default_voice
         model_id = data.get('model_id') or default_model
 
-        # Fallback voices if requested voice_id encounters a 402 payment / library voice restriction on free plan
+        # Order by premade working voices first for zero-retry sub-second response
         voices_to_try = [voice_id, "Xb7hH8MSUJpSbSDYk0k2", "EXAVITQu4vr4xnSDxMaL", "21m00Tcm4TlvDq8ikWAM"]
         unique_voices = []
         for v in voices_to_try:
@@ -2712,11 +2724,12 @@ def elevenlabs_tts():
         audio_bytes = None
         last_err = None
         for v_id in unique_voices:
-            for m_id in [model_id, "eleven_multilingual_v2"]:
+            # Try turbo/flash models first for sub-second speed
+            for m_id in [model_id, "eleven_turbo_v2_5", "eleven_flash_v2_5", "eleven_multilingual_v2"]:
                 try:
                     audio = client_el.text_to_speech.convert(
                         voice_id=v_id,
-                        text=clean_text[:1000],  # Limit chunk size for fast audio generation
+                        text=clean_text,
                         model_id=m_id
                     )
                     audio_bytes = b"".join(list(audio)) if hasattr(audio, "__iter__") else audio
@@ -2735,6 +2748,7 @@ def elevenlabs_tts():
     except Exception as e:
         print(f"[ELEVENLABS TTS ERROR] {e}")
         return jsonify({'error': f"TTS Generation Error: {str(e)}"}), 500
+
 
 @app.route('/api/dashboard_ai', methods=['POST'])
 

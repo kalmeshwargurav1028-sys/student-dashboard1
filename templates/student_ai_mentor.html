@@ -78,10 +78,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     text: text,
-                    voice_id: "NOpBlnGInO9m6vDvFkFC",
-                    model_id: "eleven_v3"
+                    voice_id: "Xb7hH8MSUJpSbSDYk0k2",
+                    model_id: "eleven_turbo_v2_5"
                 })
             });
+
 
             if (response.ok) {
                 const blob = await response.blob();
