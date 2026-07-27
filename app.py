@@ -28,49 +28,67 @@ load_dotenv()
 # Setup MongoDB
 # Vercel Serverless Optimization: Restrict maxPoolSize so 940 simultaneous users don't crash MongoDB Atlas free tier (500 conn limit)
 mongo_uri = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
-client = MongoClient(
-    mongo_uri, 
-    maxPoolSize=1, 
-    minPoolSize=0, 
-    maxIdleTimeMS=10000, 
-    serverSelectionTimeoutMS=5000
-)
-db = client['kalmeshwar']
-users = db['users']
-fs = gridfs.GridFS(db)
-
+try:
+    client = MongoClient(
+        mongo_uri, 
+        maxPoolSize=1, 
+        minPoolSize=0, 
+        maxIdleTimeMS=10000, 
+        serverSelectionTimeoutMS=5000
+    )
+    db = client['kalmeshwar']
+    users = db['users']
+    fs = gridfs.GridFS(db)
+except Exception as e:
+    print(f"[MONGODB INITIALIZATION ERROR] Failed to connect to MongoDB at {mongo_uri}: {e}")
+    client = None
+    db = None
+    users = None
+    fs = None
 
 
 # Helper Functions for Notifications
 def send_twilio_sms(phone, message):
-    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    try:
+        config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
+    except Exception as e:
+        print(f"[SMS CONFIG ERROR] Could not fetch settings from DB: {e}")
+        config_data = {}
+
     account_sid = config_data.get('TWILIO_ACCOUNT_SID') or os.environ.get('TWILIO_ACCOUNT_SID')
     auth_token = config_data.get('TWILIO_AUTH_TOKEN') or os.environ.get('TWILIO_AUTH_TOKEN')
     from_phone = config_data.get('TWILIO_PHONE_NUMBER') or os.environ.get('TWILIO_PHONE_NUMBER')
     
     if not (account_sid and auth_token and from_phone):
         print(f"[MOCK SMS] To: {phone} - Message: {message}")
-        raise ValueError("Twilio credentials not configured")
+        return False
 
     try:
-        client = TwilioClient(account_sid, auth_token)
-        message = client.messages.create(
+        twilio_client = TwilioClient(account_sid, auth_token)
+        sms_msg = twilio_client.messages.create(
             body=message,
             from_=from_phone,
             to=phone
         )
-        print(f"SMS sent successfully: {message.sid}")
+        print(f"SMS sent successfully: {sms_msg.sid}")
+        return True
     except Exception as e:
         print(f"Failed to send SMS to {phone}: {e}")
+        return False
 
 def send_sendgrid_email(email, subject, message_body):
-    config_data = db.settings.find_one({}, {'_id': 0}) or {}
+    try:
+        config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
+    except Exception as e:
+        print(f"[SENDGRID CONFIG ERROR] Could not fetch settings from DB: {e}")
+        config_data = {}
+
     api_key = config_data.get('SENDGRID_API_KEY') or os.environ.get('SENDGRID_API_KEY')
     from_email = config_data.get('SENDGRID_FROM_EMAIL') or os.environ.get('SENDGRID_FROM_EMAIL')
     
     if not (api_key and from_email):
         print(f"[MOCK EMAIL] To: {email} - Subject: {subject} - Body: {message_body}")
-        raise ValueError("SendGrid credentials not configured")
+        return False
 
     try:
         sg = sendgrid.SendGridAPIClient(api_key=api_key)
@@ -82,9 +100,10 @@ def send_sendgrid_email(email, subject, message_body):
         )
         response = sg.send(message)
         print(f"Email sent successfully: {response.status_code}")
+        return True
     except Exception as e:
-        print(f"Failed to send email via SMTP: {str(e)}")
-        raise e
+        print(f"Failed to send email via SendGrid: {str(e)}")
+        return False
 
 def send_error_email(error_details):
     # PERMANENTLY DISABLED - Do not send any error alert emails
@@ -92,12 +111,12 @@ def send_error_email(error_details):
 
 def configure_gemini():
     try:
-        config_data = db.settings.find_one({}, {'_id': 0}) or {}
+        config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
         # Always prefer Environment Variable first, fallback to database
         api_key = os.environ.get('GEMINI_API_KEY') or config_data.get('GEMINI_API_KEY')
         if api_key:
-            client = genai.Client(api_key=api_key)
-            return client, api_key
+            client_ai = genai.Client(api_key=api_key)
+            return client_ai, api_key
     except Exception as e:
         print(f"Warning: Failed to configure Gemini during startup. Error: {e}")
     return None, None
@@ -651,7 +670,15 @@ mail = Mail(app)
 # Flask-SocketIO — Real-Time WebSocket Notifications
 # Uses eventlet for async. Falls back to threading if eventlet unavailable.
 # ---------------------------------------------------------------------------
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+try:
+    socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+except Exception as e:
+    print(f"[SOCKETIO WARNING] Eventlet async_mode failed ({e}). Falling back to default async mode.")
+    try:
+        socketio = SocketIO(app, cors_allowed_origins="*")
+    except Exception as ex:
+        print(f"[SOCKETIO CRITICAL ERROR] Failed to initialize SocketIO: {ex}")
+        socketio = SocketIO(app)
 
 @socketio.on('connect')
 def on_connect():
@@ -5050,4 +5077,14 @@ You MUST format your entire response as a valid JSON object EXACTLY like this (d
         return jsonify({'success': False, 'error': f"AI Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', debug=True, port=5000)
+    port = int(os.environ.get('PORT', 5000))
+    try:
+        socketio.run(app, host='0.0.0.0', debug=True, port=port)
+    except OSError as e:
+        print(f"[SERVER ERROR] Could not bind to port {port} ({e}). Retrying on port 5001...")
+        try:
+            socketio.run(app, host='0.0.0.0', debug=True, port=5001)
+        except Exception as ex:
+            print(f"[FATAL SERVER ERROR] Failed to start server on fallback port: {ex}")
+    except Exception as e:
+        print(f"[FATAL SERVER ERROR] Unexpected server error: {e}")
