@@ -121,6 +121,21 @@ def configure_gemini():
         print(f"Warning: Failed to configure Gemini during startup. Error: {e}")
     return None, None
 
+def configure_elevenlabs():
+    try:
+        config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
+        api_key = os.environ.get('ELEVENLABS_API_KEY') or config_data.get('ELEVENLABS_API_KEY') or "sk_77f91f7dbf82af1eaf8851cec2d8be8a23a5fe3d9131eabd"
+        voice_id = os.environ.get('ELEVENLABS_VOICE_ID') or config_data.get('ELEVENLABS_VOICE_ID') or "NOpBlnGInO9m6vDvFkFC"
+        model_id = os.environ.get('ELEVENLABS_MODEL_ID') or config_data.get('ELEVENLABS_MODEL_ID') or "eleven_v3"
+        if api_key:
+            from elevenlabs.client import ElevenLabs
+            client_el = ElevenLabs(api_key=api_key)
+            return client_el, api_key, voice_id, model_id
+    except Exception as e:
+        print(f"Warning: Failed to configure ElevenLabs during startup. Error: {e}")
+    return None, None, "NOpBlnGInO9m6vDvFkFC", "eleven_v3"
+
+
 
 
 app = Flask(__name__)
@@ -2667,7 +2682,62 @@ Student Data: {name} | Performance={performance}/100 | Attendance={attendance}%.
         print(f"Gemini API Error: {e}")
         return {'response': f"Sorry, I encountered an error communicating with my AI brain. Error: {str(e)}"}
 
+@app.route('/api/tts', methods=['POST'])
+def elevenlabs_tts():
+    try:
+        data = request.get_json() or {}
+        text = data.get('text', '').strip()
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+
+        # Clean text of markdown characters before TTS
+        clean_text = re.sub(r'[#\-_*`~]', '', text).strip()
+        if not clean_text:
+            return jsonify({'error': 'Empty text content'}), 400
+
+        client_el, api_key, default_voice, default_model = configure_elevenlabs()
+        if not client_el:
+            return jsonify({'error': 'ElevenLabs API key not configured'}), 500
+
+        voice_id = data.get('voice_id') or default_voice
+        model_id = data.get('model_id') or default_model
+
+        # Fallback voices if requested voice_id encounters a 402 payment / library voice restriction on free plan
+        voices_to_try = [voice_id, "Xb7hH8MSUJpSbSDYk0k2", "EXAVITQu4vr4xnSDxMaL", "21m00Tcm4TlvDq8ikWAM"]
+        unique_voices = []
+        for v in voices_to_try:
+            if v and v not in unique_voices:
+                unique_voices.append(v)
+
+        audio_bytes = None
+        last_err = None
+        for v_id in unique_voices:
+            for m_id in [model_id, "eleven_multilingual_v2"]:
+                try:
+                    audio = client_el.text_to_speech.convert(
+                        voice_id=v_id,
+                        text=clean_text[:1000],  # Limit chunk size for fast audio generation
+                        model_id=m_id
+                    )
+                    audio_bytes = b"".join(list(audio)) if hasattr(audio, "__iter__") else audio
+                    if audio_bytes and len(audio_bytes) > 0:
+                        break
+                except Exception as me:
+                    last_err = me
+            if audio_bytes and len(audio_bytes) > 0:
+                break
+
+        if not audio_bytes:
+            raise RuntimeError(f"ElevenLabs TTS conversion failed: {last_err}")
+
+        return Response(audio_bytes, mimetype="audio/mpeg")
+
+    except Exception as e:
+        print(f"[ELEVENLABS TTS ERROR] {e}")
+        return jsonify({'error': f"TTS Generation Error: {str(e)}"}), 500
+
 @app.route('/api/dashboard_ai', methods=['POST'])
+
 def dashboard_ai():
     if not session.get('logged_in'):
         return {'error': 'Unauthorized'}, 401

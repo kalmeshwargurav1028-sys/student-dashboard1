@@ -57,108 +57,102 @@ document.addEventListener('DOMContentLoaded', function() {
     const languageSelect = document.getElementById('ai-language-select');
     const studentId = "{{ student.id }}";
     
+    let currentAudio = null;
+
+    async function speakTextElevenLabs(text, playBtnElement) {
+        try {
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+
+            if (playBtnElement) {
+                playBtnElement.innerHTML = `<svg class="w-4 h-4 animate-spin text-blue-600" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>`;
+            }
+
+            const response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: text,
+                    voice_id: "NOpBlnGInO9m6vDvFkFC",
+                    model_id: "eleven_v3"
+                })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                currentAudio = new Audio(audioUrl);
+                
+                if (playBtnElement) {
+                    playBtnElement.innerHTML = `<svg class="w-4 h-4 text-blue-600 animate-pulse" fill="currentColor" viewBox="0 0 24 24"><path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM16.5 12c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM3 9v6h4l5 5V4L7 9H3z"/></svg>`;
+                }
+
+                currentAudio.onended = () => {
+                    if (playBtnElement) {
+                        playBtnElement.innerHTML = `<svg class="w-4 h-4 text-gray-500 hover:text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+                    }
+                };
+
+                await currentAudio.play();
+                return;
+            }
+        } catch (err) {
+            console.warn('ElevenLabs TTS failed, falling back to Web Speech:', err);
+        }
+
+        // Fallback to Web Speech Synthesis
+        if ('speechSynthesis' in window) {
+            const cleanText = text.replace(/[#\-_*`~]/g, '').replace(/\n+/g, ' ').trim();
+            const utterance = new SpeechSynthesisUtterance(cleanText);
+            utterance.rate = 0.95;
+            utterance.pitch = 1.05;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        if (playBtnElement) {
+            playBtnElement.innerHTML = `<svg class="w-4 h-4 text-gray-500 hover:text-blue-600" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>`;
+        }
+    }
+
     function addMessage(text, isUser) {
         const msgDiv = document.createElement('div');
         msgDiv.className = `flex ${isUser ? 'justify-end' : 'justify-start'}`;
         
         const bubble = document.createElement('div');
-        bubble.className = `max-w-[75%] rounded-lg px-4 py-2 text-sm ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm'}`;
-        bubble.innerText = text;
+        bubble.className = `max-w-[75%] rounded-lg px-4 py-2 text-sm relative group ${isUser ? 'bg-blue-600 text-white rounded-br-none' : 'bg-white border border-gray-200 text-gray-800 rounded-bl-none shadow-sm flex flex-col gap-1'}`;
+        
+        const textSpan = document.createElement('div');
+        textSpan.innerText = text;
+        bubble.appendChild(textSpan);
+
+        if (!isUser) {
+            const controlsDiv = document.createElement('div');
+            controlsDiv.className = 'flex items-center justify-end mt-1 gap-2 pt-1 border-t border-gray-100';
+
+            const speakBtn = document.createElement('button');
+            speakBtn.type = 'button';
+            speakBtn.className = 'p-1 hover:bg-gray-100 rounded transition-colors text-xs flex items-center gap-1 text-gray-500 hover:text-blue-600';
+            speakBtn.title = 'Listen with ElevenLabs AI Voice';
+            speakBtn.innerHTML = `<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg><span class="text-[10px] font-medium">Listen</span>`;
+            
+            speakBtn.onclick = () => speakTextElevenLabs(text, speakBtn);
+            controlsDiv.appendChild(speakBtn);
+            bubble.appendChild(controlsDiv);
+
+            // Auto-speak ElevenLabs voice on new incoming response
+            speakTextElevenLabs(text, speakBtn);
+        }
         
         msgDiv.appendChild(bubble);
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
-        
-        // Voice Over for AI Mentor
-        if (!isUser) {
-            if ('speechSynthesis' in window) {
-                // Cancel any ongoing speech
-                window.speechSynthesis.cancel();
-                
-                // Clean the text: remove markdown like #, -, _, *, ` and extra spaces
-                const cleanText = text.replace(/[#\-_*`~]/g, '').replace(/\n+/g, ' ').trim();
-                
-                // Split text into chunks (sentences) to prevent voice breaking/cutting off on long texts
-                const chunks = cleanText.match(/[^.!?]+[.!?]*/g) || [cleanText];
-                
-                // Try to find a good English voice
-                let voices = window.speechSynthesis.getVoices();
-                
-                // Ensure voices are loaded (some browsers load them async)
-                if (voices.length === 0) {
-                    window.speechSynthesis.onvoiceschanged = () => {
-                        voices = window.speechSynthesis.getVoices();
-                        speakChunks(voices, chunks);
-                    };
-                } else {
-                    speakChunks(voices, chunks);
-                }
-                
-                function speakChunks(voices, chunks) {
-                    try {
-                        const selectedLang = languageSelect.value;
-                        let bestVoice;
-                        let targetLang = 'en-US';
-                        
-                        // Helper to find a voice by prefix
-                        const findVoice = (prefix) => {
-                            let v = voices.find(v => v.lang.startsWith(prefix) && (v.name.toLowerCase().includes('female') || v.name.includes('Google')));
-                            if (!v) v = voices.find(v => v.lang.startsWith(prefix));
-                            return v;
-                        };
-                        
-                        if (selectedLang === 'Hindi') {
-                            targetLang = 'hi-IN';
-                            bestVoice = findVoice('hi');
-                        } else if (selectedLang === 'Kannada') {
-                            targetLang = 'kn-IN';
-                            bestVoice = findVoice('kn');
-                        } else if (selectedLang === 'Marathi') {
-                            targetLang = 'mr-IN';
-                            bestVoice = findVoice('mr');
-                            // Fallback to Hindi for Marathi (both use Devanagari script)
-                            if (!bestVoice) {
-                                targetLang = 'hi-IN';
-                                bestVoice = findVoice('hi');
-                            }
-                        } else {
-                            targetLang = 'en-US';
-                            bestVoice = voices.find(v => 
-                                v.name.includes('Google US English') || 
-                                v.name.includes('Microsoft Zira') || 
-                                v.name.includes('Samantha')
-                            );
-                            if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('female'));
-                            if (!bestVoice) bestVoice = voices.find(v => v.lang.startsWith('en'));
-                        }
-                        
-                        // Ultimate fallback: just use the first available voice if nothing matched
-                        if (!bestVoice && voices.length > 0) {
-                            bestVoice = voices[0];
-                        }
-                        
-                        chunks.forEach(chunk => {
-                            const trimmedChunk = chunk.trim();
-                            if (!trimmedChunk) return;
-                            
-                            const utterance = new SpeechSynthesisUtterance(trimmedChunk);
-                            utterance.rate = 0.95; // Slightly slower for better clarity
-                            utterance.pitch = 1.05; // Slightly higher pitch for natural tone
-                            utterance.lang = targetLang;
-                            
-                            if (bestVoice) {
-                                utterance.voice = bestVoice;
-                            }
-                            
-                            window.speechSynthesis.speak(utterance);
-                        });
-                    } catch (e) {
-                        console.error('Speech synthesis error:', e);
-                    }
-                }
-            }
-        }
     }
+
     
     function addTypingIndicator() {
         const msgDiv = document.createElement('div');

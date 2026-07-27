@@ -11,3 +11,5 @@ dnspython
 Flask-SQLAlchemy
 eventlet==0.36.1
 openpyxl==3.1.2
+elevenlabs
+
