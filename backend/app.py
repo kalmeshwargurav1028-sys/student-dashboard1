@@ -313,6 +313,10 @@ def has_permission(permission_name):
         return defaults.get(permission_name, False)
     return False
 
+def academic_year_label():
+    year = datetime.now().year
+    return f'{year} - {year + 1}'
+
 @app.context_processor
 def inject_global_context():
     context = {
@@ -320,7 +324,8 @@ def inject_global_context():
         'role_permissions': {},
         'teacher_homerooms': [],
         'teacher_subjects': [],
-        'teacher_created_courses': []
+        'teacher_created_courses': [],
+        'academic_year_label': academic_year_label()
     }
     if not session.get('logged_in'):
         return context
