@@ -1,6 +1,6 @@
 import re
 
-with open('templates/base.html', 'r') as f:
+with open('frontend/templates/base.html', 'r') as f:
     content = f.read()
 
 # 1. Fix Logo
@@ -105,7 +105,7 @@ settings_html = """                {% if session.get('role') != 'student' %}
                 <h2"""
 content = content.replace("<h2", settings_html)
 
-with open('templates/base.html', 'w') as f:
+with open('frontend/templates/base.html', 'w') as f:
     f.write(content)
 
 print("Done")

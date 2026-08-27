@@ -2,7 +2,7 @@ import os
 import glob
 import re
 
-for filepath in glob.glob('templates/*.html'):
+for filepath in glob.glob('frontend/templates/*.html'):
     with open(filepath, 'r') as f:
         content = f.read()
     

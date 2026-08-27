@@ -98,25 +98,25 @@
                             </div>
                             <div>
                                 <label for="MAIL_PASSWORD" class="block text-sm font-medium text-gray-700">SMTP App Password</label>
-                                <input type="password" name="MAIL_PASSWORD" id="MAIL_PASSWORD" value="{{ config_data.get('MAIL_PASSWORD', '') }}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                                <input type="password" name="MAIL_PASSWORD" id="MAIL_PASSWORD" value="" autocomplete="new-password" placeholder="{% if config_data.get('MAIL_PASSWORD_configured') %}Configured — leave blank to keep{% else %}Enter SMTP password{% endif %}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                             </div>
                         </div>
 
                         <!-- Gemini -->
                         <div>
                             <label for="GEMINI_API_KEY" class="block text-sm font-medium text-gray-700">Gemini API Key</label>
-                            <input type="password" name="GEMINI_API_KEY" id="GEMINI_API_KEY" value="{{ config_data.get('GEMINI_API_KEY', '') }}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                            <input type="password" name="GEMINI_API_KEY" id="GEMINI_API_KEY" value="" autocomplete="off" placeholder="{% if config_data.get('GEMINI_API_KEY_configured') %}Configured — leave blank to keep{% else %}Enter Gemini API key{% endif %}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                         </div>
 
                         <!-- Twilio -->
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="TWILIO_ACCOUNT_SID" class="block text-sm font-medium text-gray-700">Twilio Account SID</label>
-                                <input type="password" name="TWILIO_ACCOUNT_SID" id="TWILIO_ACCOUNT_SID" value="{{ config_data.get('TWILIO_ACCOUNT_SID', '') }}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                                <input type="password" name="TWILIO_ACCOUNT_SID" id="TWILIO_ACCOUNT_SID" value="" autocomplete="off" placeholder="{% if config_data.get('TWILIO_ACCOUNT_SID_configured') %}Configured — leave blank to keep{% else %}Enter Twilio SID{% endif %}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                             </div>
                             <div>
                                 <label for="TWILIO_AUTH_TOKEN" class="block text-sm font-medium text-gray-700">Twilio Auth Token</label>
-                                <input type="password" name="TWILIO_AUTH_TOKEN" id="TWILIO_AUTH_TOKEN" value="{{ config_data.get('TWILIO_AUTH_TOKEN', '') }}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                                <input type="password" name="TWILIO_AUTH_TOKEN" id="TWILIO_AUTH_TOKEN" value="" autocomplete="off" placeholder="{% if config_data.get('TWILIO_AUTH_TOKEN_configured') %}Configured — leave blank to keep{% else %}Enter Twilio token{% endif %}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                             </div>
                         </div>
                         <div>
@@ -128,7 +128,7 @@
                         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <div>
                                 <label for="SENDGRID_API_KEY" class="block text-sm font-medium text-gray-700">SendGrid API Key</label>
-                                <input type="password" name="SENDGRID_API_KEY" id="SENDGRID_API_KEY" value="{{ config_data.get('SENDGRID_API_KEY', '') }}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
+                                <input type="password" name="SENDGRID_API_KEY" id="SENDGRID_API_KEY" value="" autocomplete="off" placeholder="{% if config_data.get('SENDGRID_API_KEY_configured') %}Configured — leave blank to keep{% else %}Enter SendGrid key{% endif %}" class="mt-1 shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border">
                             </div>
                             <div>
                                 <label for="SENDGRID_FROM_EMAIL" class="block text-sm font-medium text-gray-700">SendGrid From Email</label>

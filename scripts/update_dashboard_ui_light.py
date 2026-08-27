@@ -1,6 +1,6 @@
 import re
 
-with open('templates/admin_dashboard.html', 'r') as f:
+with open('frontend/templates/admin_dashboard.html', 'r') as f:
     content = f.read()
 
 new_dashboard = """    <!-- Dashboard View -->
@@ -298,7 +298,7 @@ new_dashboard = """    <!-- Dashboard View -->
 pattern = re.compile(r'<!-- Dashboard View -->.*?</div> <!-- Close view-dashboard -->', re.DOTALL)
 new_content = pattern.sub(new_dashboard, content)
 
-with open('templates/admin_dashboard.html', 'w') as f:
+with open('frontend/templates/admin_dashboard.html', 'w') as f:
     f.write(new_content)
 
 print("Updated admin_dashboard.html with light premium theme.")

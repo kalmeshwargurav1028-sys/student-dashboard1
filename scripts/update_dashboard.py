@@ -1,6 +1,6 @@
 import re
 
-with open('templates/admin_dashboard.html', 'r') as f:
+with open('frontend/templates/admin_dashboard.html', 'r') as f:
     content = f.read()
 
 # 1. Update stats cards to use emojis and colorful gradients
@@ -294,5 +294,5 @@ new_tables = """<!-- Active Users Tables -->
 
 content = tables_pattern.sub(new_tables, content)
 
-with open('templates/admin_dashboard.html', 'w') as f:
+with open('frontend/templates/admin_dashboard.html', 'w') as f:
     f.write(content)

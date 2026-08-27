@@ -20,11 +20,11 @@ def replace_colors(filepath):
         print(f"Updated {filepath}")
 
 # Process all html files in templates
-for filepath in glob.glob('templates/*.html'):
+for filepath in glob.glob('frontend/templates/*.html'):
     replace_colors(filepath)
 
 # Process markdown files
-replace_colors('brain.md')
-replace_colors('DESIGN.md')
+replace_colors('docs/brain.md')
+replace_colors('docs/DESIGN.md')
 
 print("Color replacement complete.")

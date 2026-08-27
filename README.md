@@ -83,12 +83,14 @@ A comprehensive web-based student management dashboard built with Flask and Mong
 
 ## Project Structure
 
-- `app.py`: Main Flask application file containing all routes and logic.
+- `backend/app.py`: Flask backend — all routes, auth, MongoDB, AI.
+- `frontend/templates/`: HTML pages (login, dashboard, attendance, …).
+- `frontend/static/`: Images, logo, and static files.
+- `app.py`: Start file for local run and Vercel (`python app.py`).
+- `tests/`: Test scripts.
+- `scripts/`: One-time migrations and helper scripts.
+- `docs/`: Design and requirements docs.
 - `requirements.txt`: Python dependencies.
-- `templates/`: HTML templates for the frontend.
-- `static/`: Static files (CSS, JS, images, uploads).
-- `data/`: Directory for data storage/backups.
-- `migrate_to_mongo.py`: Script to migrate legacy data to MongoDB.
 
 ## License
 

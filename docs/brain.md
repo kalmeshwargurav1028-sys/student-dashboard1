@@ -23,19 +23,17 @@ MongoDB database name: `kalmeshwar`
 
 | File / Folder | Purpose |
 |---|---|
-| `app.py` | **Entire backend** — all routes, DB queries, helpers (~2800+ lines) |
-| `templates/` | Jinja2 HTML templates, one per page |
-| `static/` | Images, legacy uploads (migrated to GridFS) |
+| `backend/app.py` | **Entire backend** — all routes, DB queries, helpers |
+| `frontend/templates/` | Jinja2 HTML templates, one per page |
+| `frontend/static/` | Images, legacy uploads (migrated to GridFS) |
+| `app.py` | Local + Vercel start file (imports `backend.app`) |
+| `tests/` | Test scripts |
+| `scripts/` | One-time migrations and helpers |
+| `docs/` | DESIGN.md, REQUIREMENTS.md, brain.md |
 | `data/` | Seed/backup JSON files |
 | `.env` | Local environment variables (never committed) |
 | `vercel.json` | Serverless deployment config |
 | `requirements.txt` | Python dependencies |
-| `migrate_to_mongo.py` | One-time script: JSON/SQLite → MongoDB |
-| `migrate_gridfs.py` | One-time script: static files → GridFS |
-| `sync_to_atlas.py` | One-time script: local Mongo → Atlas |
-| `DESIGN.md` | Deep-dive system design document |
-| `README.md` | Setup and feature overview |
-| `REQUIREMENTS.md` | Functional & non-functional requirements |
 
 ---
 
