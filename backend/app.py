@@ -1577,6 +1577,63 @@ def school_policies():
         return redirect(url_for('login'))
     return render_template('school_policies.html')
 
+def _teacher_mapping_list():
+    mappings = []
+    for m in db.teacher_mappings.find({'teacher_id': session.get('user_id')}, {'_id': 0}):
+        mappings.append({
+            'grade': str(m.get('grade') or ''),
+            'section': str(m.get('section') or ''),
+            'subject': m.get('subject') or '',
+            'type': m.get('type') or ''
+        })
+    return mappings
+
+@app.route('/resources-assignments')
+def resources_assignments():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    teacher_id = session.get('user_id')
+    assignments = list(db.assignments.find(
+        {'$or': [{'teacher_id': teacher_id}, {'created_by': session.get('username')}]}
+    ).sort('due_date', -1).limit(25))
+    for a in assignments:
+        a['_id'] = str(a.get('_id', ''))
+    resources = list(db.materials.find({'teacher_id': teacher_id}).sort('uploaded_at', -1).limit(25))
+    for r in resources:
+        r['_id'] = str(r.get('_id', ''))
+    return render_template(
+        'resources_assignments.html',
+        teacher_mappings=_teacher_mapping_list(),
+        assignments=assignments,
+        resources=resources
+    )
+
+@app.route('/create-announcement', methods=['GET', 'POST'])
+def create_announcement_page():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        title = (request.form.get('title') or '').strip()
+        body = (request.form.get('body') or '').strip()
+        audience = request.form.get('audience') or 'all'
+        expiry_date = request.form.get('expiry_date') or ''
+        if not title or not body or not expiry_date:
+            flash('Please fill in title, message, and expiry date.')
+        else:
+            db.announcements.insert_one({
+                'title': title,
+                'body': body,
+                'audience': audience,
+                'expiry_date': expiry_date,
+                'date_sent': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'author_id': session.get('user_id'),
+                'author_name': session.get('username')
+            })
+            flash('Announcement posted.')
+            return redirect(url_for('school_announcements'))
+    announcements = list(db.announcements.find().sort('date_sent', -1).limit(8))
+    return render_template('create_announcement.html', announcements=announcements)
+
 @app.route('/student/<student_id>/ai_mentor')
 def student_ai_mentor(student_id):
     if not session.get('logged_in'):

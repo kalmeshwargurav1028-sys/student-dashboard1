@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block header_title %}Resources & Assignments{% endblock %}
+
+{% block content %}
+<div class="w-full py-8 px-8 sm:px-10 lg:px-12 space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Resources & Assignments</h1>
+            <p class="text-sm text-gray-500 mt-1">Select a classroom and subject, then open unit plan, resource, test, or assignment.</p>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label for="cwClassroom" class="block text-sm font-medium text-gray-700 mb-1">Classroom</label>
+                <select id="cwClassroom" onchange="onClassroomChange()" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">— Select classroom —</option>
+                </select>
+            </div>
+            <div>
+                <label for="cwSubject" class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                <select id="cwSubject" onchange="onSubjectChange()" disabled class="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-gray-50 text-sm focus:ring-blue-500 focus:border-blue-500 disabled:opacity-60">
+                    <option value="">— Select classroom first —</option>
+                </select>
+            </div>
+        </div>
+        <div id="cwChoices" class="hidden grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <a id="cwUnitPlan" href="#" class="flex flex-col items-center justify-center p-4 bg-[#eff6ff] rounded-xl hover:bg-blue-100 transition-colors text-center border border-transparent hover:border-blue-200">
+                <span class="text-sm font-medium text-[#1e5a97]">Unit plan</span>
+            </a>
+            <a id="cwResource" href="#" class="flex flex-col items-center justify-center p-4 bg-[#eff6ff] rounded-xl hover:bg-blue-100 transition-colors text-center border border-transparent hover:border-blue-200">
+                <span class="text-sm font-medium text-[#1e5a97]">Create resource</span>
+            </a>
+            <a id="cwTest" href="#" class="flex flex-col items-center justify-center p-4 bg-[#eff6ff] rounded-xl hover:bg-blue-100 transition-colors text-center border border-transparent hover:border-blue-200">
+                <span class="text-sm font-medium text-[#1e5a97]">Test</span>
+            </a>
+            <a id="cwAssignment" href="#" class="flex flex-col items-center justify-center p-4 bg-[#eff6ff] rounded-xl hover:bg-blue-100 transition-colors text-center border border-transparent hover:border-blue-200">
+                <span class="text-sm font-medium text-[#1e5a97]">Assignments</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-[#1e4e8c] mb-4">Your assignments</h2>
+            <div class="space-y-3">
+                {% for a in assignments %}
+                <div class="border border-gray-100 rounded-lg p-3">
+                    <p class="text-sm font-medium text-gray-800">{{ a.title or 'Untitled' }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ a.subject or '—' }} · Class {{ a.class_name or '—' }} · due {{ a.due_date or '—' }}</p>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">No assignments yet. Select a class and subject above, then choose Assignments.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-medium text-[#1e4e8c] mb-4">Your resources</h2>
+            <div class="space-y-3">
+                {% for r in resources %}
+                <div class="border border-gray-100 rounded-lg p-3">
+                    <p class="text-sm font-medium text-gray-800">{{ r.title or r.filename or 'Resource' }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ r.subject or '—' }} · Grade {{ r.grade or '—' }} {{ r.section or '' }}</p>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500">No shared resources yet. Select a class and subject above, then choose Create resource.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const DEFAULT_SUBJECTS = ['Mathematics', 'English', 'Science', 'Social Studies', 'Hindi', 'Physics', 'Chemistry', 'Biology', 'Computer Science', 'Physical Education', 'Art', 'Music'];
+const TEACHER_MAPPINGS = {{ (teacher_mappings or []) | tojson }};
+
+function buildClassrooms(maps) {
+    const byKey = {};
+    const allSubjects = [];
+    (maps || []).forEach(function(m) {
+        const grade = String(m.grade || '');
+        const section = String(m.section || '');
+        if (m.subject && allSubjects.indexOf(m.subject) === -1) allSubjects.push(m.subject);
+        if (!grade || !section) return;
+        const key = grade + '|' + section;
+        if (!byKey[key]) byKey[key] = { key: key, grade: grade, section: section, subjects: [] };
+        if (m.subject && byKey[key].subjects.indexOf(m.subject) === -1) byKey[key].subjects.push(m.subject);
+    });
+    const rooms = Object.keys(byKey).map(function(k) { return byKey[k]; });
+    if (!rooms.length) {
+        for (let g = 1; g <= 12; g++) {
+            rooms.push({ key: g + '|A', grade: String(g), section: 'A', subjects: allSubjects.length ? allSubjects : DEFAULT_SUBJECTS });
+        }
+    } else {
+        rooms.forEach(function(room) {
+            if (!room.subjects.length) room.subjects = allSubjects.length ? allSubjects : DEFAULT_SUBJECTS;
+        });
+    }
+    rooms.sort(function(a, b) {
+        return (parseInt(a.grade, 10) || 99) - (parseInt(b.grade, 10) || 99) || String(a.section).localeCompare(String(b.section));
+    });
+    return rooms;
+}
+
+const CLASSROOMS = buildClassrooms(TEACHER_MAPPINGS);
+
+(function fillClassrooms() {
+    const select = document.getElementById('cwClassroom');
+    if (!select) return;
+    CLASSROOMS.forEach(function(room) {
+        const opt = document.createElement('option');
+        opt.value = room.key;
+        opt.textContent = 'Class ' + room.grade + ' - ' + room.section;
+        select.appendChild(opt);
+    });
+})();
+
+function onClassroomChange() {
+    const classroom = document.getElementById('cwClassroom').value;
+    const subjectSelect = document.getElementById('cwSubject');
+    const choices = document.getElementById('cwChoices');
+    subjectSelect.innerHTML = '<option value="">— Select subject —</option>';
+    if (choices) choices.classList.add('hidden');
+    if (!classroom) {
+        subjectSelect.disabled = true;
+        subjectSelect.innerHTML = '<option value="">— Select classroom first —</option>';
+        return;
+    }
+    const room = CLASSROOMS.find(function(r) { return r.key === classroom; });
+    const subjects = (room && room.subjects.length) ? room.subjects : DEFAULT_SUBJECTS;
+    subjects.forEach(function(sub) {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.textContent = sub;
+        subjectSelect.appendChild(opt);
+    });
+    subjectSelect.disabled = false;
+}
+
+function onSubjectChange() {
+    const classroom = document.getElementById('cwClassroom').value;
+    const subject = document.getElementById('cwSubject').value;
+    const choices = document.getElementById('cwChoices');
+    if (!classroom || !subject) {
+        if (choices) choices.classList.add('hidden');
+        return;
+    }
+    const parts = classroom.split('|');
+    const grade = encodeURIComponent(parts[0] || '');
+    const section = encodeURIComponent(parts[1] || '');
+    const sub = encodeURIComponent(subject);
+    const qs = 'grade=' + grade + '&section=' + section + '&subject=' + sub + '&class_name=' + grade;
+    document.getElementById('cwUnitPlan').href = '{{ url_for("unit_plan") }}?' + qs;
+    document.getElementById('cwResource').href = '{{ url_for("share_resource") }}?' + qs;
+    document.getElementById('cwTest').href = '{{ url_for("create_online_test") }}?' + qs;
+    document.getElementById('cwAssignment').href = '{{ url_for("assignments") }}?' + qs;
+    if (choices) choices.classList.remove('hidden');
+}
+</script>
+{% endblock %}

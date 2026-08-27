@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block header_title %}Create Announcement{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12 space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">Create Announcement</h1>
+            <p class="text-sm text-gray-500 mt-1">Post a message for students, teachers, or everyone.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" name="title" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="Announcement title">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Audience</label>
+            <select name="audience" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm">
+                <option value="all">Everyone</option>
+                <option value="teachers">Teachers only</option>
+                <option value="students">Students only</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Expiry date</label>
+            <input type="date" name="expiry_date" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+            <textarea name="body" rows="5" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="Write the announcement"></textarea>
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium">Post announcement</button>
+    </form>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h2 class="text-lg font-medium text-[#1e4e8c] mb-4">Recent announcements</h2>
+        <div class="space-y-3">
+            {% for ann in announcements %}
+            <div class="border border-gray-100 rounded-lg p-3">
+                <div class="flex justify-between gap-3">
+                    <p class="text-sm font-medium text-gray-800">{{ ann.title }}</p>
+                    <span class="text-xs text-gray-400 shrink-0">{{ ann.date_sent }}</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">{{ ann.body }}</p>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500">No announcements yet.</p>
+            {% endfor %}
+        </div>
+        <a href="{{ url_for('school_announcements') }}" class="inline-block mt-4 text-sm text-blue-600 hover:text-blue-800">View all school announcements</a>
+    </div>
+</div>
+{% endblock %}
