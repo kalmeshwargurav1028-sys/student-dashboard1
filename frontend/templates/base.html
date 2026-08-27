@@ -227,23 +227,25 @@
         <!-- Top Header for Mobile/Context -->
         {% if session.get('logged_in') %}
         <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-8 sm:px-10 lg:px-12 z-10 shrink-0 border-b border-gray-100 dark:border-gray-700 transition-colors">
-            <div class="flex items-center">
+            <div class="flex items-center min-w-0">
                 {% if session.get('role') != 'admin' %}
-                <a href="{% if session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="flex items-center gap-2 mr-6 shrink-0">
+                <a href="{% if session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="flex items-center gap-2 shrink-0">
                     <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto" alt="Indus Portal">
                     <span class="hidden sm:inline text-base font-bold text-[#1e4e8c] dark:text-gray-100">Indus Portal</span>
                 </a>
+                {% else %}
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% endblock %}</h2>
                 {% endif %}
-                <!-- Notification Bell -->
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
-                    <button type="button" id="bellBtn" onclick="toggleNotifs()" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none relative">
+                    <button type="button" id="bellBtn" onclick="toggleNotifs()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none relative p-1">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                         </svg>
                         <span id="notifBadge" class="hidden absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-white dark:border-gray-800 text-[9px] font-bold text-white flex items-center justify-center animate-pulse">0</span>
                     </button>
-                    <!-- Dropdown Pane -->
-                    <div id="notifDropdown" class="hidden absolute top-10 left-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                    <div id="notifDropdown" class="hidden absolute top-10 right-0 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
                         <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex justify-between items-center">
                             <h3 class="text-sm font-bold text-gray-800 dark:text-gray-200">System Notifications</h3>
                             <button onclick="clearAllNotifications()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Clear All</button>
@@ -253,13 +255,9 @@
                         </div>
                     </div>
                 </div>
-
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% if session.get('role') == 'student' %}Student Portal{% elif session.get('role') == 'admin' %}{% else %}Teacher Portal{% endif %}{% endblock %}</h2>
-            </div>
-            <div class="flex items-center gap-3">
                 {% if session.get('role') == 'admin' %}
                 <!-- Live Date and Time -->
-                <div class="hidden md:flex flex-col text-right mr-4 text-gray-500 dark:text-gray-400">
+                <div class="hidden md:flex flex-col text-right mr-1 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
                     <div class="relative cursor-pointer group" onclick="document.getElementById('hidden-calendar').showPicker()">
                         <span id="nav-date" class="text-xs group-hover:text-blue-500 transition-colors" title="Click to open calendar"></span>
@@ -269,7 +267,6 @@
                 
                 <div class="relative">
                     <button type="button" onclick="toggleProfileDropdown()" class="flex items-center gap-3 focus:outline-none rounded-full">
-                        <!-- Username removed as requested -->
                         {% if session.get('photo_url') %}
                         <img src="{{ session.get('photo_url') }}" alt="Profile Photo" class="h-9 w-9 rounded-full object-cover shadow-md border-2 border-white dark:border-gray-800">
                         {% else %}
@@ -278,7 +275,6 @@
                         </div>
                         {% endif %}
                     </button>
-                    <!-- Profile Dropdown -->
                     <div id="headerProfileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-50">
                         {% if session.get('role') != 'student' %}
                             <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
