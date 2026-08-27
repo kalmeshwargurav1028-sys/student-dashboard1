@@ -44,6 +44,36 @@
             </div>
         </div>
 
+        <div class="mb-8 bg-white shadow-sm rounded-xl border border-gray-100 p-4">
+            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Portal control (Super Admin)</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{{ url_for('admin_school_policies') }}" class="flex flex-col items-center justify-center p-4 bg-sky-50 hover:bg-sky-100 border border-sky-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-sky-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-file-lines text-sky-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-sky-800">School Policies</span>
+                </a>
+                <a href="{{ url_for('school_announcements') }}" class="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-amber-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-bullhorn text-amber-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-amber-800">Announcements</span>
+                </a>
+                <a href="{{ url_for('teacher_mapping') }}" class="flex flex-col items-center justify-center p-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-indigo-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-map text-indigo-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-indigo-800">Teacher Mapping</span>
+                </a>
+                <a href="{{ url_for('staff_management') }}" class="flex flex-col items-center justify-center p-4 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-lg transition-colors group">
+                    <div class="bg-white p-2 rounded-full shadow-sm border border-rose-200 mb-2 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-user-shield text-rose-600"></i>
+                    </div>
+                    <span class="text-xs font-bold text-rose-800">Staff & Admins</span>
+                </a>
+            </div>
+        </div>
+
         <!-- Analytics Overview -->
         <div class="mb-8">
             <h2 class="text-lg font-bold text-gray-900 mb-4">User Activity Stats</h2>

@@ -1575,7 +1575,66 @@ def school_announcements():
 def school_policies():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return render_template('school_policies.html')
+    return render_template('school_policies.html', policies=_get_school_policies())
+
+DEFAULT_SCHOOL_POLICIES = [
+    {'title': 'Attendance', 'body': 'Students should attend regularly. Absences must be informed to the class teacher. Teachers mark attendance in the portal every school day.', 'order': 1},
+    {'title': 'Assignments & assessments', 'body': 'Work should be posted with a due date. Late work is recorded. Tests and assignments stay linked to the mapped classroom and subject.', 'order': 2},
+    {'title': 'Communication', 'body': 'Use portal messaging for parent contact. School announcements go to the assigned audience only. Keep messages professional and brief.', 'order': 3},
+    {'title': 'Resources', 'body': 'Share study materials through Resource Hub. Do not upload copyrighted files you do not have permission to use.', 'order': 4},
+]
+
+def _get_school_policies():
+    policies = list(db.school_policies.find().sort('order', 1))
+    if not policies:
+        db.school_policies.insert_many([dict(p) for p in DEFAULT_SCHOOL_POLICIES])
+        policies = list(db.school_policies.find().sort('order', 1))
+    for p in policies:
+        p['_id'] = str(p['_id'])
+    return policies
+
+@app.route('/admin/school-policies', methods=['GET', 'POST'])
+def admin_school_policies():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('admin_portal'))
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'add':
+            title = (request.form.get('title') or '').strip()
+            body = (request.form.get('body') or '').strip()
+            if title and body:
+                last = db.school_policies.find_one(sort=[('order', -1)])
+                order = (last.get('order', 0) + 1) if last else 1
+                db.school_policies.insert_one({
+                    'title': title,
+                    'body': body,
+                    'order': order,
+                    'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'updated_by': session.get('username')
+                })
+                flash('Policy added.')
+        elif action == 'update':
+            pid = request.form.get('id')
+            title = (request.form.get('title') or '').strip()
+            body = (request.form.get('body') or '').strip()
+            if pid and title and body:
+                db.school_policies.update_one(
+                    {'_id': ObjectId(pid)},
+                    {'$set': {
+                        'title': title,
+                        'body': body,
+                        'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                        'updated_by': session.get('username')
+                    }}
+                )
+                flash('Policy updated.')
+        elif action == 'delete':
+            pid = request.form.get('id')
+            if pid:
+                db.school_policies.delete_one({'_id': ObjectId(pid)})
+                flash('Policy removed.')
+        return redirect(url_for('admin_school_policies'))
+    return render_template('admin_school_policies.html', policies=_get_school_policies())
 
 def _teacher_mapping_list():
     mappings = []
@@ -1878,9 +1937,33 @@ def admin_dashboard():
 def staff_management():
     if not session.get('logged_in') or session.get('role') != 'admin':
         return redirect(url_for('login'))
-        
-    # Get all teachers and admins
-    staff_members = list(db.users.find({'role': {'$in': ['teacher', 'admin']}}, {'password': 0}))
+
+    staff_members = []
+    seen_emails = set()
+    for a in db.admins.find({}, {'password': 0}):
+        email = (a.get('email') or '').lower()
+        seen_emails.add(email)
+        staff_members.append({
+            '_id': str(a.get('_id', '')),
+            'name': a.get('name') or email or 'Admin',
+            'email': a.get('email', ''),
+            'role': 'admin',
+            'account_kind': 'super_admin',
+            'assigned_class': None,
+        })
+    for u in db.users.find({'role': {'$in': ['teacher', 'admin']}}, {'password': 0}):
+        email = (u.get('email') or '').lower()
+        if email in seen_emails:
+            continue
+        name = u.get('name') or f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get('email') or 'Staff'
+        staff_members.append({
+            '_id': str(u.get('_id', '')),
+            'name': name,
+            'email': u.get('email', ''),
+            'role': u.get('role', 'teacher'),
+            'account_kind': 'admin' if u.get('role') == 'admin' else 'teacher',
+            'assigned_class': u.get('assigned_class'),
+        })
     return render_template('staff_management.html', staff_members=staff_members)
 
 @app.route('/api/staff/add', methods=['POST'])
@@ -1899,24 +1982,32 @@ def add_staff():
         return jsonify({'success': False, 'error': 'All fields are required'}), 400
         
     try:
-        existing_user = db.users.find_one({'email': email})
-        if existing_user:
+        if role not in ('teacher', 'admin'):
+            role = 'teacher'
+        if db.users.find_one({'email': email}) or db.admins.find_one({'email': email}):
             return jsonify({'success': False, 'error': 'User with this email already exists'}), 400
             
         hashed_password = generate_password_hash(password)
-        
-        new_staff = {
-            'first_name': first_name,
-            'last_name': last_name,
-            'name': f"{first_name} {last_name}",
-            'email': email,
-            'role': role,
-            'assigned_class': assigned_class,
-            'password': hashed_password,
-            'created_at': datetime.utcnow().isoformat()
-        }
-        
-        db.users.insert_one(new_staff)
+        full_name = f"{first_name} {last_name}".strip()
+
+        if role == 'admin':
+            db.admins.insert_one({
+                'email': email,
+                'password': hashed_password,
+                'name': full_name or email.split('@')[0],
+                'created_at': datetime.utcnow().isoformat()
+            })
+        else:
+            db.users.insert_one({
+                'first_name': first_name,
+                'last_name': last_name,
+                'name': full_name,
+                'email': email,
+                'role': 'teacher',
+                'assigned_class': assigned_class,
+                'password': hashed_password,
+                'created_at': datetime.utcnow().isoformat()
+            })
         
         log_notification(
             "Staff Member Created", 
@@ -1938,7 +2029,10 @@ def delete_staff(staff_id):
         return jsonify({'success': False, 'error': 'You cannot delete your own account.'}), 400
         
     try:
-        result = db.users.delete_one({'_id': ObjectId(staff_id)})
+        oid = ObjectId(staff_id)
+        result = db.users.delete_one({'_id': oid})
+        if result.deleted_count == 0:
+            result = db.admins.delete_one({'_id': oid})
         if result.deleted_count > 0:
             log_notification(
                 "Staff Member Deleted", 

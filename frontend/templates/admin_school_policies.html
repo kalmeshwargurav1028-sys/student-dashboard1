@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block header_title %}Manage School Policies{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12 space-y-6">
+    <div class="flex items-center gap-3">
+        <a href="{{ url_for('admin_dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">School Policies</h1>
+            <p class="text-sm text-gray-500 mt-1">Super Admin control. Teachers and students see these on School Policies.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+        <input type="hidden" name="action" value="add">
+        <h2 class="text-base font-semibold text-[#1e4e8c]">Add policy</h2>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <input type="text" name="title" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="e.g. Uniform">
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
+            <textarea name="body" rows="3" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="Policy text teachers and students will read"></textarea>
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium">Add policy</button>
+    </form>
+
+    <div class="space-y-4">
+        {% for p in policies %}
+        <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+            <input type="hidden" name="id" value="{{ p._id }}">
+            <input type="text" name="title" value="{{ p.title }}" class="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-[#1e4e8c]">
+            <textarea name="body" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600">{{ p.body }}</textarea>
+            <div class="flex gap-2">
+                <button type="submit" name="action" value="update" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Save</button>
+                <button type="submit" name="action" value="delete" class="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-medium" onclick="return confirm('Remove this policy?')">Delete</button>
+            </div>
+        </form>
+        {% else %}
+        <p class="text-sm text-gray-500">No policies yet.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

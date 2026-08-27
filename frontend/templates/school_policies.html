@@ -3,30 +3,27 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
-    <div class="mb-6 flex items-center gap-3">
-        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-        </a>
-        <h1 class="text-2xl font-bold text-gray-900">School Policies</h1>
+    <div class="mb-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">School Policies</h1>
+        </div>
+        {% if session.get('role') == 'admin' %}
+        <a href="{{ url_for('admin_school_policies') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">Edit policies</a>
+        {% endif %}
     </div>
 
     <div class="space-y-4">
+        {% for p in policies %}
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">Attendance</h2>
-            <p class="text-sm text-gray-600">Students should attend regularly. Absences must be informed to the class teacher. Teachers mark attendance in the portal every school day.</p>
+            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">{{ p.title }}</h2>
+            <p class="text-sm text-gray-600 whitespace-pre-line">{{ p.body }}</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">Assignments &amp; assessments</h2>
-            <p class="text-sm text-gray-600">Work should be posted with a due date. Late work is recorded. Tests and assignments stay linked to the mapped classroom and subject.</p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">Communication</h2>
-            <p class="text-sm text-gray-600">Use portal messaging for parent contact. School announcements go to the assigned audience only. Keep messages professional and brief.</p>
-        </div>
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">Resources</h2>
-            <p class="text-sm text-gray-600">Share study materials through Resource Hub. Do not upload copyrighted files you do not have permission to use.</p>
-        </div>
+        {% else %}
+        <p class="text-sm text-gray-500">No school policies have been published yet.</p>
+        {% endfor %}
     </div>
 </div>
 {% endblock %}

@@ -3,11 +3,16 @@
 
 {% block content %}
 <div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
-    <div class="mb-6 flex items-center gap-3">
-        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-        </a>
-        <h1 class="text-2xl font-bold text-gray-900">School Announcement</h1>
+    <div class="mb-6 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-gray-400 hover:text-gray-600 transition">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <h1 class="text-2xl font-bold text-gray-900">School Announcement</h1>
+        </div>
+        {% if session.get('role') in ('admin', 'teacher') %}
+        <a href="{{ url_for('create_announcement_page') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">Create announcement</a>
+        {% endif %}
     </div>
 
     <div class="space-y-4">
