@@ -23,41 +23,39 @@
         </div>
     </div>
 
-    <div class="relative overflow-hidden bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-6 flex flex-row justify-between items-center gap-4 w-full">
-        <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-        <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl pointer-events-none"></div>
+    <div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-6 flex flex-row justify-between items-center gap-4 w-full">
+        <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+            <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+            <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl"></div>
+        </div>
 
         <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
-            <div class="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white/95 p-1 shadow-md overflow-hidden">
-                <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="Teacher cartoon" class="h-full w-full object-cover rounded-lg">
+            <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
+                <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="Teacher" class="h-full w-full object-contain rounded-lg">
             </div>
             <h1 class="text-lg sm:text-xl font-semibold tracking-wide truncate">Welcome, {{ session.get('username', 'Teacher') }}</h1>
         </div>
         
-        <div class="relative z-10 shrink-0">
-            <div class="relative">
-                <button type="button" onclick="toggleProfileDropdown()" class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl border border-white/10 focus:outline-none w-full text-left">
-                    <div class="flex flex-col items-end">
-                        <span class="text-sm font-semibold text-white">My Profile</span>
-                        <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">Manage Settings</span>
-                    </div>
-                    <div class="relative h-10 w-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center shrink-0">
-                        {% if session.get('profile_photo') %}
-                        <img src="{{ url_for('static', filename='uploads/' + session.get('profile_photo')) }}" 
-                             alt="" 
-                             class="h-full w-full object-cover"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        {% endif %}
-                        <svg class="h-6 w-6 text-white/70 {% if session.get('profile_photo') %}hidden{% endif %}" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-                        </svg>
-                    </div>
-                </button>
-                <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">
-                    <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">View Profile</a>
-                    <div class="border-t border-gray-100 my-1"></div>
-                    <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">Logout</a>
+        <div class="relative z-30 shrink-0" data-profile-menu>
+            <button type="button" onclick="event.stopPropagation(); toggleBannerProfile(this)" class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl border border-white/10 focus:outline-none w-full text-left">
+                <div class="flex flex-col items-end">
+                    <span class="text-sm font-semibold text-white">My Profile</span>
+                    <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">Manage Settings</span>
                 </div>
+                <div class="relative h-10 w-10 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center shrink-0">
+                    {% if session.get('profile_photo') %}
+                    <img src="{{ url_for('static', filename='uploads/' + session.get('profile_photo')) }}" 
+                         alt="" 
+                         class="h-full w-full object-cover"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    {% endif %}
+                    <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="" class="h-full w-full object-contain {% if session.get('profile_photo') %}hidden{% endif %}">
+                </div>
+            </button>
+            <div data-profile-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">
+                <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">View Profile</a>
+                <div class="border-t border-gray-100 my-1"></div>
+                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">Logout</a>
             </div>
         </div>
     </div>
