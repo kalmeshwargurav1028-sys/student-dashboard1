@@ -15,23 +15,15 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Subject</label>
-                    <input type="text" name="subject" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
+                    <input type="text" name="subject" value="{{ request.args.get('subject', '') }}" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Target Grade</label>
                     <select name="target_class" required class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="1st">1st Standard</option>
-                        <option value="2nd">2nd Standard</option>
-                        <option value="3rd">3rd Standard</option>
-                        <option value="4th">4th Standard</option>
-                        <option value="5th">5th Standard</option>
-                        <option value="6th">6th Standard</option>
-                        <option value="7th">7th Standard</option>
-                        <option value="8th">8th Standard</option>
-                        <option value="9th">9th Standard</option>
-                        <option value="10th">10th Standard</option>
-                        <option value="11th">11th Standard</option>
-                        <option value="12th">12th Standard</option>
+                        {% set g = request.args.get('grade') or request.args.get('class_name') or '' %}
+                        {% for n, label in [('1','1st'),('2','2nd'),('3','3rd'),('4','4th'),('5','5th'),('6','6th'),('7','7th'),('8','8th'),('9','9th'),('10','10th'),('11','11th'),('12','12th')] %}
+                        <option value="{{ label }}" {% if g == n or g == label %}selected{% endif %}>{{ label }} Standard</option>
+                        {% endfor %}
                     </select>
                 </div>
                 <div>

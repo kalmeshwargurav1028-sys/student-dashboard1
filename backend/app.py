@@ -1544,8 +1544,25 @@ def dashboard():
         }).sort('due_date', 1).limit(4))
         
         recent_activity = list(db.announcements.find().sort('date_sent', -1).limit(4))
+
+    teacher_mappings = []
+    if session.get('role') == 'teacher':
+        for m in db.teacher_mappings.find({'teacher_id': session.get('user_id')}, {'_id': 0}):
+            teacher_mappings.append({
+                'grade': str(m.get('grade') or ''),
+                'section': str(m.get('section') or ''),
+                'subject': m.get('subject') or '',
+                'type': m.get('type') or ''
+            })
     
-    return render_template('dashboard.html', students=students, analytics=analytics, upcoming_assignments=upcoming_assignments, recent_activity=recent_activity)
+    return render_template(
+        'dashboard.html',
+        students=students,
+        analytics=analytics,
+        upcoming_assignments=upcoming_assignments,
+        recent_activity=recent_activity,
+        teacher_mappings=teacher_mappings
+    )
 
 @app.route('/student/<student_id>/ai_mentor')
 def student_ai_mentor(student_id):
@@ -4504,6 +4521,46 @@ def create_online_test():
         return redirect(url_for('teacher_online_tests'))
         
     return render_template('create_online_test.html')
+
+@app.route('/unit-plan', methods=['GET', 'POST'])
+def unit_plan():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+
+    grade = (request.values.get('grade') or '').strip()
+    section = (request.values.get('section') or '').strip()
+    subject = (request.values.get('subject') or '').strip()
+
+    query = {
+        'teacher_id': session.get('user_id'),
+        'grade': grade,
+        'section': section,
+        'subject': subject
+    }
+
+    if request.method == 'POST':
+        db.unit_plans.update_one(
+            query,
+            {'$set': {
+                'title': request.form.get('title', ''),
+                'objectives': request.form.get('objectives', ''),
+                'topics': request.form.get('topics', ''),
+                'duration': request.form.get('duration', ''),
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M')
+            }},
+            upsert=True
+        )
+        flash('Unit plan saved.')
+        return redirect(url_for('unit_plan', grade=grade, section=section, subject=subject))
+
+    plan = db.unit_plans.find_one(query, {'_id': 0}) or {}
+    return render_template(
+        'unit_plan.html',
+        plan=plan,
+        grade=grade,
+        section=section,
+        subject=subject
+    )
 
 @app.route('/teacher/delete_test/<test_id>', methods=['POST'])
 def delete_online_test(test_id):
