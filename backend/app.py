@@ -1100,6 +1100,7 @@ def login():
             
     return render_template('login.html')
 
+@app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin-portal', methods=['GET', 'POST'])
 def admin_portal():
     if request.method == 'POST':
@@ -1650,7 +1651,7 @@ def student_profile(student_id):
 @app.route('/admin_dashboard')
 def admin_dashboard():
     if not session.get('logged_in') or session.get('role') != 'admin':
-        return redirect(url_for('login'))
+        return redirect(url_for('admin_portal'))
         
     now = datetime.now()
     active_threshold = now - timedelta(minutes=15)
