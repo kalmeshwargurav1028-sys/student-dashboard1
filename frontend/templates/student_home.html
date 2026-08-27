@@ -89,54 +89,6 @@
         </div>
     </div>
 
-  <!-- Today's Schedule -->
-  <div class="card p-6">
-    <div class="flex items-center gap-2 mb-4">
-      <div class="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-blue-600">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      </div>
-      <h2 class="text-gray-600 font-medium">Today's schedule</h2>
-    </div>
-    
-    <div class="flex overflow-x-auto gap-4 pb-2 hide-scroll">
-      {% for entry in today_schedule %}
-      <div class="time-pill px-5 py-3.5 rounded-2xl flex flex-col min-w-[140px]">
-        <span class="text-xs font-semibold text-blue-800/70 mb-0.5">{{ entry.time }}</span>
-        <span class="font-medium text-blue-900">{{ entry.subject }}</span>
-      </div>
-      {% else %}
-      <p class="text-gray-400 text-sm font-medium py-2">No classes scheduled for today.</p>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Stat Cards -->
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-    <!-- Active Courses -->
-    <a href="{{ url_for('student_courses', student_id=session.get('user_id')) }}" class="card p-6 block hover:shadow-md transition-shadow">
-      <div class="text-sm font-medium text-gray-500 mb-2">Active courses</div>
-      <div class="text-4xl font-semibold text-blue-900">{{ courses | length }}</div>
-    </a>
-
-    <!-- Avg Progress -->
-    <div class="card p-6">
-      <div class="text-sm font-medium text-gray-500 mb-2">Avg. progress</div>
-      <div class="text-4xl font-semibold text-blue-900">{{ performance }}%</div>
-    </div>
-
-    <!-- Deadlines -->
-    <a href="{{ url_for('assignments') }}" class="card p-6 block hover:shadow-md transition-shadow">
-      <div class="text-sm font-medium text-gray-500 mb-2">Deadlines</div>
-      <div class="text-4xl font-semibold text-blue-900">{{ pending_assignments }}</div>
-    </a>
-
-    <!-- Materials -->
-    <a href="{{ url_for('student_materials') }}" class="card p-6 block hover:shadow-md transition-shadow">
-      <div class="text-sm font-medium text-gray-500 mb-2">Materials</div>
-      <div class="text-4xl font-semibold text-blue-900">{{ materials_count }}</div>
-    </a>
-  </div>
-
   <!-- Quick Actions -->
   <div class="card p-6">
     <div class="flex items-center gap-2 mb-4">

@@ -64,66 +64,6 @@
     </div>
     {% endif %}
 
-    <!-- Analytics Overview -->
-    {% if analytics %}
-    <div class="mb-8">
-        <h2 class="text-lg font-medium text-[#1e4e8c] mb-4">Analytics overview</h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Total students -->
-            <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-[104px]">
-                <span class="text-gray-500 text-sm font-medium mb-2">Total students</span>
-                <span class="text-3xl font-medium text-[#1e5a97]">{{ analytics.total_students }}</span>
-            </div>
-            <!-- Today's attendance -->
-            <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-[104px]">
-                <span class="text-gray-500 text-sm font-medium mb-2">Today's attendance</span>
-                <div class="flex items-baseline gap-2">
-                    <span class="text-3xl font-medium text-emerald-600">{{ analytics.present_count }}</span>
-                    <span class="text-sm font-medium text-red-500">{{ analytics.absent_count }} absent</span>
-                </div>
-            </div>
-            <!-- To grade -->
-            <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-[104px]">
-                <span class="text-gray-500 text-sm font-medium mb-2">To grade</span>
-                <span class="text-3xl font-medium text-amber-600">14</span>
-            </div>
-            <!-- Avg. class score -->
-            <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-[104px]">
-                <span class="text-gray-500 text-sm font-medium mb-2">Avg. class score</span>
-                <span class="text-3xl font-medium text-[#1e5a97]">{{ analytics.avg_performance }}%</span>
-            </div>
-        </div>
-    </div>
-    {% endif %}
-
-    <!-- Your Classes -->
-    <div class="mb-8">
-        <h2 class="text-lg font-medium text-[#1e4e8c] mb-4">Your classes</h2>
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {% if teacher_homerooms %}
-                {% for hr in teacher_homerooms %}
-                <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-24">
-                    <span class="text-gray-800 font-medium text-base">Homeroom {{ hr.grade }}-{{ hr.section }}</span>
-                    <span class="text-gray-500 text-xs">32 students - next 9:00 AM</span>
-                </div>
-                {% endfor %}
-            {% endif %}
-            {% if teacher_subjects %}
-                {% for sub in teacher_subjects %}
-                <div class="bg-white rounded-xl p-5 border border-gray-100 shadow-sm flex flex-col justify-between h-24">
-                    <span class="text-gray-800 font-medium text-base">{{ sub.subject|capitalize }}</span>
-                    <span class="text-gray-500 text-xs">30 students - next 11:00 AM</span>
-                </div>
-                {% endfor %}
-            {% endif %}
-            {% if not teacher_homerooms and not teacher_subjects %}
-                <div class="col-span-2 lg:col-span-4 bg-white rounded-xl p-5 border border-gray-100 shadow-sm text-center text-gray-500">
-                    No classes assigned yet.
-                </div>
-            {% endif %}
-        </div>
-    </div>
-
     <!-- Teacher Center Modules -->
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_350px] gap-6 mb-8">
         
