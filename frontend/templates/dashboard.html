@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block sidebar %}{% endblock %}
-
 {% block header_title %}Teacher Dashboard{% endblock %}
 
 {% block content %}
@@ -31,7 +29,7 @@
 
         <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
             <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
-                <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="Teacher" class="h-full w-full object-contain rounded-lg">
+                <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="Indus Portal" class="h-full w-full object-contain rounded-lg">
             </div>
             <h1 class="text-lg sm:text-xl font-semibold tracking-wide truncate">Welcome, {{ session.get('username', 'Teacher') }}</h1>
         </div>
@@ -49,7 +47,7 @@
                          class="h-full w-full object-cover"
                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                     {% endif %}
-                    <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="" class="h-full w-full object-contain {% if session.get('profile_photo') %}hidden{% endif %}">
+                    <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="" class="h-full w-full object-contain {% if session.get('profile_photo') %}hidden{% endif %}">
                 </div>
             </button>
             <div data-profile-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">

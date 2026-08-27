@@ -39,8 +39,8 @@
 <body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
     {% block sidebar %}
-    {% if session.get('logged_in') %}
-    <!-- Sidebar -->
+    {% if session.get('logged_in') and session.get('role') == 'admin' %}
+    <!-- Sidebar (admin only) -->
     <aside id="sidebar" class="bg-[#2563eb] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-700 dark:border-gray-950 shadow-xl">
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-4 bg-[#2157d0] dark:bg-gray-900 border-b border-blue-700/50 dark:border-gray-700">
@@ -228,6 +228,12 @@
         {% if session.get('logged_in') %}
         <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-8 sm:px-10 lg:px-12 z-10 shrink-0 border-b border-gray-100 dark:border-gray-700 transition-colors">
             <div class="flex items-center">
+                {% if session.get('role') != 'admin' %}
+                <a href="{% if session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="flex items-center gap-2 mr-6 shrink-0">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto" alt="Indus Portal">
+                    <span class="hidden sm:inline text-base font-bold text-[#1e4e8c] dark:text-gray-100">Indus Portal</span>
+                </a>
+                {% endif %}
                 <!-- Notification Bell -->
                 <div class="relative">
                     <button type="button" id="bellBtn" onclick="toggleNotifs()" class="mr-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none relative">
