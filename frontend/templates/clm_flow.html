@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block header_title %}CLM Flow{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
+    <div class="mb-6 flex items-center gap-3">
+        <a href="{{ url_for('resources_assignments') }}" class="text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">CLM Flow</h1>
+            <p class="text-sm text-gray-500 mt-1">
+                Class {{ grade or '—' }}{{ section or '' }}{% if subject %} · {{ subject }}{% endif %}
+            </p>
+        </div>
+    </div>
+
+    <form method="POST" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 space-y-5">
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Flow title</label>
+            <input type="text" name="title" value="{{ flow.get('title', '') }}" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="e.g. Term 1 History learning flow">
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Overview</label>
+            <textarea name="overview" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="How this unit moves from introduction to assessment">{{ flow.get('overview', '') }}</textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Lesson steps</label>
+            <textarea name="steps" rows="10" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="1. Engage&#10;2. Explore&#10;3. Explain&#10;4. Elaborate&#10;5. Evaluate">{{ flow.get('steps', '') }}</textarea>
+        </div>
+        {% if flow.get('updated_at') %}
+        <p class="text-xs text-gray-400">Last saved {{ flow.get('updated_at') }}</p>
+        {% endif %}
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium">Save CLM flow</button>
+    </form>
+</div>
+{% endblock %}

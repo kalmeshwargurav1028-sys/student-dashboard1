@@ -4,7 +4,7 @@
 {% block content %}
 <div class="max-w-5xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
     <div class="mb-6 flex items-center gap-3">
-        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+        <a href="{{ url_for('resources_assignments') }}" class="text-gray-400 hover:text-gray-600 transition">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
         <h1 class="text-2xl font-bold text-gray-900">Create & Share Resource</h1>
@@ -420,5 +420,31 @@ function submitForm(statusValue) {
     sf.value = statusValue;
     document.getElementById('resourceForm').submit();
 }
+
+(function prefillFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const subject = params.get('subject');
+    const grade = params.get('grade');
+    const section = params.get('section');
+    if (!subject) return;
+    const subjectEl = document.getElementById('subject-select');
+    if (!subjectEl) return;
+    if ([...subjectEl.options].some(function(o) { return o.value === subject; })) {
+        subjectEl.value = subject;
+    }
+    onSubjectChange(subjectEl.value || subject);
+    if (grade) {
+        const gradeEl = document.getElementById('grade-select');
+        if (gradeEl) {
+            gradeEl.value = grade;
+            onGradeChange();
+        }
+    }
+    if (section) {
+        const sectionEl = document.getElementById('section-select');
+        if (sectionEl) sectionEl.value = section;
+    }
+    if (typeof updateStudentTargetSummary === 'function') updateStudentTargetSummary();
+})();
 </script>
 {% endblock %}

@@ -1647,24 +1647,63 @@ def _teacher_mapping_list():
         })
     return mappings
 
+DEFAULT_CLASS_SUBJECTS = [
+    'Mathematics', 'English', 'Science', 'Social Studies',
+    'Hindi', 'History', 'Physics', 'Chemistry', 'Biology',
+    'Computer Science', 'Physical Education', 'Art', 'Music'
+]
+
+def _teacher_classrooms():
+    by_key = {}
+    mapped_subjects = []
+    for m in _teacher_mapping_list():
+        grade = str(m.get('grade') or '').strip()
+        section = str(m.get('section') or '').strip().upper()
+        subject = (m.get('subject') or '').strip()
+        if subject and subject not in mapped_subjects:
+            mapped_subjects.append(subject)
+        if not grade or not section:
+            continue
+        key = f'{grade}|{section}'
+        if key not in by_key:
+            variations = get_class_variations(grade)
+            count = db.students.count_documents({
+                'student_class': {'$in': variations},
+                'division': {'$regex': f'^{re.escape(section)}$', '$options': 'i'}
+            })
+            by_key[key] = {
+                'key': key,
+                'grade': grade,
+                'section': section,
+                'label': f'{grade}{section}',
+                'student_count': count,
+                'subjects': []
+            }
+        if subject and subject not in by_key[key]['subjects']:
+            by_key[key]['subjects'].append(subject)
+    fallback = mapped_subjects or DEFAULT_CLASS_SUBJECTS
+    rooms = list(by_key.values())
+    for room in rooms:
+        if not room['subjects']:
+            room['subjects'] = list(fallback)
+        room['subjects'].sort()
+    rooms.sort(key=lambda r: (int(r['grade']) if str(r['grade']).isdigit() else 99, r['section']))
+    return rooms
+
+def _class_context():
+    return {
+        'grade': (request.values.get('grade') or '').strip(),
+        'section': (request.values.get('section') or '').strip(),
+        'subject': (request.values.get('subject') or '').strip(),
+    }
+
 @app.route('/resources-assignments')
 def resources_assignments():
     if not session.get('logged_in') or session.get('role') != 'teacher':
         return redirect(url_for('login'))
-    teacher_id = session.get('user_id')
-    assignments = list(db.assignments.find(
-        {'$or': [{'teacher_id': teacher_id}, {'created_by': session.get('username')}]}
-    ).sort('due_date', -1).limit(25))
-    for a in assignments:
-        a['_id'] = str(a.get('_id', ''))
-    resources = list(db.materials.find({'teacher_id': teacher_id}).sort('uploaded_at', -1).limit(25))
-    for r in resources:
-        r['_id'] = str(r.get('_id', ''))
     return render_template(
         'resources_assignments.html',
-        teacher_mappings=_teacher_mapping_list(),
-        assignments=assignments,
-        resources=resources
+        classrooms=_teacher_classrooms()
     )
 
 @app.route('/create-announcement', methods=['GET', 'POST'])
@@ -4725,6 +4764,89 @@ def unit_plan():
         section=section,
         subject=subject
     )
+
+@app.route('/clm-flow', methods=['GET', 'POST'])
+def clm_flow():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    ctx = _class_context()
+    query = {
+        'teacher_id': session.get('user_id'),
+        'grade': ctx['grade'],
+        'section': ctx['section'],
+        'subject': ctx['subject']
+    }
+    if request.method == 'POST':
+        db.clm_flows.update_one(
+            query,
+            {'$set': {
+                'title': request.form.get('title', ''),
+                'overview': request.form.get('overview', ''),
+                'steps': request.form.get('steps', ''),
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M')
+            }},
+            upsert=True
+        )
+        flash('CLM flow saved.')
+        return redirect(url_for('clm_flow', **ctx))
+    flow = db.clm_flows.find_one(query, {'_id': 0}) or {}
+    return render_template('clm_flow.html', flow=flow, **ctx)
+
+@app.route('/ai-clm-plan', methods=['GET', 'POST'])
+def ai_clm_plan():
+    if not session.get('logged_in') or session.get('role') != 'teacher':
+        return redirect(url_for('login'))
+    ctx = _class_context()
+    query = {
+        'teacher_id': session.get('user_id'),
+        'grade': ctx['grade'],
+        'section': ctx['section'],
+        'subject': ctx['subject']
+    }
+    plan = db.clm_plans.find_one(query, {'_id': 0}) or {}
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'generate':
+            client, api_key = configure_gemini()
+            if not api_key or not client:
+                flash('Set GEMINI_API_KEY to generate an AI CLM plan.')
+            else:
+                prompt = (
+                    f"Write a 4-week Curriculum Learning Map (CLM) for Grade {ctx['grade']}{ctx['section']} "
+                    f"{ctx['subject']}. Include weekly goals, lesson flow, activities, and a short assessment. "
+                    "Use plain text with week headings. Keep it practical for a school classroom."
+                )
+                try:
+                    response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                    plan_text = (response.text or '').strip()
+                    db.clm_plans.update_one(
+                        query,
+                        {'$set': {
+                            'title': request.form.get('title') or f"{ctx['subject']} CLM — Grade {ctx['grade']}{ctx['section']}",
+                            'plan_text': plan_text,
+                            'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M')
+                        }},
+                        upsert=True
+                    )
+                    flash('AI CLM plan generated.')
+                except Exception as e:
+                    flash(f'Could not generate the plan: {e}')
+            return redirect(url_for('ai_clm_plan', **ctx))
+        db.clm_plans.update_one(
+            query,
+            {'$set': {
+                'title': request.form.get('title', ''),
+                'plan_text': request.form.get('plan_text', ''),
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M')
+            }},
+            upsert=True
+        )
+        flash('AI CLM plan saved.')
+        return redirect(url_for('ai_clm_plan', **ctx))
+
+    return render_template('ai_clm_plan.html', plan=plan, **ctx)
 
 @app.route('/teacher/delete_test/<test_id>', methods=['POST'])
 def delete_online_test(test_id):
