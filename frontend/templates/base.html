@@ -27,6 +27,7 @@
 <body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
     {% if session.get('logged_in') %}
+    {% block sidebar %}
     <!-- Sidebar -->
     <aside id="sidebar" class="bg-[#2563eb] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-700 dark:border-gray-950 shadow-xl">
         <!-- Sidebar Header -->
@@ -205,6 +206,7 @@
         </nav>
         
     </aside>
+    {% endblock %}
     {% endif %}
 
     <!-- Main Content Wrapper -->

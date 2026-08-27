@@ -1,9 +1,11 @@
 {% extends 'base.html' %}
 
+{% block sidebar %}{% endblock %}
+
 {% block header_title %}Teacher Dashboard{% endblock %}
 
 {% block content %}
-<div class="w-full py-8 px-8 sm:px-10 lg:px-12">
+<div class="w-full py-4 px-4 sm:px-6 lg:px-8">
 
     <!-- Teacher Mappings Summary Banner -->
     {% if session.get('role') == 'teacher' %}
@@ -21,29 +23,15 @@
         </div>
     </div>
 
-    <div class="relative overflow-hidden bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-3xl p-6 sm:p-8 shadow-lg text-white mb-8 flex flex-col sm:flex-row justify-between items-center gap-6">
+    <div class="relative overflow-hidden bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-6 flex flex-row justify-between items-center gap-4 w-full">
         <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
         <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl pointer-events-none"></div>
 
-        <div class="flex items-center gap-5 relative z-10">
-            <div class="shrink-0 h-24 w-24 sm:h-28 sm:w-28 rounded-2xl bg-white/95 p-1.5 shadow-lg overflow-hidden">
-                <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="Teacher cartoon" class="h-full w-full object-cover rounded-xl">
+        <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
+            <div class="shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white/95 p-1 shadow-md overflow-hidden">
+                <img src="{{ url_for('static', filename='images/cartoon-teacher.png') }}" alt="Teacher cartoon" class="h-full w-full object-cover rounded-lg">
             </div>
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-semibold mb-3 tracking-wide">Welcome, {{ session.get('username', 'Teacher') }}</h1>
-                <div class="flex flex-wrap gap-3">
-                    {% if teacher_homerooms %}
-                        {% for hr in teacher_homerooms %}
-                            <span class="inline-block px-4 py-1.5 rounded-lg text-sm bg-white/20 hover:bg-white/30 transition-colors cursor-default">Homeroom Gr {{ hr.grade }}-{{ hr.section }}</span>
-                        {% endfor %}
-                    {% endif %}
-                    {% if teacher_subjects %}
-                        {% for sub in teacher_subjects %}
-                            <span class="inline-block px-4 py-1.5 rounded-lg text-sm bg-white/20 hover:bg-white/30 transition-colors cursor-default">{{ sub.subject|capitalize }}</span>
-                        {% endfor %}
-                    {% endif %}
-                </div>
-            </div>
+            <h1 class="text-lg sm:text-xl font-semibold tracking-wide truncate">Welcome, {{ session.get('username', 'Teacher') }}</h1>
         </div>
         
         <div class="relative z-10 shrink-0">
