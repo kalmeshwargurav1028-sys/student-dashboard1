@@ -1564,6 +1564,19 @@ def dashboard():
         teacher_mappings=teacher_mappings
     )
 
+@app.route('/school-announcements')
+def school_announcements():
+    if not session.get('logged_in') or session.get('role') == 'student':
+        return redirect(url_for('login'))
+    announcements = list(db.announcements.find().sort('date_sent', -1).limit(50))
+    return render_template('school_announcements.html', announcements=announcements)
+
+@app.route('/school-policies')
+def school_policies():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return render_template('school_policies.html')
+
 @app.route('/student/<student_id>/ai_mentor')
 def student_ai_mentor(student_id):
     if not session.get('logged_in'):
