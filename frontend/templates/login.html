@@ -13,152 +13,86 @@
         .role-btn[aria-pressed="false"] { border-color: #e5e7eb; background: #fff; color: #6b7280; }
     </style>
 </head>
-<body class="min-h-screen bg-[#f4f7fb] text-gray-900 antialiased">
-    <div class="min-h-screen grid lg:grid-cols-2">
-
-        <aside class="relative hidden lg:flex flex-col justify-between overflow-hidden bg-[#123a6b] text-white px-12 py-10">
-            <div class="absolute inset-0 pointer-events-none">
-                <div class="absolute -top-24 -left-16 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl"></div>
-                <div class="absolute bottom-0 right-0 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"></div>
-                <div class="absolute inset-0 opacity-30" style="background-image: radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px); background-size: 22px 22px;"></div>
+<body class="min-h-screen bg-[#eef3f9] text-gray-900 antialiased">
+    <main class="min-h-screen flex items-center justify-center px-4 py-10">
+        <div class="w-full max-w-[420px] bg-white rounded-3xl shadow-sm border border-gray-100 px-6 py-8 sm:px-8">
+            <div class="flex justify-center mb-6">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School" class="h-20 w-auto object-contain">
             </div>
-            <div class="relative">
-                <div class="flex items-center gap-3">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus" class="h-12 w-auto object-contain bg-white rounded-xl p-1">
-                    <div>
-                        <p class="text-sm font-semibold tracking-wide">Indus Portal</p>
-                        <p class="text-xs text-blue-200">Personalized learning</p>
-                    </div>
-                </div>
+
+            <h1 class="text-center text-2xl font-semibold tracking-tight text-gray-900">Sign in</h1>
+            <p class="mt-1 text-center text-sm text-gray-500">Choose Teacher or Student, then enter your email.</p>
+
+            {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                {% for message in messages %}
+                <p>{{ message }}</p>
+                {% endfor %}
             </div>
-            <div class="relative max-w-md">
-                <p class="text-sm font-medium text-blue-200 mb-3">School workspace</p>
-                <h1 class="text-4xl font-semibold leading-tight tracking-tight">One place for class, students, and school work.</h1>
-                <p class="mt-4 text-blue-100/90 text-base leading-relaxed">Sign in to open your dashboard, resources, attendance, and messages.</p>
-                <ul class="mt-10 space-y-4">
-                    <li class="flex items-start gap-3">
-                        <span class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                        </span>
-                        <div>
-                            <p class="text-sm font-semibold">Resources & assignments</p>
-                            <p class="text-xs text-blue-200">Plan units, share files, and set work by class.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        </span>
-                        <div>
-                            <p class="text-sm font-semibold">Attendance & grades</p>
-                            <p class="text-xs text-blue-200">Mark the day and keep the gradebook current.</p>
-                        </div>
-                    </li>
-                    <li class="flex items-start gap-3">
-                        <span class="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/10">
-                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                        </span>
-                        <div>
-                            <p class="text-sm font-semibold">School messages</p>
-                            <p class="text-xs text-blue-200">Announcements and parent contact stay in one place.</p>
-                        </div>
-                    </li>
-                </ul>
+            {% endif %}
+            {% endwith %}
+
+            <div class="mt-6 grid grid-cols-2 gap-3" role="tablist" aria-label="Sign in as">
+                <button type="button" id="tabTeacher" class="role-btn rounded-xl border px-3 py-3 text-center transition" aria-pressed="true" onclick="switchTab('teacher')">
+                    <span class="block text-sm font-semibold">Teacher</span>
+                </button>
+                <button type="button" id="tabStudent" class="role-btn rounded-xl border px-3 py-3 text-center transition" aria-pressed="false" onclick="switchTab('student')">
+                    <span class="block text-sm font-semibold">Student</span>
+                </button>
             </div>
-            <p class="relative text-xs text-blue-200">Academic year {{ academic_year_label }}</p>
-        </aside>
 
-        <main class="flex items-center justify-center px-4 py-10 sm:px-8">
-            <div class="w-full max-w-[420px]">
-                <div class="lg:hidden flex items-center gap-3 mb-8">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus" class="h-10 w-auto object-contain">
-                    <div>
-                        <p class="text-sm font-semibold text-[#123a6b]">Indus Portal</p>
-                        <p class="text-xs text-gray-500">Academic year {{ academic_year_label }}</p>
+            <form action="{{ url_for('login') }}" method="POST" class="mt-6 space-y-4" onsubmit="onSubmit()">
+                <input type="hidden" name="login_type" id="login_type" value="teacher">
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">School email</label>
+                    <input type="email" id="email" name="email" required autofocus autocomplete="username"
+                        class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400"
+                        placeholder="name@indusschool.com">
+                </div>
+
+                <div id="passwordField">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                        <a href="{{ url_for('forgot_password') }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Forgot password?</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required autocomplete="current-password"
+                            class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
+                            placeholder="Enter your password">
+                        <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret('password', this)" aria-label="Show password">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
                     </div>
                 </div>
 
-                <h2 class="text-2xl font-semibold text-gray-900 tracking-tight">Sign in</h2>
-                <p class="mt-1 text-sm text-gray-500">Choose your role, then enter your school email.</p>
-
-                {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                <div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-                    {% for message in messages %}
-                    <p>{{ message }}</p>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                {% endwith %}
-
-                <div class="mt-6 grid grid-cols-2 gap-3" role="tablist" aria-label="Sign in as">
-                    <button type="button" id="tabTeacher" class="role-btn rounded-xl border px-3 py-3 text-left transition" aria-pressed="true" onclick="switchTab('teacher')">
-                        <span class="block text-sm font-semibold">Teacher</span>
-                        <span class="block text-xs mt-0.5 opacity-80">Staff dashboard</span>
-                    </button>
-                    <button type="button" id="tabStudent" class="role-btn rounded-xl border px-3 py-3 text-left transition" aria-pressed="false" onclick="switchTab('student')">
-                        <span class="block text-sm font-semibold">Student</span>
-                        <span class="block text-xs mt-0.5 opacity-80">Classes & work</span>
-                    </button>
+                <div id="studentIdField" class="hidden">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="student_id" class="block text-sm font-medium text-gray-700">Password or student ID</label>
+                        <a href="{{ url_for('forgot_password') }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Forgot password?</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="student_id" name="student_id" autocomplete="current-password"
+                            class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
+                            placeholder="Password or IND001">
+                        <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret('student_id', this)" aria-label="Show password">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        </button>
+                    </div>
+                    <p class="mt-1.5 text-xs text-gray-500">If you have not set a password yet, use your student ID.</p>
                 </div>
 
-                <form action="{{ url_for('login') }}" method="POST" class="mt-6 space-y-4" onsubmit="onSubmit(this)">
-                    <input type="hidden" name="login_type" id="login_type" value="teacher">
+                <button type="submit" id="submitBtn" class="w-full rounded-xl bg-[#1d4ed8] hover:bg-[#1e40af] text-white text-sm font-semibold py-3 mt-2 transition">
+                    Sign in
+                </button>
+            </form>
 
-                    <div>
-                        <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">School email</label>
-                        <input type="email" id="email" name="email" required autofocus autocomplete="username"
-                            class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400"
-                            placeholder="name@indusschool.com">
-                    </div>
-
-                    <div id="passwordField">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                            <a href="{{ url_for('forgot_password') }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Forgot password?</a>
-                        </div>
-                        <div class="relative">
-                            <input type="password" id="password" name="password" required autocomplete="current-password"
-                                class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
-                                placeholder="Enter your password">
-                            <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret('password', this)" aria-label="Show password">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div id="studentIdField" class="hidden">
-                        <div class="flex items-center justify-between mb-1.5">
-                            <label for="student_id" class="block text-sm font-medium text-gray-700">Password or student ID</label>
-                            <a href="{{ url_for('forgot_password') }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Forgot password?</a>
-                        </div>
-                        <div class="relative">
-                            <input type="password" id="student_id" name="student_id" autocomplete="current-password"
-                                class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
-                                placeholder="Password or IND001">
-                            <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret('student_id', this)" aria-label="Show password">
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </button>
-                        </div>
-                        <p class="mt-1.5 text-xs text-gray-500">If you have not set a password yet, use your student ID.</p>
-                    </div>
-
-                    <button type="submit" id="submitBtn" class="w-full rounded-xl bg-[#1d4ed8] hover:bg-[#1e40af] text-white text-sm font-semibold py-3 mt-2 transition">
-                        Sign in
-                    </button>
-                </form>
-
-                <div class="mt-6 flex items-center justify-between text-sm">
-                    <a href="{{ url_for('signup') }}" class="font-medium text-[#1e4e8c] hover:text-blue-800">Create an account</a>
-                    <button type="button" onclick="toggleHelp()" class="text-gray-500 hover:text-gray-800">Need help?</button>
-                </div>
-                <p class="mt-5 text-center text-xs text-gray-400">
-                    Super Admin?
-                    <a href="{{ url_for('admin_portal') }}" class="font-medium text-gray-600 hover:text-blue-700">Open admin login</a>
-                </p>
-            </div>
-        </main>
-    </div>
+            <p class="mt-6 text-center">
+                <button type="button" onclick="toggleHelp()" class="text-sm text-gray-500 hover:text-gray-800">Need help?</button>
+            </p>
+        </div>
+    </main>
 
     <div id="helpModal" class="hidden fixed inset-0 z-50">
         <div class="absolute inset-0 bg-slate-900/40" onclick="toggleHelp()"></div>
@@ -170,9 +104,8 @@
                 </button>
             </div>
             <div class="space-y-3 text-sm text-gray-600">
-                <p>For login issues or a new account, email the system administrator.</p>
+                <p>Ask Super Admin for a new account. For login issues, email support.</p>
                 <a href="mailto:kalmeshwargurav1028@gmail.com" class="block rounded-xl border border-gray-200 px-4 py-3 hover:bg-blue-50 text-blue-700 font-medium">kalmeshwargurav1028@gmail.com</a>
-                <p class="text-xs text-gray-500">Teachers and students sign in here. Super Admins use the admin login link.</p>
             </div>
         </div>
     </div>
@@ -193,7 +126,6 @@
             passwordInput.required = isTeacher;
             studentIdField.classList.toggle('hidden', isTeacher);
             studentIdInput.required = !isTeacher;
-            document.getElementById('email').focus();
         }
 
         function toggleSecret(id, btn) {
@@ -206,7 +138,7 @@
             document.getElementById('helpModal').classList.toggle('hidden');
         }
 
-        function onSubmit(form) {
+        function onSubmit() {
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
             btn.textContent = 'Signing in…';
