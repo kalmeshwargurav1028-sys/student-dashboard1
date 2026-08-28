@@ -19,7 +19,6 @@
             </div>
 
             <h1 class="text-center text-2xl font-semibold tracking-tight text-gray-900">Sign in</h1>
-            <p class="mt-1 text-center text-sm text-gray-500">Use the email and password given by Super Admin.</p>
 
             {% with messages = get_flashed_messages() %}
             {% if messages %}
@@ -33,7 +32,7 @@
 
             <form action="{{ url_for('login') }}" method="POST" class="mt-6 space-y-4" onsubmit="onSubmit()">
                 <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">School email</label>
+                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                     <input type="email" id="email" name="email" required autofocus autocomplete="username"
                         class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400"
                         placeholder="name@indusschool.com">
