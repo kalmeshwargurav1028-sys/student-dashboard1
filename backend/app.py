@@ -1011,98 +1011,72 @@ def verify_2fa():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        login_type = request.form.get('login_type', 'teacher')
-        email = request.form['email']
-        
-        if login_type == 'admin':
-            ensure_bootstrap_admin()
-            admin = db.admins.find_one({'email': email})
-            password = request.form.get('password', '')
-            if admin and verify_password(admin.get('password', ''), password):
-                upgrade_password_if_plaintext(db.admins, {'email': email}, admin.get('password'), password)
-                session_data = {
-                    'role': 'admin',
-                    'user_id': str(admin['_id']),
-                    'username': admin.get('name') or email.split('@')[0],
-                    'email': email,
-                    'redirect_url': url_for('admin_dashboard')
-                }
-                return initiate_2fa(email, session_data)
-            else:
-                flash('Invalid admin credentials. Please try again.')
-                
-        elif login_type == 'student':
-            student_id_or_password = request.form.get('student_id')
-            
-            # Check new student_users auth collection first
-            auth_user = db.student_users.find_one({'email': email})
-            
-            if auth_user and verify_password(auth_user.get('password', ''), student_id_or_password):
-                upgrade_password_if_plaintext(db.student_users, {'email': email}, auth_user.get('password'), student_id_or_password)
-                student_id = auth_user.get('student_id')
-                profile = db.students.find_one({'id': student_id})
-                session_data = {
-                    'role': 'student',
-                    'user_id': student_id,
-                    'email': email,
-                    'username': profile.get('name') if profile else email.split('@')[0],
-                    'photo_url': profile.get('photo_url', '') if profile else '',
-                    'redirect_url': url_for('student_home')
-                }
-                return initiate_2fa(email, session_data)
-            
-            # Fallback to checking the students profile collection for older entries
-            student = db.students.find_one({'email': email})
-            
-            if student and (verify_password(student.get('password', ''), student_id_or_password) or student.get('id') == student_id_or_password):
-                if verify_password(student.get('password', ''), student_id_or_password):
-                    upgrade_password_if_plaintext(db.students, {'email': email}, student.get('password'), student_id_or_password)
-                student_id = student.get('id')
-                session_data = {
-                    'role': 'student',
-                    'user_id': student_id,
-                    'username': student.get('name', email.split('@')[0]),
-                    'email': email,
-                    'photo_url': student.get('photo_url', ''),
-                    'redirect_url': url_for('student_home')
-                }
-                return initiate_2fa(email, session_data)
-            else:
-                flash('Invalid student credentials. Please check your Email and Student ID.')
-        else:
-            password = request.form.get('password', '')
-            user = db.users.find_one({'email': email})
-            
-            if user and verify_password(user.get('password', ''), password):
-                upgrade_password_if_plaintext(db.users, {'email': email}, user.get('password'), password)
-                if not user.get('verified'):
-                    flash('This account is not verified yet. Please enter the verification code sent to your email.')
-                    otp = generate_otp()
-                    expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-                    session['otp_code'] = otp
-                    session['otp_expiry'] = expiry
-                    session['otp_email'] = email
-                    result = send_otp_email(email, otp)
-                    if result is not True:
-                        flash(f'Failed to send OTP email: {result}')
-                    return redirect(url_for('verify_otp', email=email))
-                    
-                first = user.get('first_name') or ''
-                last = user.get('last_name') or ''
-                name = f"{first} {last}".strip()
-                session_data = {
-                    'role': user.get('custom_role', 'teacher'),
-                    'assigned_class': user.get('assigned_class', 'all'),
-                    'user_id': str(user['_id']),
-                    'username': name if name else email.split('@')[0],
-                    'email': email,
-                    'photo_url': user.get('photo_url'),
-                    'redirect_url': url_for('dashboard')
-                }
-                return initiate_2fa(email, session_data)
-            else:
-                flash('Invalid credentials. Please try again.')
-            
+        email = (request.form.get('email') or '').strip()
+        password = request.form.get('password', '')
+
+        user = db.users.find_one({'email': email})
+        if user and verify_password(user.get('password', ''), password):
+            upgrade_password_if_plaintext(db.users, {'email': email}, user.get('password'), password)
+            if user.get('verified') is False:
+                flash('This account is not verified yet. Please enter the verification code sent to your email.')
+                otp = generate_otp()
+                expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
+                session['otp_code'] = otp
+                session['otp_expiry'] = expiry
+                session['otp_email'] = email
+                result = send_otp_email(email, otp)
+                if result is not True:
+                    flash(f'Failed to send OTP email: {result}')
+                return redirect(url_for('verify_otp', email=email))
+
+            first = user.get('first_name') or ''
+            last = user.get('last_name') or ''
+            name = user.get('name') or f'{first} {last}'.strip()
+            role = user.get('custom_role') or user.get('role') or 'teacher'
+            if role == 'admin':
+                role = 'teacher'
+            session_data = {
+                'role': role,
+                'assigned_class': user.get('assigned_class', 'all'),
+                'user_id': str(user['_id']),
+                'username': name if name else email.split('@')[0],
+                'email': email,
+                'photo_url': user.get('photo_url'),
+                'redirect_url': url_for('dashboard')
+            }
+            return initiate_2fa(email, session_data)
+
+        auth_user = db.student_users.find_one({'email': email})
+        if auth_user and verify_password(auth_user.get('password', ''), password):
+            upgrade_password_if_plaintext(db.student_users, {'email': email}, auth_user.get('password'), password)
+            student_id = auth_user.get('student_id')
+            profile = db.students.find_one({'id': student_id})
+            session_data = {
+                'role': 'student',
+                'user_id': student_id,
+                'email': email,
+                'username': profile.get('name') if profile else email.split('@')[0],
+                'photo_url': profile.get('photo_url', '') if profile else '',
+                'redirect_url': url_for('student_home')
+            }
+            return initiate_2fa(email, session_data)
+
+        student = db.students.find_one({'email': email})
+        if student and (verify_password(student.get('password', ''), password) or student.get('id') == password):
+            if verify_password(student.get('password', ''), password):
+                upgrade_password_if_plaintext(db.students, {'email': email}, student.get('password'), password)
+            session_data = {
+                'role': 'student',
+                'user_id': student.get('id'),
+                'username': student.get('name', email.split('@')[0]),
+                'email': email,
+                'photo_url': student.get('photo_url', ''),
+                'redirect_url': url_for('student_home')
+            }
+            return initiate_2fa(email, session_data)
+
+        flash('Invalid email or password. Ask Super Admin if you do not have an account yet.')
+
     return render_template('login.html')
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -1131,89 +1105,8 @@ def admin_portal():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == 'POST':
-        signup_type = request.form.get('signup_type', 'teacher')
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
-        
-        if password != confirm_password:
-            flash('Passwords do not match. Please try again.')
-            return render_template('signup.html')
-
-        if signup_type == 'student':
-            existing_student = db.student_users.find_one({'email': email})
-            if existing_student:
-                flash('Student with this email already exists. Please login.')
-                return redirect(url_for('login'))
-                
-            # Create student
-            all_students = list(db.students.find({}, {'id': 1, '_id': 0}))
-            ind_ids = [s.get('id', '') for s in all_students if str(s.get('id', '')).startswith('IND')]
-            max_num = 0
-            for sid in ind_ids:
-                try:
-                    num = int(sid[3:])
-                    if num > max_num:
-                        max_num = num
-                except ValueError:
-                    pass
-            new_id = f"IND{max_num + 1:03d}"
-            
-            
-            # Create auth entry
-            db.student_users.insert_one({
-                'student_id': new_id,
-                'email': email,
-                'password': generate_password_hash(password)
-            })
-            
-            # Create profile entry
-            db.students.insert_one({
-                'id': new_id,
-                'name': f"{first_name} {last_name}".strip(),
-                'email': email,
-                'attendance': '100',
-                'performance': '0',
-            })
-            flash(f'Student account created successfully! Your Student ID is {new_id}. You can now log in.')
-            return redirect(url_for('login'))
-            
-        # Teacher signup flow below
-            
-        existing_user = db.users.find_one({'email': email})
-        
-        if existing_user:
-            if existing_user.get('verified'):
-                flash('Email already exists. Please login.')
-                return redirect(url_for('login'))
-            else:
-                db.users.delete_one({'email': email})
-                
-        otp = generate_otp()
-        expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-        db.users.insert_one({
-            'first_name': first_name,
-            'last_name': last_name,
-            'email': email,
-            'password': generate_password_hash(password),
-            'verified': False
-        })
-        
-        session['otp_code'] = otp
-        session['otp_expiry'] = expiry
-        session['otp_email'] = email
-        result = send_otp_email(email, otp)
-        
-        if result is True:
-            flash('Verification code sent to your email! Please verify below.')
-        else:
-            flash(f'Failed to send verification code email: {result}')
-        return redirect(url_for('verify_otp', email=email))
-        
-    return render_template('signup.html')
+    flash('Accounts are created by Super Admin. Sign in with the email and password you were given.')
+    return redirect(url_for('login'))
 
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
@@ -1260,7 +1153,7 @@ def forgot_password():
         user = db.users.find_one({'email': email})
         student = db.student_users.find_one({'email': email}) or db.students.find_one({'email': email})
         
-        if (user and user.get('verified')) or student:
+        if user or student:
             otp = generate_otp()
             expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
             session['otp_code'] = otp
@@ -2050,6 +1943,7 @@ def add_staff():
                 'role': 'teacher',
                 'assigned_class': assigned_class,
                 'password': hashed_password,
+                'verified': True,
                 'created_at': datetime.utcnow().isoformat()
             })
         
