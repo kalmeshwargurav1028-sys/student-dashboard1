@@ -1009,6 +1009,23 @@ def verify_2fa():
             
     return render_template('verify_2fa.html', email=email)
 
+@app.route('/resend_2fa', methods=['POST'])
+def resend_2fa():
+    email = (request.form.get('email') or session.get('otp_email') or '').strip()
+    if not email or not session.get('pending_2fa_data'):
+        flash('Session expired. Please log in again.')
+        return redirect(url_for('login'))
+    otp = generate_otp()
+    session['otp_code'] = otp
+    session['otp_expiry'] = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
+    session['otp_email'] = email
+    result = send_otp_email(email, otp)
+    if result is True:
+        flash('A new verification code was sent to your email.')
+    else:
+        flash(f'Failed to resend the code: {result}')
+    return redirect(url_for('verify_2fa', email=email))
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
