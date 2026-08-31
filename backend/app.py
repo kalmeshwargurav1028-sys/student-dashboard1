@@ -1014,6 +1014,19 @@ def login():
         email = (request.form.get('email') or '').strip()
         password = request.form.get('password', '')
 
+        ensure_bootstrap_admin()
+        admin = db.admins.find_one({'email': email})
+        if admin and verify_password(admin.get('password', ''), password):
+            upgrade_password_if_plaintext(db.admins, {'email': email}, admin.get('password'), password)
+            session_data = {
+                'role': 'admin',
+                'user_id': str(admin['_id']),
+                'username': admin.get('name') or email.split('@')[0],
+                'email': email,
+                'redirect_url': url_for('admin_dashboard')
+            }
+            return initiate_2fa(email, session_data)
+
         user = db.users.find_one({'email': email})
         if user and verify_password(user.get('password', ''), password):
             upgrade_password_if_plaintext(db.users, {'email': email}, user.get('password'), password)
@@ -1034,7 +1047,12 @@ def login():
             name = user.get('name') or f'{first} {last}'.strip()
             role = user.get('custom_role') or user.get('role') or 'teacher'
             if role == 'admin':
+                redirect_url = url_for('admin_dashboard')
+            elif role == 'student':
+                redirect_url = url_for('student_home')
+            else:
                 role = 'teacher'
+                redirect_url = url_for('dashboard')
             session_data = {
                 'role': role,
                 'assigned_class': user.get('assigned_class', 'all'),
@@ -1042,7 +1060,7 @@ def login():
                 'username': name if name else email.split('@')[0],
                 'email': email,
                 'photo_url': user.get('photo_url'),
-                'redirect_url': url_for('dashboard')
+                'redirect_url': redirect_url
             }
             return initiate_2fa(email, session_data)
 
@@ -1082,26 +1100,7 @@ def login():
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin-portal', methods=['GET', 'POST'])
 def admin_portal():
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form.get('password', '')
-        
-        ensure_bootstrap_admin()
-        admin = db.admins.find_one({'email': email})
-        if admin and verify_password(admin.get('password', ''), password):
-            upgrade_password_if_plaintext(db.admins, {'email': email}, admin.get('password'), password)
-            session_data = {
-                'role': 'admin',
-                'user_id': str(admin['_id']),
-                'username': admin.get('name') or email.split('@')[0],
-                'email': email,
-                'redirect_url': url_for('admin_dashboard')
-            }
-            return initiate_2fa(email, session_data)
-        else:
-            flash('Invalid admin credentials. Please try again.')
-            
-    return render_template('admin_portal.html')
+    return redirect(url_for('login'))
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -1152,8 +1151,9 @@ def forgot_password():
         email = request.form.get('email')
         user = db.users.find_one({'email': email})
         student = db.student_users.find_one({'email': email}) or db.students.find_one({'email': email})
+        admin = db.admins.find_one({'email': email})
         
-        if user or student:
+        if user or student or admin:
             otp = generate_otp()
             expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
             session['otp_code'] = otp
@@ -1198,6 +1198,9 @@ def reset_password():
                     db.student_users.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
                 if student_profile:
                     db.students.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
+                admin = db.admins.find_one({'email': email})
+                if admin:
+                    db.admins.update_one({'email': email}, {'$set': {'password': generate_password_hash(new_password)}})
                     
                 session.pop('otp_code', None)
                 session.pop('otp_email', None)
@@ -1494,7 +1497,7 @@ def _get_school_policies():
 @app.route('/admin/school-policies', methods=['GET', 'POST'])
 def admin_school_policies():
     if not session.get('logged_in') or session.get('role') != 'admin':
-        return redirect(url_for('admin_portal'))
+        return redirect(url_for('login'))
     if request.method == 'POST':
         action = request.form.get('action')
         if action == 'add':
@@ -1734,7 +1737,7 @@ def student_profile(student_id):
 @app.route('/admin_dashboard')
 def admin_dashboard():
     if not session.get('logged_in') or session.get('role') != 'admin':
-        return redirect(url_for('admin_portal'))
+        return redirect(url_for('login'))
         
     now = datetime.now()
     active_threshold = now - timedelta(minutes=15)
