@@ -4,442 +4,350 @@
 {% block content %}
 <div class="max-w-full mx-auto px-8 sm:px-10 lg:px-12 py-6">
 
-  <!-- Page Header -->
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-    <div>
-      <h1 class="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-3">
-        <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
-          </svg>
-        </span>
-        Teacher Mapping
-      </h1>
-      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Assign homeroom teachers and subject teachers to each Grade–Section classroom.
-      </p>
-    </div>
-    <!-- Quick stats pills -->
-    <div class="flex flex-wrap gap-2" id="stats-row">
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-        {{ teachers|length }} Teachers
-      </span>
-      <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-        48 Classrooms (Gr 1–12 × A–D)
-      </span>
-      <span id="pill-homeroom" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold border border-indigo-200">
-        🏠 — Homeroom set
-      </span>
-      <span id="pill-subject" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
-        📚 — Subject set
-      </span>
+  <div class="mb-6">
+    <h1 class="text-2xl font-semibold text-slate-900">Teacher Mapping</h1>
+    <p class="mt-1 text-sm text-slate-500">Teacher name sits beside class, grade, section, subject, and class teacher. Students in that class can be mapped to the same teacher.</p>
+  </div>
+
+  <div id="toast" class="fixed bottom-6 right-6 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-semibold bg-sky-600">
+    <span id="toast-msg">Saved</span>
+  </div>
+
+  <div class="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+    <h2 class="text-sm font-semibold text-slate-900 mb-4">Map a teacher</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Teacher</label>
+        <select id="t-teacher" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <option value="">Select teacher</option>
+          {% for t in teachers %}
+          <option value="{{ t._id }}" data-name="{{ t.full_name }}">{{ t.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Class</label>
+        <select id="t-class" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white" onchange="syncGradeFromClass()">
+          {% for grade in grades %}
+          <option value="{{ grade }}">Class {{ grade }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Grade</label>
+        <select id="t-grade" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          {% for grade in grades %}
+          <option value="{{ grade }}">Grade {{ grade }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Section</label>
+        <select id="t-section" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          {% for section in sections %}
+          <option value="{{ section }}">{{ section }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Subject</label>
+        <select id="t-subject" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <option value="">None (class teacher only)</option>
+          {% for subject in subjects %}
+          <option value="{{ subject }}">{{ subject }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="flex items-center gap-3 pb-1">
+        <label class="inline-flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" id="t-class-teacher" class="rounded border-slate-300" checked>
+          Class teacher
+        </label>
+        <button type="button" onclick="saveTeacherMap()" class="flex-1 rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold py-2.5">Save</button>
+      </div>
     </div>
   </div>
 
-  <!-- Toast -->
-  <div id="toast"
-       class="fixed bottom-6 right-6 z-50 hidden px-5 py-3 rounded-xl shadow-2xl text-white text-sm font-semibold
-              bg-blue-600 transition-all duration-300 flex items-center gap-2">
-    <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-    </svg>
-    <span id="toast-msg">Saved!</span>
-  </div>
-
-  <!-- ── TABS ────────────────────────────────────────── -->
-  <div class="flex gap-1 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl w-fit mb-6">
-    <button id="tab-homeroom" onclick="switchTab('homeroom')"
-            class="tab-btn px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200
-                   bg-white dark:bg-gray-700 text-blue-700 dark:text-blue-400 shadow">
-      🏠 Homeroom Mapping
-    </button>
-    <button id="tab-subject" onclick="switchTab('subject')"
-            class="tab-btn px-5 py-2 rounded-lg text-sm font-semibold transition-all duration-200
-                   text-gray-500 dark:text-gray-400 hover:text-gray-700">
-      📚 Subject Mapping
-    </button>
-  </div>
-
-  <!-- ══════════════════════════════════════════════════
-       TAB 1 — HOMEROOM MAPPING
-       One homeroom teacher per Grade × Section
-  ══════════════════════════════════════════════════ -->
-  <div id="panel-homeroom">
-
-    <!-- Grade selector tabs -->
-    <div class="flex flex-wrap gap-2 mb-5">
-      {% for grade in grades %}
-      <button onclick="selectGrade('{{ grade }}')" id="gbtn-{{ grade }}"
-              class="grade-btn px-4 py-1.5 rounded-lg border text-sm font-semibold transition-all
-                     {% if loop.first %}bg-blue-600 text-white border-blue-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400{% endif %}">
-        Gr {{ grade }}
-      </button>
-      {% endfor %}
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden mb-8">
+    <div class="px-5 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Mapped teachers</h2>
+      <p class="text-xs text-slate-500 mt-0.5">One row per teacher, class, grade, section, and subject</p>
     </div>
-
-    <!-- Grid: 4 section cards -->
-    {% for grade in grades %}
-    <div id="grade-panel-{{ grade }}" class="grade-panel {% if not loop.first %}hidden{% endif %}">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {% for section in sections %}
-        {% set hr = homeroom_lookup.get(grade, {}).get(section, {}) %}
-        <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow p-5">
-          <!-- Card header -->
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Grade {{ grade }}</span>
-              <h3 class="text-xl font-black text-gray-800 dark:text-white">Section {{ section }}</h3>
-            </div>
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-500 flex items-center justify-center shadow">
-              <span class="text-white font-black text-sm">{{ section }}</span>
-            </div>
-          </div>
-
-          <!-- Current assignment badge -->
-          <div id="hr-badge-{{ grade }}-{{ section }}"
-               class="mb-4 px-3 py-2 rounded-lg text-xs font-semibold
-                      {% if hr.get('teacher_name') %}bg-blue-50 text-blue-700 border border-blue-200{% else %}bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600{% endif %}">
-            {% if hr.get('teacher_name') %}
-              🎓 {{ hr.teacher_name }}
-            {% else %}
-              <span class="text-gray-400">— Not assigned —</span>
-            {% endif %}
-          </div>
-
-          <!-- Dropdown -->
-          <select id="hr-select-{{ grade }}-{{ section }}"
-                  onchange="saveHomeroom('{{ grade }}', '{{ section }}', this)"
-                  class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2
-                         bg-white dark:bg-gray-700 text-gray-800 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-blue-400 transition">
-            <option value="">— Select teacher —</option>
-            {% for t in teachers %}
-            <option value="{{ t._id }}" data-name="{{ t.full_name }}"
-              {% if hr.get('teacher_id') == t._id %}selected{% endif %}>
-              {{ t.full_name }}{% if t.get('department') %} ({{ t.department }}){% endif %}
-            </option>
-            {% endfor %}
-          </select>
-
-          <!-- Clear button -->
-          {% if hr.get('teacher_name') %}
-          <button onclick="clearMapping('{{ grade }}', '{{ section }}', 'homeroom')"
-                  class="mt-2 w-full text-xs text-red-500 hover:text-red-700 font-medium py-1.5 rounded-lg
-                         hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-            ✕ Clear assignment
-          </button>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="px-5 py-3">Teacher</th>
+            <th class="px-4 py-3">Class</th>
+            <th class="px-4 py-3">Grade</th>
+            <th class="px-4 py-3">Section</th>
+            <th class="px-4 py-3">Subject</th>
+            <th class="px-4 py-3">Class teacher</th>
+            <th class="px-4 py-3">Students in class</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in mapping_rows %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-5 py-3 font-medium text-slate-900 whitespace-nowrap">{{ row.teacher_name }}</td>
+            <td class="px-4 py-3 text-slate-700">Class {{ row.class }}</td>
+            <td class="px-4 py-3 text-slate-700">Grade {{ row.grade }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ row.section }}</td>
+            <td class="px-4 py-3 text-slate-700">{{ row.subject }}</td>
+            <td class="px-4 py-3">
+              {% if row.is_class_teacher %}
+              <span class="inline-flex text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Yes</span>
+              {% else %}
+              <span class="text-xs text-slate-400">No</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-slate-600">
+              {% if row.students %}
+              <span class="text-slate-900 font-medium">{{ row.students|length }}</span>
+              · {% for st in row.students %}{{ st.name }}{% if not loop.last %}, {% endif %}{% endfor %}
+              {% else %}
+              <span class="text-slate-400">No students in this class yet</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right whitespace-nowrap">
+              <button type="button" class="text-xs text-red-600 hover:underline"
+                onclick="deleteTeacherMap('{{ row.type }}', '{{ row.class }}', '{{ row.section }}', '{{ row.subject }}')">Remove</button>
+            </td>
+          </tr>
           {% else %}
-          <div class="mt-2 h-7"></div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
+          <tr>
+            <td colspan="8" class="px-5 py-10 text-center text-slate-400">No mappings yet. Save a teacher above.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    {% endfor %}
   </div>
 
-  <!-- ══════════════════════════════════════════════════
-       TAB 2 — SUBJECT MAPPING
-       Per-subject teacher assignment for each Grade × Section
-  ══════════════════════════════════════════════════ -->
-  <div id="panel-subject" class="hidden">
-
-    <!-- Filters row -->
-    <div class="flex flex-wrap items-center gap-3 mb-5">
-      <div class="flex gap-1 flex-wrap">
-        {% for grade in grades %}
-        <button onclick="selectSubjectGrade('{{ grade }}')" id="sgbtn-{{ grade }}"
-                class="subgrade-btn px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all
-                       {% if loop.first %}bg-blue-600 text-white border-blue-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-blue-400{% endif %}">
-          Gr {{ grade }}
-        </button>
-        {% endfor %}
+  <div class="bg-white rounded-xl border border-slate-200 p-5 mb-6">
+    <h2 class="text-sm font-semibold text-slate-900 mb-1">Map a student to a teacher</h2>
+    <p class="text-xs text-slate-500 mb-4">Link a student in a class to their class teacher or subject teacher.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
+      <div class="lg:col-span-2">
+        <label class="block text-xs font-medium text-slate-600 mb-1">Student</label>
+        <select id="s-student" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white" onchange="fillStudentClass()">
+          <option value="">Select student</option>
+          {% for st in students %}
+          <option value="{{ st.id }}" data-name="{{ st.name }}" data-class="{{ st.class }}" data-section="{{ st.section }}">{{ st.name }}{% if st.class %} · {{ st.class }} {{ st.section }}{% endif %}</option>
+          {% endfor %}
+        </select>
       </div>
-      <div class="flex gap-1 flex-wrap ml-2">
-        {% for section in sections %}
-        <button onclick="selectSubjectSection('{{ section }}')" id="ssbtn-{{ section }}"
-                class="subsec-btn px-3 py-1.5 rounded-lg border text-xs font-semibold transition-all
-                       {% if loop.first %}bg-indigo-600 text-white border-indigo-600{% else %}bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:border-indigo-400{% endif %}">
-          Sec {{ section }}
-        </button>
-        {% endfor %}
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Teacher</label>
+        <select id="s-teacher" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <option value="">Select teacher</option>
+          {% for t in teachers %}
+          <option value="{{ t._id }}" data-name="{{ t.full_name }}">{{ t.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Class / Grade</label>
+        <select id="s-class" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          {% for grade in grades %}
+          <option value="{{ grade }}">Class {{ grade }} / Grade {{ grade }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Section</label>
+        <select id="s-section" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          {% for section in sections %}
+          <option value="{{ section }}">{{ section }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-600 mb-1">Subject</label>
+        <select id="s-subject" class="w-full text-sm border border-slate-200 rounded-lg px-3 py-2 bg-white">
+          <option value="Class teacher">Class teacher</option>
+          {% for subject in subjects %}
+          <option value="{{ subject }}">{{ subject }}</option>
+          {% endfor %}
+        </select>
       </div>
     </div>
+    <div class="mt-4">
+      <button type="button" onclick="saveStudentMap()" class="rounded-lg bg-sky-500 hover:bg-sky-600 text-white text-sm font-semibold px-5 py-2.5">Map student</button>
+    </div>
+  </div>
 
-    <!-- Subject cards grid -->
-    <div id="subject-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- Populated by JS based on selected grade+section -->
+  <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Student–teacher mapping</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-50 text-left text-xs font-medium uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="px-5 py-3">Student</th>
+            <th class="px-4 py-3">Teacher</th>
+            <th class="px-4 py-3">Class</th>
+            <th class="px-4 py-3">Grade</th>
+            <th class="px-4 py-3">Section</th>
+            <th class="px-4 py-3">Subject</th>
+            <th class="px-4 py-3">Class teacher</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for row in student_maps %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-5 py-3 font-medium text-slate-900">{{ row.student_name }}</td>
+            <td class="px-4 py-3 text-slate-800">{{ row.teacher_name }}</td>
+            <td class="px-4 py-3">Class {{ row.class }}</td>
+            <td class="px-4 py-3">Grade {{ row.grade }}</td>
+            <td class="px-4 py-3">{{ row.section }}</td>
+            <td class="px-4 py-3">{{ row.subject }}</td>
+            <td class="px-4 py-3">
+              {% if row.is_class_teacher or row.subject == 'Class teacher' %}
+              <span class="inline-flex text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Yes</span>
+              {% else %}
+              <span class="text-xs text-slate-400">No</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 text-right">
+              <button type="button" class="text-xs text-red-600 hover:underline" onclick="deleteStudentMap('{{ row.id }}')">Remove</button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="px-5 py-10 text-center text-slate-400">No student mappings yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
   </div>
 
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════════════
-     EMBEDDED DATA — passed from Jinja to JS
-══════════════════════════════════════════════════════════════════════ -->
 <script>
-// ── Data from server ──────────────────────────────────────────────────
-const ALL_TEACHERS = {{ teachers | tojson }};
-const ALL_SUBJECTS = {{ subjects | tojson }};
-const ALL_GRADES   = {{ grades   | tojson }};
-const ALL_SECTIONS = {{ sections | tojson }};
-
-// subject_lookup[grade][section][subject] = { teacher_id, teacher_name }
-const SUBJECT_LOOKUP = {{ subject_lookup | tojson }};
-
-// ── State ─────────────────────────────────────────────────────────────
-let activeTab       = 'homeroom';
-let activeGrade     = ALL_GRADES[0];
-let activeSection   = ALL_SECTIONS[0];
-let subActiveGrade  = ALL_GRADES[0];
-let subActiveSection= ALL_SECTIONS[0];
-
-// ── Tab switching ─────────────────────────────────────────────────────
-function switchTab(tab) {
-  activeTab = tab;
-  document.getElementById('panel-homeroom').classList.toggle('hidden', tab !== 'homeroom');
-  document.getElementById('panel-subject').classList.toggle('hidden',  tab !== 'subject');
-
-  const btnHR  = document.getElementById('tab-homeroom');
-  const btnSub = document.getElementById('tab-subject');
-  if (tab === 'homeroom') {
-    btnHR.classList.add('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
-    btnHR.classList.remove('text-gray-500','dark:text-gray-400');
-    btnSub.classList.remove('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
-    btnSub.classList.add('text-gray-500','dark:text-gray-400');
-  } else {
-    btnSub.classList.add('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
-    btnSub.classList.remove('text-gray-500','dark:text-gray-400');
-    btnHR.classList.remove('bg-white','dark:bg-gray-700','text-blue-700','dark:text-blue-400','shadow');
-    btnHR.classList.add('text-gray-500','dark:text-gray-400');
-    renderSubjectGrid();
-  }
+function syncGradeFromClass() {
+  document.getElementById('t-grade').value = document.getElementById('t-class').value;
 }
 
-// ── Homeroom grade selector ───────────────────────────────────────────
-function selectGrade(grade) {
-  activeGrade = grade;
-  document.querySelectorAll('.grade-panel').forEach(p => p.classList.add('hidden'));
-  document.getElementById(`grade-panel-${grade}`).classList.remove('hidden');
-  document.querySelectorAll('.grade-btn').forEach(b => {
-    b.classList.remove('bg-blue-600','text-white','border-blue-600');
-    b.classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-  });
-  const active = document.getElementById(`gbtn-${grade}`);
-  active.classList.add('bg-blue-600','text-white','border-blue-600');
-  active.classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-}
-
-// ── Subject grade/section selectors ──────────────────────────────────
-function selectSubjectGrade(grade) {
-  subActiveGrade = grade;
-  document.querySelectorAll('.subgrade-btn').forEach(b => {
-    b.classList.remove('bg-blue-600','text-white','border-blue-600');
-    b.classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-  });
-  const active = document.getElementById(`sgbtn-${grade}`);
-  active.classList.add('bg-blue-600','text-white','border-blue-600');
-  active.classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-  renderSubjectGrid();
-}
-
-function selectSubjectSection(section) {
-  subActiveSection = section;
-  document.querySelectorAll('.subsec-btn').forEach(b => {
-    b.classList.remove('bg-indigo-600','text-white','border-indigo-600');
-    b.classList.add('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-  });
-  const active = document.getElementById(`ssbtn-${section}`);
-  active.classList.add('bg-indigo-600','text-white','border-indigo-600');
-  active.classList.remove('bg-white','dark:bg-gray-800','text-gray-600','dark:text-gray-300','border-gray-200','dark:border-gray-700');
-  renderSubjectGrid();
-}
-
-// ── Render subject grid ───────────────────────────────────────────────
-const SUBJECT_ICONS = {
-  'Mathematics':        '🔢',
-  'English':            '📖',
-  'Science':            '🔬',
-  'Social Studies':     '🌍',
-  'Hindi':              '🕉️',
-  'Physics':            '⚛️',
-  'Chemistry':          '🧪',
-  'Biology':            '🧬',
-  'Computer Science':   '💻',
-  'Physical Education': '🏃',
-  'Art':                '🎨',
-  'Music':              '🎵',
-};
-
-function renderSubjectGrid() {
-  const grid = document.getElementById('subject-grid');
-  const g = subActiveGrade, s = subActiveSection;
-  const sectionMap = (SUBJECT_LOOKUP[g] || {})[s] || {};
-
-  grid.innerHTML = ALL_SUBJECTS.map(subject => {
-    const mapping     = sectionMap[subject] || {};
-    const teacherName = mapping.teacher_name || '';
-    const teacherId   = mapping.teacher_id   || '';
-    const icon = SUBJECT_ICONS[subject] || '📌';
-
-    const options = ALL_TEACHERS.map(t =>
-      `<option value="${t._id}" data-name="${t.full_name}" ${teacherId === t._id ? 'selected' : ''}>
-         ${t.full_name}${t.department ? ' (' + t.department + ')' : ''}
-       </option>`
-    ).join('');
-
-    const badgeHtml = teacherName
-      ? `<div class="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-700">
-           👤 ${teacherName}
-         </div>`
-      : `<div class="mb-3 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600">
-           — Not assigned —
-         </div>`;
-
-    const clearBtn = teacherName
-      ? `<button onclick="clearSubjectMapping('${g}','${s}','${subject.replace(/'/g,"\\'")}', this)"
-                 class="mt-2 w-full text-xs text-red-500 hover:text-red-700 font-medium py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
-           ✕ Clear
-         </button>`
-      : '';
-
-    return `
-      <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow p-5">
-        <div class="flex items-center gap-3 mb-3">
-          <span class="text-2xl">${icon}</span>
-          <div>
-            <p class="text-xs text-gray-400 uppercase tracking-widest font-bold">Gr ${g} · Sec ${s}</p>
-            <h3 class="text-sm font-black text-gray-800 dark:text-white leading-tight">${subject}</h3>
-          </div>
-        </div>
-        ${badgeHtml}
-        <select onchange="saveSubjectMapping('${g}','${s}','${subject.replace(/'/g,"\\'")}', this)"
-                class="w-full text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2
-                       bg-white dark:bg-gray-700 text-gray-800 dark:text-white
-                       focus:outline-none focus:ring-2 focus:ring-indigo-400 transition">
-          <option value="">— Select teacher —</option>
-          ${options}
-        </select>
-        ${clearBtn}
-      </div>`;
-  }).join('');
-}
-
-// ── API calls ─────────────────────────────────────────────────────────
-async function saveHomeroom(grade, section, selectEl) {
-  const teacherId   = selectEl.value;
-  const teacherName = teacherId
-    ? selectEl.options[selectEl.selectedIndex].dataset.name
-    : '';
-
-  const res = await fetch('/api/teacher-mapping/homeroom', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ grade, section, teacher_id: teacherId, teacher_name: teacherName })
-  });
-  const data = await res.json();
-  if (data.success) {
-    const badge = document.getElementById(`hr-badge-${grade}-${section}`);
-    if (badge) {
-      if (teacherName) {
-        badge.className = 'mb-4 px-3 py-2 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200';
-        badge.innerHTML = `🎓 ${teacherName}`;
-      } else {
-        badge.className = 'mb-4 px-3 py-2 rounded-lg text-xs font-semibold bg-gray-50 text-gray-400 border border-gray-200 dark:bg-gray-700 dark:border-gray-600';
-        badge.innerHTML = '<span class="text-gray-400">— Not assigned —</span>';
-      }
-    }
-    showToast(teacherName ? `Grade ${grade}-${section} homeroom → ${teacherName}` : 'Homeroom cleared');
-  } else {
-    showToast('Error: ' + (data.error || 'Unknown error'), true);
-  }
-}
-
-async function saveSubjectMapping(grade, section, subject, selectEl) {
-  const teacherId   = selectEl.value;
-  const teacherName = teacherId
-    ? selectEl.options[selectEl.selectedIndex].dataset.name
-    : '';
-
-  const res = await fetch('/api/teacher-mapping/subject', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ grade, section, subject, teacher_id: teacherId, teacher_name: teacherName })
-  });
-  const data = await res.json();
-  if (data.success) {
-    // Update local cache
-    if (!SUBJECT_LOOKUP[grade]) SUBJECT_LOOKUP[grade] = {};
-    if (!SUBJECT_LOOKUP[grade][section]) SUBJECT_LOOKUP[grade][section] = {};
-    if (teacherName) {
-      SUBJECT_LOOKUP[grade][section][subject] = { teacher_id: teacherId, teacher_name: teacherName };
-    } else {
-      delete SUBJECT_LOOKUP[grade][section][subject];
-    }
-    renderSubjectGrid();
-    showToast(teacherName ? `${subject} (Gr ${grade}-${section}) → ${teacherName}` : `${subject} cleared`);
-  } else {
-    showToast('Error: ' + (data.error || 'Unknown error'), true);
-  }
-}
-
-async function clearMapping(grade, section, type) {
-  const res = await fetch('/api/teacher-mapping/clear', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ grade, section, type })
-  });
-  const data = await res.json();
-  if (data.success) {
-    showToast(`Mapping cleared for Grade ${grade}-${section}`);
-    // Reload to refresh badges
-    setTimeout(() => location.reload(), 800);
-  }
-}
-
-async function clearSubjectMapping(grade, section, subject, btn) {
-  const selectEl = btn.closest('.p-5').querySelector('select');
-  selectEl.value = '';
-  await saveSubjectMapping(grade, section, subject, selectEl);
-}
-
-// ── Toast ─────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, isError = false) {
+function showToast(msg, isError) {
   const el = document.getElementById('toast');
-  const msgEl = document.getElementById('toast-msg');
-  msgEl.textContent = msg;
-  el.className = el.className.replace(/bg-\w+-\d+/g, isError ? 'bg-red-600' : 'bg-blue-600');
+  document.getElementById('toast-msg').textContent = msg;
+  el.classList.toggle('bg-red-600', !!isError);
+  el.classList.toggle('bg-sky-600', !isError);
   el.classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('hidden'), 3000);
+  setTimeout(() => el.classList.add('hidden'), 2800);
 }
 
-// ── Init ──────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  renderSubjectGrid();
-  updatePills();
-});
+function selectedName(id) {
+  const el = document.getElementById(id);
+  const opt = el.options[el.selectedIndex];
+  return opt ? (opt.dataset.name || opt.textContent) : '';
+}
 
-function updatePills() {
-  // Count homeroom mappings (already in DOM via Jinja)
-  const hrCount = document.querySelectorAll('[id^="hr-badge-"]').length;
-  const setHr   = Array.from(document.querySelectorAll('[id^="hr-badge-"]'))
-                       .filter(el => el.textContent.includes('🎓')).length;
-  document.getElementById('pill-homeroom').textContent = `🏠 ${setHr} / ${hrCount} Homeroom set`;
+async function saveTeacherMap() {
+  const teacherEl = document.getElementById('t-teacher');
+  const teacherId = teacherEl.value;
+  const teacherName = selectedName('t-teacher');
+  const grade = document.getElementById('t-grade').value || document.getElementById('t-class').value;
+  const section = document.getElementById('t-section').value;
+  const subject = document.getElementById('t-subject').value;
+  const isClassTeacher = document.getElementById('t-class-teacher').checked;
 
-  // Count subject mappings from SUBJECT_LOOKUP
-  let subTotal = 0, subSet = 0;
-  ALL_GRADES.forEach(g => ALL_SECTIONS.forEach(s => {
-    ALL_SUBJECTS.forEach(sub => {
-      subTotal++;
-      if ((SUBJECT_LOOKUP[g] || {})[s] && SUBJECT_LOOKUP[g][s][sub]) subSet++;
+  if (!teacherId) { showToast('Select a teacher', true); return; }
+  if (!isClassTeacher && !subject) { showToast('Pick a subject, or mark class teacher', true); return; }
+
+  let ok = true;
+  if (isClassTeacher) {
+    const res = await fetch('/api/teacher-mapping/homeroom', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ grade, section, teacher_id: teacherId, teacher_name: teacherName })
     });
-  }));
-  document.getElementById('pill-subject').textContent = `📚 ${subSet} / ${subTotal} Subjects set`;
+    const data = await res.json();
+    if (!data.success) { showToast(data.error || 'Could not save class teacher', true); ok = false; }
+  }
+  if (ok && subject) {
+    const res = await fetch('/api/teacher-mapping/subject', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ grade, section, subject, teacher_id: teacherId, teacher_name: teacherName })
+    });
+    const data = await res.json();
+    if (!data.success) { showToast(data.error || 'Could not save subject', true); ok = false; }
+  }
+  if (ok) {
+    showToast('Mapping saved');
+    setTimeout(() => location.reload(), 500);
+  }
+}
+
+async function deleteTeacherMap(type, grade, section, subject) {
+  if (!confirm('Remove this mapping?')) return;
+  const payload = { type, grade, section };
+  if (type === 'subject') payload.subject = subject;
+  const res = await fetch('/api/teacher-mapping/delete', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  if (data.success) location.reload();
+  else showToast(data.error || 'Could not remove', true);
+}
+
+function fillStudentClass() {
+  const el = document.getElementById('s-student');
+  const opt = el.options[el.selectedIndex];
+  if (!opt || !opt.value) return;
+  const raw = (opt.dataset.class || '').replace(/[^0-9]/g, '');
+  if (raw) {
+    const cls = document.getElementById('s-class');
+    if ([...cls.options].some(o => o.value === raw)) cls.value = raw;
+  }
+  const sec = (opt.dataset.section || '').toUpperCase();
+  if (sec) {
+    const sel = document.getElementById('s-section');
+    if ([...sel.options].some(o => o.value === sec)) sel.value = sec;
+  }
+}
+
+async function saveStudentMap() {
+  const studentEl = document.getElementById('s-student');
+  const teacherEl = document.getElementById('s-teacher');
+  if (!studentEl.value || !teacherEl.value) { showToast('Select student and teacher', true); return; }
+  const subject = document.getElementById('s-subject').value;
+  const res = await fetch('/api/student-mapping', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      student_id: studentEl.value,
+      student_name: selectedName('s-student'),
+      teacher_id: teacherEl.value,
+      teacher_name: selectedName('s-teacher'),
+      grade: document.getElementById('s-class').value,
+      section: document.getElementById('s-section').value,
+      subject,
+      is_class_teacher: subject === 'Class teacher'
+    })
+  });
+  const data = await res.json();
+  if (data.success) {
+    showToast('Student mapped');
+    setTimeout(() => location.reload(), 500);
+  } else {
+    showToast(data.error || 'Could not map student', true);
+  }
+}
+
+async function deleteStudentMap(id) {
+  if (!confirm('Remove this student mapping?')) return;
+  const res = await fetch('/api/student-mapping/delete', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ id })
+  });
+  const data = await res.json();
+  if (data.success) location.reload();
+  else showToast(data.error || 'Could not remove', true);
 }
 </script>
 {% endblock %}

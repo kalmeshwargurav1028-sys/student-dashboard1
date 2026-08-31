@@ -114,6 +114,14 @@
                     </div>
                     <h2 class="text-center text-3xl font-bold text-[#123a6b] mb-6">Log In</h2>
 
+                    {% if local_dev %}
+                    <div class="mb-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+                        <p class="font-semibold text-slate-800">Local test logins</p>
+                        <p class="mt-1">admin@localhost · teacher@localhost · student@localhost</p>
+                        <p>Password: <span class="font-mono">LocalTest@123</span></p>
+                    </div>
+                    {% endif %}
+
                     {% with messages = get_flashed_messages() %}
                     {% if messages %}
                     <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">

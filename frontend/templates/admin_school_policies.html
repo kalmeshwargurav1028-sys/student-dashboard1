@@ -9,11 +9,21 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold text-gray-900">School Policies</h1>
-            <p class="text-sm text-gray-500 mt-1">Super Admin control. Teachers and students see these on School Policies.</p>
+            <p class="text-sm text-gray-500 mt-1">Super Admin control. Teachers and students see these on School Policies. Attach a PDF if the policy is a document.</p>
         </div>
     </div>
 
-    <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
         <input type="hidden" name="action" value="add">
         <h2 class="text-base font-semibold text-[#1e4e8c]">Add policy</h2>
         <div>
@@ -22,20 +32,41 @@
         </div>
         <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">Details</label>
-            <textarea name="body" rows="3" required class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="Policy text teachers and students will read"></textarea>
+            <textarea name="body" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 bg-gray-50 text-sm" placeholder="Policy text teachers and students will read (optional if you upload a PDF)"></textarea>
+        </div>
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">PDF (optional)</label>
+            <input type="file" name="pdf_file" accept="application/pdf,.pdf" class="block w-full text-sm text-gray-600 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-50 file:text-blue-700 file:font-medium hover:file:bg-blue-100">
+            <p class="mt-1 text-xs text-gray-400">PDF only, up to 10 MB.</p>
         </div>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium">Add policy</button>
     </form>
 
     <div class="space-y-4">
         {% for p in policies %}
-        <form method="POST" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
+        <form method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 space-y-3">
             <input type="hidden" name="id" value="{{ p._id }}">
             <input type="text" name="title" value="{{ p.title }}" class="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm font-semibold text-[#1e4e8c]">
             <textarea name="body" rows="3" class="w-full border border-gray-200 rounded-xl px-4 py-2 text-sm text-gray-600">{{ p.body }}</textarea>
+            {% if p.pdf_url %}
+            <div class="flex flex-wrap items-center gap-3 text-sm">
+                <a href="{{ p.pdf_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 text-blue-700 font-medium hover:text-blue-900">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                    {{ p.pdf_filename or 'View PDF' }}
+                </a>
+                <label class="inline-flex items-center gap-1.5 text-slate-600">
+                    <input type="checkbox" name="remove_pdf" value="1" class="rounded border-gray-300">
+                    Remove PDF
+                </label>
+            </div>
+            {% endif %}
+            <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">{% if p.pdf_url %}Replace PDF{% else %}Add PDF{% endif %}</label>
+                <input type="file" name="pdf_file" accept="application/pdf,.pdf" class="block w-full text-sm text-gray-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:text-slate-700">
+            </div>
             <div class="flex gap-2">
                 <button type="submit" name="action" value="update" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">Save</button>
-                <button type="submit" name="action" value="delete" class="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-medium" onclick="return confirm('Remove this policy?')">Delete</button>
+                <button type="submit" name="action" value="delete" class="bg-white border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-medium">Delete</button>
             </div>
         </form>
         {% else %}

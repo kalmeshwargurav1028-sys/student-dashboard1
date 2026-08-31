@@ -1,16 +1,43 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Overview{% endblock %}
+{% block header_title %}Administration{% endblock %}
 
 {% block content %}
 <div class="w-full py-6 px-6 sm:px-8 lg:px-10">
 
     <div id="view-dashboard" class="view-section">
 
-        <div class="mb-8">
-            <p class="text-sm text-slate-500">{{ academic_year_label }}</p>
-            <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">{{ session.get('username', 'Admin') }}</h1>
-            <p class="text-sm text-slate-500 mt-1">Super Admin · school control, people, and permissions</p>
+        <div class="relative bg-gradient-to-r from-sky-600 via-sky-500 to-sky-400 rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-6 flex flex-row justify-between items-center gap-4 w-full">
+            <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+                <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+                <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-200/30 rounded-full blur-xl"></div>
+            </div>
+            <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
+                <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
+                    <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="Indus Portal" class="h-full w-full object-contain rounded-lg">
+                </div>
+                <div class="min-w-0">
+                    <p class="text-xs sm:text-sm text-sky-100 font-medium">Welcome back</p>
+                    <h1 class="text-lg sm:text-xl font-semibold tracking-wide truncate">{{ session.get('username', 'Admin') }}</h1>
+                    <p class="text-xs sm:text-sm text-sky-100 mt-0.5">Super Admin &nbsp;·&nbsp; {{ academic_year_label }}</p>
+                </div>
+            </div>
+            <div class="relative z-30 shrink-0" data-profile-menu>
+                <button type="button" onclick="event.stopPropagation(); toggleBannerProfile(this)" class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl border border-white/10 focus:outline-none w-full text-left">
+                    <div class="flex flex-col items-end">
+                        <span class="text-sm font-semibold text-white">My Profile</span>
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-sky-100">Manage Settings</span>
+                    </div>
+                    <div class="relative h-10 w-10 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center shrink-0">
+                        <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="" class="h-full w-full object-contain">
+                    </div>
+                </button>
+                <div data-profile-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">
+                    <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-sky-50 hover:text-sky-700 transition-colors">View Profile</a>
+                    <div class="border-t border-gray-100 my-1"></div>
+                    <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">Logout</a>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
@@ -32,193 +59,205 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
-            <div class="bg-white border border-slate-200 rounded-lg">
+            <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
                 <div class="px-5 py-3 border-b border-slate-200">
-                    <h2 class="text-sm font-semibold text-slate-900">People</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Accounts, mapping, and access</p>
+                    <h2 class="text-sm font-semibold text-slate-900">Teacher analysis</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Mapping coverage and subject load</p>
                 </div>
-                <div class="divide-y divide-slate-100">
-                    <a href="{{ url_for('utility_registration') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Add user</span>
-                        <span class="text-xs text-slate-400">Teacher or Super Admin</span>
-                    </a>
-                    <a href="{{ url_for('staff_management') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Staff &amp; admins</span>
-                        <span class="text-xs text-slate-400">Manage accounts</span>
-                    </a>
-                    <a href="{{ url_for('teacher_mapping') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Teacher mapping</span>
-                        <span class="text-xs text-slate-400">Class and subject</span>
-                    </a>
-                    <a href="#roles" onclick="showView('roles'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Role permissions</span>
-                        <span class="text-xs text-slate-400">Who can do what</span>
-                    </a>
+                <div class="p-5 space-y-5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Mapped</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ teacher_analytics.mapped }}</p>
+                            <p class="text-xs text-slate-500">{{ teacher_analytics.mapped_pct }}% of teachers</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Not mapped</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ teacher_analytics.unmapped }}</p>
+                            <p class="text-xs text-slate-500">Need class or subject</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Homeroom</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ teacher_analytics.homeroom_assignments }}</p>
+                            <p class="text-xs text-slate-500">Class teacher assignments</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Subjects</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ teacher_analytics.subject_assignments }}</p>
+                            <p class="text-xs text-slate-500">Subject classroom assignments</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Mapping coverage</p>
+                            <div class="h-52"><canvas id="chartTeacherCoverage"></canvas></div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Assignment type</p>
+                            <div class="h-52"><canvas id="chartTeacherMix"></canvas></div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Assignments by subject</p>
+                        <div class="h-56"><canvas id="chartTeacherSubjects"></canvas></div>
+                    </div>
                 </div>
             </div>
-            <div class="bg-white border border-slate-200 rounded-lg">
+            <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
                 <div class="px-5 py-3 border-b border-slate-200">
-                    <h2 class="text-sm font-semibold text-slate-900">School</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Content teachers and students see</p>
+                    <h2 class="text-sm font-semibold text-slate-900">Student analysis</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Enrolment, attendance, and performance</p>
                 </div>
-                <div class="divide-y divide-slate-100">
-                    <a href="{{ url_for('admin_school_policies') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">School policies</span>
-                        <span class="text-xs text-slate-400">Edit published policy pages</span>
-                    </a>
-                    <a href="{{ url_for('school_announcements') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Announcements</span>
-                        <span class="text-xs text-slate-400">Post to the school</span>
-                    </a>
-                    <a href="#announcements" onclick="showView('announcements'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Broadcast</span>
-                        <span class="text-xs text-slate-400">Targeted notice</span>
-                    </a>
-                    <a href="#reports" onclick="showView('reports'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
-                        <span class="text-sm text-slate-800">Teacher reports</span>
-                        <span class="text-xs text-slate-400">Daily logs submitted</span>
-                    </a>
+                <div class="p-5 space-y-5">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Logins</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ student_analytics.with_login }}</p>
+                            <p class="text-xs text-slate-500">{{ student_analytics.profiles }} student profiles</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Active now</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ stats.active_students }}</p>
+                            <p class="text-xs text-slate-500">Last 15 minutes</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Avg attendance</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ student_analytics.avg_attendance }}%</p>
+                            <p class="text-xs text-slate-500">Across student profiles</p>
+                        </div>
+                        <div class="rounded-lg border border-slate-100 px-3 py-3">
+                            <p class="text-xs uppercase tracking-wider text-slate-400">Avg performance</p>
+                            <p class="mt-1 text-2xl font-semibold text-slate-900">{{ student_analytics.avg_performance }}%</p>
+                            <p class="text-xs text-slate-500">Recorded school average</p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Students by class</p>
+                        <div class="h-56"><canvas id="chartStudentClass"></canvas></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Attendance range</p>
+                            <div class="h-52"><canvas id="chartStudentAttendance"></canvas></div>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Attendance vs performance</p>
+                            <div class="h-52"><canvas id="chartStudentScores"></canvas></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                    <h2 class="text-sm font-semibold text-slate-900">Directory</h2>
-                    <p class="text-xs text-slate-500 mt-0.5">Who is on the portal and when they last signed in</p>
-                </div>
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                    <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search name or email" class="w-full sm:w-56 px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400">
-                    <select id="roleFilter" onchange="filterUsers()" class="border border-slate-200 rounded-md text-sm py-2 px-2 text-slate-700 bg-white">
-                        <option value="all">All roles</option>
-                        <option value="admin">Admins</option>
-                        <option value="teacher">Teachers</option>
-                    </select>
-                    <select id="dateFilter" onchange="filterUsers()" class="border border-slate-200 rounded-md text-sm py-2 px-2 text-slate-700 bg-white">
-                        <option value="7">Last 7 days</option>
-                        <option value="30">Last 30 days</option>
-                        <option value="all">All time</option>
-                    </select>
-                </div>
-            </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    if (typeof Chart === 'undefined') return;
+    const sky = ['#0ea5e9', '#38bdf8', '#0284c7', '#7dd3fc', '#0369a1', '#bae6fd', '#075985'];
+    Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+    Chart.defaults.font.size = 11;
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.plugins.legend.position = 'bottom';
+    Chart.defaults.plugins.legend.labels.boxWidth = 10;
+    Chart.defaults.plugins.legend.labels.padding = 12;
 
-            <div class="grid grid-cols-1 gap-0">
-            <div class="border-b border-slate-100 last:border-b-0" data-activity="admin">
-                <div class="px-5 py-3 bg-slate-50 border-b border-slate-200">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Admin Activity</h3>
-                </div>
-                <div class="max-h-64 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-slate-100">
-                        <thead class="bg-white sticky top-0 z-10">
-                            <tr>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Admin</th>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Last active</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-slate-50">
-                            {% for t in active_admins %}
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-xs font-medium text-slate-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Active
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">Just now</td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in inactive_admins %}
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-xs font-medium text-slate-400">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></span> Inactive
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">{{ t.last_active }}</td>
-                            </tr>
-                            {% endfor %}
-                            {% if not active_admins and not inactive_admins %}
-                            <tr><td colspan="3" class="px-5 py-8 text-center text-sm text-slate-400">No admins yet.</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+    const teacherAnalytics = {{ teacher_analytics | tojson }};
+    const studentAnalytics = {{ student_analytics | tojson }};
 
-            <div data-activity="teacher">
-                <div class="px-5 py-3 bg-slate-50 border-b border-t border-slate-200">
-                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Teacher Activity</h3>
-                </div>
-                <div class="max-h-64 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-slate-100">
-                        <thead class="bg-white sticky top-0 z-10">
-                            <tr>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Teacher</th>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Role</th>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Last active</th>
-                                <th scope="col" class="relative px-5 py-3"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-slate-50">
-                            {% for t in active_teachers %}
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-600">
-                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-xs font-medium text-slate-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Active
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">Just now</td>
-                                <td class="px-5 py-3 whitespace-nowrap text-right">
-                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-sm text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline">Reset password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in inactive_teachers %}
-                            <tr class="hover:bg-slate-50">
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
-                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-600">
-                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap">
-                                    <span class="inline-flex items-center text-xs font-medium text-slate-400">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></span> Inactive
-                                    </span>
-                                </td>
-                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">{{ t.last_active }}</td>
-                                <td class="px-5 py-3 whitespace-nowrap text-right">
-                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-sm text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline">Reset password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not active_teachers and not inactive_teachers %}
-                            <tr><td colspan="5" class="px-5 py-8 text-center text-sm text-slate-400">No teachers registered.</td></tr>
-                            {% endif %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            </div>
-        </div>
+    const doughnutOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '62%',
+        plugins: { legend: { position: 'bottom' } }
+    };
+    const barOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false }, ticks: { maxRotation: 40 } },
+            y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f1f5f9' } }
+        }
+    };
+
+    function doughnut(id, labels, data, colors) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el, {
+            type: 'doughnut',
+            data: { labels: labels, datasets: [{ data: data, backgroundColor: colors, borderWidth: 0 }] },
+            options: doughnutOpts
+        });
+    }
+    function bar(id, labels, data, color) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el, {
+            type: 'bar',
+            data: {
+                labels: labels.length ? labels : ['No data'],
+                datasets: [{ data: data.length ? data : [0], backgroundColor: color || '#0ea5e9', borderRadius: 6, maxBarThickness: 36 }]
+            },
+            options: barOpts
+        });
+    }
+
+    doughnut(
+        'chartTeacherCoverage',
+        ['Mapped', 'Not mapped'],
+        [teacherAnalytics.mapped || 0, teacherAnalytics.unmapped || 0],
+        ['#0ea5e9', '#cbd5e1']
+    );
+    doughnut(
+        'chartTeacherMix',
+        (teacherAnalytics.assignment_mix || []).map(function (r) { return r.name; }),
+        (teacherAnalytics.assignment_mix || []).map(function (r) { return r.count; }),
+        ['#0284c7', '#38bdf8']
+    );
+    bar(
+        'chartTeacherSubjects',
+        (teacherAnalytics.subjects || []).map(function (r) { return r.name; }),
+        (teacherAnalytics.subjects || []).map(function (r) { return r.count; }),
+        sky
+    );
+    bar(
+        'chartStudentClass',
+        (studentAnalytics.by_class || []).map(function (r) { return r.name; }),
+        (studentAnalytics.by_class || []).map(function (r) { return r.count; }),
+        '#0ea5e9'
+    );
+    doughnut(
+        'chartStudentAttendance',
+        (studentAnalytics.attendance_bands || []).map(function (r) { return r.name; }),
+        (studentAnalytics.attendance_bands || []).map(function (r) { return r.count; }),
+        ['#f87171', '#fbbf24', '#38bdf8', '#34d399']
+    );
+    const scoreEl = document.getElementById('chartStudentScores');
+    if (scoreEl) {
+        new Chart(scoreEl, {
+            type: 'bar',
+            data: {
+                labels: ['Attendance', 'Performance'],
+                datasets: [{
+                    data: [studentAnalytics.avg_attendance || 0, studentAnalytics.avg_performance || 0],
+                    backgroundColor: ['#0ea5e9', '#34d399'],
+                    borderRadius: 6,
+                    maxBarThickness: 48
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: { beginAtZero: true, max: 100, ticks: { callback: function (v) { return v + '%'; } }, grid: { color: '#f1f5f9' } }
+                }
+            }
+        });
+    }
+})();
+</script>
 
     </div>
 

@@ -418,6 +418,26 @@ def academic_year_label():
     year = datetime.now().year
     return f'{year} - {year + 1}'
 
+
+def academic_year_short():
+    """Sidebar label, e.g. 2026-27. Prefers Settings, else June–May school year."""
+    try:
+        config = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
+        raw = (config.get('academic_year') or '').strip()
+        years = re.findall(r'\d{4}', raw)
+        if len(years) >= 2:
+            return f'{years[0]}-{years[1][-2:]}'
+        if len(years) == 1:
+            y = int(years[0])
+            return f'{y}-{str(y + 1)[-2:]}'
+    except Exception:
+        pass
+    year = datetime.now().year
+    if datetime.now().month < 6:
+        year -= 1
+    return f'{year}-{str(year + 1)[-2:]}'
+
+
 @app.context_processor
 def inject_global_context():
     context = {
@@ -426,7 +446,8 @@ def inject_global_context():
         'teacher_homerooms': [],
         'teacher_subjects': [],
         'teacher_created_courses': [],
-        'academic_year_label': academic_year_label()
+        'academic_year_label': academic_year_label(),
+        'academic_year_short': academic_year_short(),
     }
     if not session.get('logged_in'):
         return context
@@ -1702,6 +1723,92 @@ def school_policies():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     return render_template('school_policies.html', policies=_get_school_policies())
+
+
+ACADEMIC_YEAR_KEY = '2026-27'
+
+DEFAULT_SCHOOL_CALENDAR = [
+    {'date': '2026-06-08', 'title': 'Academic year begins', 'kind': 'term', 'notes': 'First day of school for 2026-27.'},
+    {'date': '2026-08-15', 'title': 'Independence Day', 'kind': 'holiday', 'notes': 'School closed.'},
+    {'date': '2026-10-02', 'title': 'Gandhi Jayanti', 'kind': 'holiday', 'notes': 'School closed.'},
+    {'date': '2026-10-19', 'title': 'Diwali break begins', 'kind': 'holiday', 'notes': 'Festival holidays.'},
+    {'date': '2026-10-26', 'title': 'School reopens after Diwali', 'kind': 'term', 'notes': ''},
+    {'date': '2026-12-25', 'title': 'Christmas', 'kind': 'holiday', 'notes': 'Winter break begins.'},
+    {'date': '2027-01-05', 'title': 'School reopens after winter break', 'kind': 'term', 'notes': ''},
+    {'date': '2027-01-26', 'title': 'Republic Day', 'kind': 'holiday', 'notes': 'School closed.'},
+    {'date': '2027-03-08', 'title': 'Term examinations begin', 'kind': 'exam', 'notes': ''},
+    {'date': '2027-04-14', 'title': 'Academic year closing', 'kind': 'event', 'notes': 'Last working day of 2026-27.'},
+]
+
+
+def _get_school_calendar_events():
+    events = list(db.school_calendar.find({'academic_year': ACADEMIC_YEAR_KEY}).sort('date', 1))
+    if not events:
+        docs = [dict(e, academic_year=ACADEMIC_YEAR_KEY) for e in DEFAULT_SCHOOL_CALENDAR]
+        db.school_calendar.insert_many(docs)
+        events = list(db.school_calendar.find({'academic_year': ACADEMIC_YEAR_KEY}).sort('date', 1))
+    out = []
+    for e in events:
+        out.append({
+            'id': str(e['_id']),
+            'date': e.get('date', ''),
+            'title': e.get('title', ''),
+            'kind': e.get('kind', 'event'),
+            'notes': e.get('notes', ''),
+        })
+    return out
+
+
+@app.route('/school-calendar', methods=['GET', 'POST'])
+def school_calendar():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        if session.get('role') != 'admin':
+            return redirect(url_for('school_calendar'))
+        action = request.form.get('action')
+        if action == 'add':
+            title = (request.form.get('title') or '').strip()
+            date = (request.form.get('date') or '').strip()
+            kind = (request.form.get('kind') or 'event').strip()
+            notes = (request.form.get('notes') or '').strip()
+            if title and date:
+                db.school_calendar.insert_one({
+                    'academic_year': ACADEMIC_YEAR_KEY,
+                    'title': title,
+                    'date': date,
+                    'kind': kind if kind in ('holiday', 'term', 'exam', 'event') else 'event',
+                    'notes': notes,
+                    'updated_by': session.get('username'),
+                })
+        elif action == 'delete':
+            event_id = request.form.get('id')
+            if event_id:
+                try:
+                    db.school_calendar.delete_one({'_id': ObjectId(event_id)})
+                except Exception:
+                    pass
+        return redirect(url_for('school_calendar'))
+    events = _get_school_calendar_events()
+    return render_template(
+        'school_calendar.html',
+        events=events,
+        academic_year_key=ACADEMIC_YEAR_KEY,
+    )
+
+
+@app.route('/school-updates')
+def school_updates():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    role = session.get('role')
+    query = {}
+    if role == 'student':
+        query = {'audience': {'$in': ['all', 'students']}}
+    elif role == 'teacher':
+        query = {'audience': {'$in': ['all', 'teachers']}}
+    announcements = list(db.announcements.find(query).sort('date_sent', -1).limit(50))
+    return render_template('school_updates.html', announcements=announcements)
 
 DEFAULT_SCHOOL_POLICIES = [
     {'title': 'Attendance', 'body': 'Students should attend regularly. Absences must be informed to the class teacher. Teachers mark attendance in the portal every school day.', 'order': 1},
