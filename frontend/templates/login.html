@@ -3,64 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign in · Indus Portal</title>
+    <title>Log In · Indus LMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         html, body { font-family: 'Inter', system-ui, sans-serif; }
-        .field-input:focus { outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12); }
+        body {
+            background-color: #f4f8fc;
+            background-image: radial-gradient(#dbe7f5 1px, transparent 1px);
+            background-size: 22px 22px;
+        }
+        .field-input:focus { outline: none; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14); border-color: #93c5fd; }
     </style>
 </head>
-<body class="min-h-screen bg-[#eef3f9] text-gray-900 antialiased">
+<body class="min-h-screen text-gray-900 antialiased">
     <main class="min-h-screen flex items-center justify-center px-4 py-10">
-        <div class="w-full max-w-[420px] bg-white rounded-3xl shadow-sm border border-gray-100 px-6 py-8 sm:px-8">
-            <div class="flex justify-center mb-6">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School" class="h-20 w-auto object-contain">
-            </div>
+        <div class="w-full max-w-5xl min-h-[620px] bg-white rounded-[28px] shadow-[0_20px_50px_rgba(30,64,175,0.12)] overflow-hidden flex flex-col md:flex-row">
 
-            <h1 class="text-center text-2xl font-semibold tracking-tight text-gray-900">Sign in</h1>
-
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-            <div class="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
-                {% for message in messages %}
-                <p>{{ message }}</p>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
-
-            <form action="{{ url_for('login') }}" method="POST" class="mt-6 space-y-4" onsubmit="onSubmit()">
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                    <input type="email" id="email" name="email" required autofocus autocomplete="username"
-                        class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400"
-                        placeholder="name@indusschool.com">
+            <aside class="md:w-[42%] bg-gradient-to-b from-[#cfe5ff] via-[#7eb6f5] to-[#3b82f6] px-10 py-12 flex flex-col text-[#123a6b]">
+                <h2 class="text-center text-2xl font-bold tracking-tight">Indus LMS</h2>
+                <div class="flex-1 flex flex-col justify-center mt-10 md:mt-0">
+                    <h1 class="text-4xl font-bold tracking-tight">Welcome Back</h1>
+                    <p class="mt-2 text-base font-medium text-[#1e4e8c]/80">Access your School LMS dashboard</p>
+                    <ul class="mt-10 space-y-5 text-[15px] font-medium">
+                        <li class="flex items-center gap-3">
+                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                            Easy course access
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Teacher and student login
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/></svg>
+                            All school updates in one place
+                        </li>
+                        <li class="flex items-center gap-3">
+                            <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 17l6-6 4 4 8-8"/></svg>
+                            Track progress &amp; performance
+                        </li>
+                    </ul>
                 </div>
+            </aside>
 
-                <div>
-                    <div class="flex items-center justify-between mb-1.5">
-                        <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <a href="{{ url_for('forgot_password') }}" class="text-xs font-medium text-blue-600 hover:text-blue-800">Forgot password?</a>
+            <section class="md:w-[58%] px-8 py-12 sm:px-14 flex flex-col justify-center">
+                <div class="w-full max-w-sm mx-auto">
+                    <div class="flex justify-center mb-5">
+                        <div class="rounded-2xl border border-gray-200 bg-white p-3 shadow-sm">
+                            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Indus International School" class="h-20 w-auto object-contain">
+                        </div>
                     </div>
-                    <div class="relative">
-                        <input type="password" id="password" name="password" required autocomplete="current-password"
-                            class="field-input w-full rounded-xl border border-gray-200 bg-white px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
-                            placeholder="Enter your password">
-                        <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret()" aria-label="Show password">
-                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                    <h2 class="text-center text-3xl font-bold text-[#123a6b] mb-6">Log In</h2>
+
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                    <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                        {% for message in messages %}
+                        <p>{{ message }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    {% endwith %}
+
+                    <form action="{{ url_for('login') }}" method="POST" class="space-y-4" onsubmit="onSubmit()">
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-600 mb-1.5">Email</label>
+                            <input type="email" id="email" name="email" required autofocus autocomplete="username"
+                                class="field-input w-full rounded-lg border border-gray-200 px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400"
+                                placeholder="Enter your email">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-600 mb-1.5">Password</label>
+                            <div class="relative">
+                                <input type="password" id="password" name="password" required autocomplete="current-password"
+                                    class="field-input w-full rounded-lg border border-gray-200 px-4 py-3 pr-12 text-sm text-gray-900 placeholder:text-gray-400"
+                                    placeholder="Enter your password">
+                                <button type="button" class="absolute inset-y-0 right-0 px-3 text-gray-400 hover:text-gray-700" onclick="toggleSecret()" aria-label="Show password">
+                                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <button type="submit" id="submitBtn" class="w-full mt-2 rounded-lg bg-[#2563eb] hover:bg-[#1d4ed8] text-white text-sm font-bold tracking-wide py-3.5 flex items-center justify-center gap-2">
+                            LOGIN
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
                         </button>
+                    </form>
+
+                    <div class="mt-8 space-y-3 text-center">
+                        <a href="{{ url_for('forgot_password') }}" class="inline-flex items-center gap-2 text-sm font-medium text-[#2563eb] hover:text-blue-800">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                            Forgot Password
+                        </a>
+                        <div>
+                            <button type="button" onclick="toggleHelp()" class="inline-flex items-center gap-2 text-sm font-medium text-red-500 hover:text-red-600">
+                                <span class="inline-flex h-4 w-4 items-center justify-center rounded-full border border-red-400 text-[10px]">?</span>
+                                Need help?
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <button type="submit" id="submitBtn" class="w-full rounded-xl bg-[#1d4ed8] hover:bg-[#1e40af] text-white text-sm font-semibold py-3 mt-2 transition">
-                    Sign in
-                </button>
-            </form>
-
-            <p class="mt-6 text-center">
-                <button type="button" onclick="toggleHelp()" class="text-sm text-gray-500 hover:text-gray-800">Need help?</button>
-            </p>
+            </section>
         </div>
     </main>
 
@@ -73,10 +115,8 @@
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="space-y-3 text-sm text-gray-600">
-                <p>Ask Super Admin for an account. Sign in here with the email and password they give you.</p>
-                <a href="mailto:kalmeshwargurav1028@gmail.com" class="block rounded-xl border border-gray-200 px-4 py-3 hover:bg-blue-50 text-blue-700 font-medium">kalmeshwargurav1028@gmail.com</a>
-            </div>
+            <p class="text-sm text-gray-600 mb-3">Ask Super Admin for an account, then sign in with the email and password they give you.</p>
+            <a href="mailto:kalmeshwargurav1028@gmail.com" class="block rounded-xl border border-gray-200 px-4 py-3 hover:bg-blue-50 text-blue-700 font-medium text-sm">kalmeshwargurav1028@gmail.com</a>
         </div>
     </div>
 
@@ -91,7 +131,7 @@
         function onSubmit() {
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.textContent = 'Signing in…';
+            btn.textContent = 'SIGNING IN…';
         }
     </script>
 </body>
