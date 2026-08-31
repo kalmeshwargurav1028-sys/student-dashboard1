@@ -8,6 +8,7 @@ import io
 import re
 from datetime import datetime, timedelta
 import traceback
+from html import escape
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, send_file, jsonify
 from flask_socketio import SocketIO, emit, join_room
 from werkzeug.utils import secure_filename
@@ -23,6 +24,7 @@ from bson.objectid import ObjectId
 import gridfs
 import smtplib
 from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = (
@@ -199,6 +201,29 @@ def upgrade_password_if_plaintext(collection, query, stored, provided):
         except Exception:
             pass
 
+def _is_local_dev():
+    """True on a local Flask process. Never true on Vercel."""
+    return not os.environ.get('VERCEL')
+
+
+def _local_2fa_required():
+    return os.environ.get('REQUIRE_2FA', '').strip().lower() in ('1', 'true', 'yes')
+
+
+LOCAL_TEST_PASSWORD = 'LocalTest@123'
+
+
+def find_by_email(collection, email):
+    """Exact match first, then case-insensitive email lookup."""
+    email = (email or '').strip()
+    if not email or collection is None:
+        return None
+    doc = collection.find_one({'email': email})
+    if doc:
+        return doc
+    return collection.find_one({'email': {'$regex': f'^{re.escape(email)}$', '$options': 'i'}})
+
+
 def ensure_bootstrap_admin():
     """Create the first admin only when the admins collection is empty."""
     if db is None or db.admins.count_documents({}) > 0:
@@ -217,6 +242,81 @@ def ensure_bootstrap_admin():
         'password': generate_password_hash(password),
         'name': 'Admin'
     })
+
+
+def ensure_local_test_accounts():
+    """Known admin / teacher / student logins for local testing only."""
+    if db is None or not _is_local_dev():
+        return
+    hashed = generate_password_hash(LOCAL_TEST_PASSWORD)
+    now = datetime.utcnow().isoformat()
+
+    admin = find_by_email(db.admins, 'admin@localhost')
+    if not admin:
+        db.admins.insert_one({
+            'email': 'admin@localhost',
+            'password': hashed,
+            'name': 'Local Admin',
+            'created_at': now,
+        })
+    else:
+        db.admins.update_one({'_id': admin['_id']}, {'$set': {'password': hashed}})
+
+    teacher = find_by_email(db.users, 'teacher@localhost')
+    if not teacher:
+        db.users.insert_one({
+            'first_name': 'Local',
+            'last_name': 'Teacher',
+            'name': 'Local Teacher',
+            'email': 'teacher@localhost',
+            'role': 'teacher',
+            'assigned_class': 'all',
+            'password': hashed,
+            'verified': True,
+            'created_at': now,
+        })
+    else:
+        db.users.update_one(
+            {'_id': teacher['_id']},
+            {'$set': {'password': hashed, 'verified': True, 'role': 'teacher'}},
+        )
+
+    student_auth = find_by_email(db.student_users, 'student@localhost')
+    student_profile = find_by_email(db.students, 'student@localhost')
+    if not student_profile:
+        student_id = (student_auth or {}).get('student_id') or 'INDLOCAL'
+        db.students.insert_one({
+            'id': student_id,
+            'name': 'Local Student',
+            'email': 'student@localhost',
+            'student_class': '10th',
+            'division': 'A',
+            'board': 'CBSE',
+            'academic_year': str(datetime.utcnow().year),
+            'attendance': '100',
+            'performance': '80',
+            'subjects': {},
+            'created_at': now,
+        })
+    else:
+        student_id = student_profile.get('id') or 'INDLOCAL'
+    if not student_auth:
+        db.student_users.insert_one({
+            'student_id': student_id,
+            'email': 'student@localhost',
+            'password': hashed,
+        })
+    else:
+        db.student_users.update_one({'_id': student_auth['_id']}, {'$set': {'password': hashed}})
+
+
+def _finish_login(session_data):
+    session['logged_in'] = True
+    for key, value in session_data.items():
+        if key != 'redirect_url':
+            session[key] = value
+    return redirect(session_data.get('redirect_url', url_for('dashboard')))
+
 
 import re
 
@@ -881,8 +981,8 @@ def send_otp_email(email, otp, is_reset=False):
         print(f'[OTP] ✗ Failed to deliver to {email}: {error_msg}')
         return error_msg
 
-def send_generic_email(email, subject, body):
-    """Send a generic email via configured SMTP."""
+def send_generic_email(email, subject, body, html=None):
+    """Send a generic email via configured SMTP. Optional HTML part for formatted mail."""
     try:
         cfg = _get_smtp_config()
     except RuntimeError as e:
@@ -897,7 +997,12 @@ def send_generic_email(email, subject, body):
     print(f'\n[EMAIL] Sending to {email} via {smtp_server}:{smtp_port} as {smtp_user}\n')
 
     try:
-        msg = MIMEText(body)
+        if html:
+            msg = MIMEMultipart('alternative')
+            msg.attach(MIMEText(body, 'plain', 'utf-8'))
+            msg.attach(MIMEText(html, 'html', 'utf-8'))
+        else:
+            msg = MIMEText(body, 'plain', 'utf-8')
         msg['Subject'] = subject
         msg['From']    = smtp_user
         msg['To']      = email
@@ -914,6 +1019,101 @@ def send_generic_email(email, subject, body):
     except Exception as e:
         print(f'[EMAIL] ✗ Failed to deliver to {email}: {str(e)}')
         raise e
+
+
+REGISTRATION_SUPPORT_EMAIL = 'kalmeshwargurav1028@gmail.com'
+LMS_PUBLIC_BASE = (os.environ.get('APP_URL') or 'https://student-dashboard1-blue.vercel.app').rstrip('/')
+LMS_LOGIN_URL = f'{LMS_PUBLIC_BASE}/login'
+LMS_LOGO_URL = f'{LMS_PUBLIC_BASE}/static/images/logo.png'
+
+
+def _public_name(email, first_name, last_name):
+    return f'{first_name or ""} {last_name or ""}'.strip() or (email or '').split('@')[0]
+
+
+def _registration_welcome_body(email, first_name, last_name, signup_date):
+    name = _public_name(email, first_name, last_name)
+    return (
+        'This is an automated message. Please do not reply to this email. '
+        f'For support, contact us at {REGISTRATION_SUPPORT_EMAIL}.\n\n'
+        f'Dear {name},\n\n'
+        'Thank you for signing up with LMS Dashboard! We\'re excited to have you on board '
+        'and can\'t wait to help you explore the powerful LMS our platform offers.\n\n'
+        'Your Account Details\n\n'
+        f'Email: {email}\n\n'
+        f'Signup Date: {signup_date}\n\n'
+        f'Log in here: {LMS_LOGIN_URL}\n'
+    )
+
+
+def _registration_welcome_html(email, first_name, last_name, signup_date):
+    name = escape(_public_name(email, first_name, last_name))
+    safe_email = escape(email or '')
+    safe_date = escape(signup_date or '')
+    return f'''<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#eef6fb;font-family:Arial,Helvetica,sans-serif;color:#123a6b;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#eef6fb;padding:24px 12px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="560" cellspacing="0" cellpadding="0" style="max-width:560px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #dbeafe;">
+          <tr>
+            <td align="center" style="background:#0ea5e9;padding:22px 20px;">
+              <img src="{LMS_LOGO_URL}" alt="Indus LMS" width="72" style="display:block;border:0;background:#ffffff;border-radius:12px;padding:6px;">
+              <p style="margin:12px 0 0;color:#ffffff;font-size:18px;font-weight:bold;">Indus LMS Dashboard</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 28px 8px;font-size:12px;color:#64748b;line-height:1.5;">
+              This is an automated message. Please do not reply to this email. For support, contact us at
+              <a href="mailto:{REGISTRATION_SUPPORT_EMAIL}" style="color:#0284c7;">{REGISTRATION_SUPPORT_EMAIL}</a>.
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 0;font-size:16px;line-height:1.6;color:#123a6b;">
+              <p style="margin:0 0 12px;">Dear {name},</p>
+              <p style="margin:0 0 16px;">Thank you for signing up with LMS Dashboard! We're excited to have you on board and can't wait to help you explore the powerful LMS our platform offers.</p>
+              <p style="margin:0 0 8px;font-weight:bold;">Your Account Details</p>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;">
+                <tr>
+                  <td style="padding:14px 16px;font-size:14px;line-height:1.7;">
+                    <strong>Email:</strong> {safe_email}<br>
+                    <strong>Signup Date:</strong> {safe_date}
+                  </td>
+                </tr>
+              </table>
+              <p style="margin:22px 0 8px;" align="center">
+                <a href="{LMS_LOGIN_URL}" style="display:inline-block;background:#0ea5e9;color:#ffffff;text-decoration:none;font-weight:bold;font-size:14px;padding:12px 28px;border-radius:8px;">Log in to LMS Dashboard</a>
+              </p>
+              <p style="margin:0 0 24px;font-size:12px;color:#64748b;" align="center">
+                Or copy this link:<br>
+                <a href="{LMS_LOGIN_URL}" style="color:#0284c7;word-break:break-all;">{LMS_LOGIN_URL}</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>'''
+
+
+def send_registration_welcome_email(email, first_name='', last_name='', signup_date=None):
+    """System-generated welcome mail after admin registers a teacher, student, or Super Admin."""
+    email = (email or '').strip()
+    if not email or '@' not in email:
+        return False
+    date_str = signup_date or datetime.now().strftime('%d %b %Y, %I:%M %p')
+    body = _registration_welcome_body(email, first_name, last_name, date_str)
+    html = _registration_welcome_html(email, first_name, last_name, date_str)
+    try:
+        send_generic_email(email, 'Welcome to LMS Dashboard', body, html=html)
+        return True
+    except Exception as e:
+        print(f'[WELCOME EMAIL] Could not send to {email}: {e}')
+        return False
 
 @app.before_request
 def update_last_active():
@@ -958,6 +1158,8 @@ def get_file(file_id):
         return "File not found", 404
 
 def initiate_2fa(email, session_data):
+    if _is_local_dev() and not _local_2fa_required():
+        return _finish_login(session_data)
     otp = generate_otp()
     expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
     session['otp_code'] = otp
@@ -1033,32 +1235,35 @@ def login():
         password = request.form.get('password', '')
 
         ensure_bootstrap_admin()
-        admin = db.admins.find_one({'email': email})
+        ensure_local_test_accounts()
+        admin = find_by_email(db.admins, email)
         if admin and verify_password(admin.get('password', ''), password):
-            upgrade_password_if_plaintext(db.admins, {'email': email}, admin.get('password'), password)
+            stored_email = admin.get('email') or email
+            upgrade_password_if_plaintext(db.admins, {'_id': admin['_id']}, admin.get('password'), password)
             session_data = {
                 'role': 'admin',
                 'user_id': str(admin['_id']),
-                'username': admin.get('name') or email.split('@')[0],
-                'email': email,
+                'username': admin.get('name') or stored_email.split('@')[0],
+                'email': stored_email,
                 'redirect_url': url_for('admin_dashboard')
             }
-            return initiate_2fa(email, session_data)
+            return initiate_2fa(stored_email, session_data)
 
-        user = db.users.find_one({'email': email})
+        user = find_by_email(db.users, email)
         if user and verify_password(user.get('password', ''), password):
-            upgrade_password_if_plaintext(db.users, {'email': email}, user.get('password'), password)
+            stored_email = user.get('email') or email
+            upgrade_password_if_plaintext(db.users, {'_id': user['_id']}, user.get('password'), password)
             if user.get('verified') is False:
                 flash('This account is not verified yet. Please enter the verification code sent to your email.')
                 otp = generate_otp()
                 expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
                 session['otp_code'] = otp
                 session['otp_expiry'] = expiry
-                session['otp_email'] = email
-                result = send_otp_email(email, otp)
+                session['otp_email'] = stored_email
+                result = send_otp_email(stored_email, otp)
                 if result is not True:
                     flash(f'Failed to send OTP email: {result}')
-                return redirect(url_for('verify_otp', email=email))
+                return redirect(url_for('verify_otp', email=stored_email))
 
             first = user.get('first_name') or ''
             last = user.get('last_name') or ''
@@ -1075,45 +1280,47 @@ def login():
                 'role': role,
                 'assigned_class': user.get('assigned_class', 'all'),
                 'user_id': str(user['_id']),
-                'username': name if name else email.split('@')[0],
-                'email': email,
+                'username': name if name else stored_email.split('@')[0],
+                'email': stored_email,
                 'photo_url': user.get('photo_url'),
                 'redirect_url': redirect_url
             }
-            return initiate_2fa(email, session_data)
+            return initiate_2fa(stored_email, session_data)
 
-        auth_user = db.student_users.find_one({'email': email})
+        auth_user = find_by_email(db.student_users, email)
         if auth_user and verify_password(auth_user.get('password', ''), password):
-            upgrade_password_if_plaintext(db.student_users, {'email': email}, auth_user.get('password'), password)
+            stored_email = auth_user.get('email') or email
+            upgrade_password_if_plaintext(db.student_users, {'_id': auth_user['_id']}, auth_user.get('password'), password)
             student_id = auth_user.get('student_id')
             profile = db.students.find_one({'id': student_id})
             session_data = {
                 'role': 'student',
                 'user_id': student_id,
-                'email': email,
-                'username': profile.get('name') if profile else email.split('@')[0],
+                'email': stored_email,
+                'username': profile.get('name') if profile else stored_email.split('@')[0],
                 'photo_url': profile.get('photo_url', '') if profile else '',
                 'redirect_url': url_for('student_home')
             }
-            return initiate_2fa(email, session_data)
+            return initiate_2fa(stored_email, session_data)
 
-        student = db.students.find_one({'email': email})
+        student = find_by_email(db.students, email)
         if student and (verify_password(student.get('password', ''), password) or student.get('id') == password):
+            stored_email = student.get('email') or email
             if verify_password(student.get('password', ''), password):
-                upgrade_password_if_plaintext(db.students, {'email': email}, student.get('password'), password)
+                upgrade_password_if_plaintext(db.students, {'_id': student['_id']}, student.get('password'), password)
             session_data = {
                 'role': 'student',
                 'user_id': student.get('id'),
-                'username': student.get('name', email.split('@')[0]),
-                'email': email,
+                'username': student.get('name', stored_email.split('@')[0]),
+                'email': stored_email,
                 'photo_url': student.get('photo_url', ''),
                 'redirect_url': url_for('student_home')
             }
-            return initiate_2fa(email, session_data)
+            return initiate_2fa(stored_email, session_data)
 
         flash('Invalid email or password. Ask Super Admin if you do not have an account yet.')
 
-    return render_template('login.html')
+    return render_template('login.html', local_dev=_is_local_dev())
 
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin-portal', methods=['GET', 'POST'])
@@ -1510,7 +1717,35 @@ def _get_school_policies():
         policies = list(db.school_policies.find().sort('order', 1))
     for p in policies:
         p['_id'] = str(p['_id'])
+        if p.get('pdf_file_id'):
+            p['pdf_url'] = url_for('get_file', file_id=p['pdf_file_id'])
     return policies
+
+
+def _delete_gridfs_file(file_id):
+    if not file_id:
+        return
+    try:
+        fs.delete(ObjectId(file_id))
+    except Exception:
+        pass
+
+
+def _save_policy_pdf(upload):
+    """Store a policy PDF in GridFS. Returns (meta_dict, error_message)."""
+    if not upload or not upload.filename:
+        return None, None
+    filename = secure_filename(upload.filename)
+    if not filename.lower().endswith('.pdf'):
+        return None, 'Only PDF files are allowed.'
+    content = upload.read()
+    if len(content) > 10 * 1024 * 1024:
+        return None, 'PDF must be 10 MB or smaller.'
+    if not content:
+        return None, 'The PDF file is empty.'
+    file_id = str(fs.put(content, filename=filename, content_type='application/pdf'))
+    return {'pdf_file_id': file_id, 'pdf_filename': filename}, None
+
 
 @app.route('/admin/school-policies', methods=['GET', 'POST'])
 def admin_school_policies():
@@ -1521,35 +1756,55 @@ def admin_school_policies():
         if action == 'add':
             title = (request.form.get('title') or '').strip()
             body = (request.form.get('body') or '').strip()
-            if title and body:
+            pdf_meta, pdf_error = _save_policy_pdf(request.files.get('pdf_file'))
+            if pdf_error:
+                flash(pdf_error)
+            elif title and (body or pdf_meta):
                 last = db.school_policies.find_one(sort=[('order', -1)])
                 order = (last.get('order', 0) + 1) if last else 1
-                db.school_policies.insert_one({
+                doc = {
                     'title': title,
                     'body': body,
                     'order': order,
                     'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
                     'updated_by': session.get('username')
-                })
+                }
+                if pdf_meta:
+                    doc.update(pdf_meta)
+                db.school_policies.insert_one(doc)
                 flash('Policy added.')
+            else:
+                flash('Add policy text or a PDF.')
         elif action == 'update':
             pid = request.form.get('id')
             title = (request.form.get('title') or '').strip()
             body = (request.form.get('body') or '').strip()
-            if pid and title and body:
-                db.school_policies.update_one(
-                    {'_id': ObjectId(pid)},
-                    {'$set': {
-                        'title': title,
-                        'body': body,
-                        'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
-                        'updated_by': session.get('username')
-                    }}
-                )
+            if pid and title:
+                existing = db.school_policies.find_one({'_id': ObjectId(pid)}) or {}
+                updates = {
+                    'title': title,
+                    'body': body,
+                    'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'updated_by': session.get('username')
+                }
+                pdf_meta, pdf_error = _save_policy_pdf(request.files.get('pdf_file'))
+                if pdf_error:
+                    flash(pdf_error)
+                    return redirect(url_for('admin_school_policies'))
+                if pdf_meta:
+                    _delete_gridfs_file(existing.get('pdf_file_id'))
+                    updates.update(pdf_meta)
+                elif request.form.get('remove_pdf') == '1':
+                    _delete_gridfs_file(existing.get('pdf_file_id'))
+                    updates['pdf_file_id'] = None
+                    updates['pdf_filename'] = None
+                db.school_policies.update_one({'_id': ObjectId(pid)}, {'$set': updates})
                 flash('Policy updated.')
         elif action == 'delete':
             pid = request.form.get('id')
             if pid:
+                existing = db.school_policies.find_one({'_id': ObjectId(pid)}) or {}
+                _delete_gridfs_file(existing.get('pdf_file_id'))
                 db.school_policies.delete_one({'_id': ObjectId(pid)})
                 flash('Policy removed.')
         return redirect(url_for('admin_school_policies'))
@@ -1888,8 +2143,95 @@ def admin_dashboard():
             available_roles.append(key)
     
     teacher_reports = list(db.teacher_reports.find().sort('date_submitted', -1))
+
+    mappings = list(db.teacher_mappings.find({}, {'_id': 0, 'teacher_id': 1, 'type': 1, 'subject': 1}))
+    mapped_ids = {str(m.get('teacher_id')) for m in mappings if m.get('teacher_id')}
+    teacher_id_set = {str(t.get('_id')) for t in teachers}
+    mapped_teachers = len(teacher_id_set & mapped_ids)
+    homeroom_n = sum(1 for m in mappings if m.get('type') == 'homeroom')
+    subject_n = sum(1 for m in mappings if m.get('type') == 'subject')
+    subject_counts = {}
+    for m in mappings:
+        if m.get('type') == 'subject':
+            name = m.get('subject') or 'Subject'
+            subject_counts[name] = subject_counts.get(name, 0) + 1
+    subject_rows = sorted(subject_counts.items(), key=lambda x: (-x[1], x[0]))[:8]
+    subj_max = max((c for _, c in subject_rows), default=1)
+
+    class_counts = {}
+    att_vals = []
+    perf_vals = []
+    for profile in student_profiles.values():
+        cls = profile.get('student_class') or profile.get('class') or 'Unassigned'
+        class_counts[str(cls)] = class_counts.get(str(cls), 0) + 1
+        try:
+            att_vals.append(float(str(profile.get('attendance') or '0').replace('%', '').strip() or 0))
+        except ValueError:
+            pass
+        try:
+            perf_vals.append(float(str(profile.get('performance') or '0').replace('%', '').strip() or 0))
+        except ValueError:
+            pass
+    class_rows = sorted(class_counts.items(), key=lambda x: str(x[0]))
+    class_max = max((c for _, c in class_rows), default=1)
+
+    def _pct(part, whole):
+        if not whole:
+            return 0
+        return round(100.0 * part / whole, 1)
+
+    def _bands(vals):
+        buckets = [('0–49%', 0, 50), ('50–74%', 50, 75), ('75–89%', 75, 90), ('90–100%', 90, 101)]
+        counts = {label: 0 for label, _, _ in buckets}
+        for v in vals:
+            for label, lo, hi in buckets:
+                if lo <= v < hi:
+                    counts[label] += 1
+                    break
+        return [{'name': label, 'count': counts[label]} for label, _, _ in buckets]
+
+    teacher_analytics = {
+        'mapped': mapped_teachers,
+        'unmapped': max(0, len(teachers) - mapped_teachers),
+        'mapped_pct': _pct(mapped_teachers, len(teachers)),
+        'homeroom_assignments': homeroom_n,
+        'subject_assignments': subject_n,
+        'subjects': [{'name': n, 'count': c, 'pct': _pct(c, subj_max)} for n, c in subject_rows],
+        'assignment_mix': [
+            {'name': 'Class teacher', 'count': homeroom_n},
+            {'name': 'Subject', 'count': subject_n},
+        ],
+    }
+    student_analytics = {
+        'by_class': [{'name': n, 'count': c, 'pct': _pct(c, class_max)} for n, c in class_rows],
+        'avg_attendance': round(sum(att_vals) / len(att_vals), 1) if att_vals else 0,
+        'avg_performance': round(sum(perf_vals) / len(perf_vals), 1) if perf_vals else 0,
+        'with_login': len(student_users),
+        'profiles': len(student_profiles),
+        'attendance_bands': _bands(att_vals),
+        'performance_bands': _bands(perf_vals),
+        'active': len(active_students),
+        'inactive': len(inactive_students),
+    }
     
-    return render_template('admin_dashboard.html', stats=stats, active_admins=active_admins, inactive_admins=inactive_admins, active_teachers=active_teachers, inactive_teachers=inactive_teachers, active_students=active_students, inactive_students=inactive_students, materials=materials, announcements=announcements, now_time=now_time, global_config=global_config, available_roles=available_roles, teacher_reports=teacher_reports)
+    return render_template(
+        'admin_dashboard.html',
+        stats=stats,
+        active_admins=active_admins,
+        inactive_admins=inactive_admins,
+        active_teachers=active_teachers,
+        inactive_teachers=inactive_teachers,
+        active_students=active_students,
+        inactive_students=inactive_students,
+        materials=materials,
+        announcements=announcements,
+        now_time=now_time,
+        global_config=global_config,
+        available_roles=available_roles,
+        teacher_reports=teacher_reports,
+        teacher_analytics=teacher_analytics,
+        student_analytics=student_analytics,
+    )
 
 @app.route('/staff_management')
 def staff_management():
@@ -1973,6 +2315,7 @@ def add_staff():
             f"Admin {session.get('username')} created a new {role}: {first_name} {last_name}.", 
             role_target='admin'
         )
+        send_registration_welcome_email(email, first_name, last_name)
         
         return jsonify({'success': True})
     except Exception as e:
@@ -2140,7 +2483,13 @@ def _register_portal_user(role, email, schools, grades, department, first_name='
         f"{session.get('username')} registered {role} {email}.",
         role_target='admin',
     )
-    return True, password
+    mailed = send_registration_welcome_email(
+        email,
+        first_name,
+        last_name,
+        datetime.now().strftime('%d %b %Y, %I:%M %p'),
+    )
+    return True, {'password': password, 'email_sent': mailed}
 
 
 def _utility_context():
@@ -2167,7 +2516,8 @@ def utility_registration():
             request.form.get('last_name', '').strip(),
         )
         if ok:
-            flash(f'User registered. Temporary password: {result}')
+            mailed = 'Welcome email sent.' if result.get('email_sent') else 'Welcome email could not be sent.'
+            flash(f"User registered. Temporary password: {result['password']}. {mailed}")
             return redirect(url_for('utility_registration'))
         flash(result)
     return render_template('admin_user_registration.html', **ctx)
@@ -2262,7 +2612,7 @@ def utility_registration_bulk():
         flash('The first row must include Role and Email columns.')
         return redirect(url_for('utility_registration'))
 
-    created, skipped = [], []
+    created, skipped, mailed = [], [], 0
     for raw in rows[1:]:
         if not raw or all(v is None or str(v).strip() == '' for v in raw):
             continue
@@ -2282,11 +2632,13 @@ def utility_registration_bulk():
         )
         if ok:
             created.append(email)
+            if result.get('email_sent'):
+                mailed += 1
         else:
             skipped.append(f'{email or "(missing email)"}: {result}')
 
     if created:
-        flash(f'Registered {len(created)} user(s) from Excel.')
+        flash(f'Registered {len(created)} user(s) from Excel. Welcome email sent to {mailed}.')
     if skipped:
         flash(f'Skipped {len(skipped)} row(s). ' + '; '.join(skipped[:8]))
     if not created and not skipped:
@@ -5306,12 +5658,18 @@ def teacher_mapping():
     # Build lookup: homeroom_lookup[grade][section] = mapping_doc
     homeroom_lookup = {}
     for m in homeroom_maps:
-        homeroom_lookup.setdefault(m['grade'], {})[m['section']] = m
+        g = m.get('grade')
+        s = m.get('section')
+        if g and s:
+            homeroom_lookup.setdefault(g, {})[s] = m
 
-    # Build lookup: subject_lookup[grade][section][subject] = mapping_doc
     subject_lookup = {}
     for m in subject_maps:
-        subject_lookup.setdefault(m['grade'], {}).setdefault(m['section'], {})[m['subject']] = m
+        g = m.get('grade')
+        s = m.get('section')
+        sub = m.get('subject')
+        if g and s and sub:
+            subject_lookup.setdefault(g, {}).setdefault(s, {})[sub] = m
 
     grades   = [str(g) for g in range(1, 13)]
     sections = ['A', 'B', 'C', 'D']
@@ -5321,14 +5679,86 @@ def teacher_mapping():
         'Computer Science', 'Physical Education', 'Art', 'Music'
     ]
 
+    all_students = []
+    for s in db.students.find({}, {'_id': 0, 'id': 1, 'name': 1, 'email': 1, 'student_class': 1, 'division': 1}):
+        all_students.append({
+            'id': s.get('id') or '',
+            'name': s.get('name') or s.get('email') or s.get('id') or 'Student',
+            'email': s.get('email') or '',
+            'class': str(s.get('student_class') or ''),
+            'section': str(s.get('division') or ''),
+        })
+
+    def _students_in(grade, section):
+        variations = set(get_class_variations(grade) or [])
+        variations.add(str(grade))
+        variations.add(f'Class {grade}')
+        out = []
+        for st in all_students:
+            cls = st['class']
+            sec = (st['section'] or '').upper()
+            if sec != str(section).upper():
+                continue
+            digits = ''.join(c for c in cls if c.isdigit())
+            if cls in variations or digits == str(grade):
+                out.append(st)
+        return out
+
+    mapping_rows = []
+    for m in homeroom_maps:
+        g, sec = str(m.get('grade') or ''), str(m.get('section') or '')
+        in_class = _students_in(g, sec)
+        mapping_rows.append({
+            'type': 'homeroom',
+            'teacher_id': m.get('teacher_id') or '',
+            'teacher_name': m.get('teacher_name') or 'Teacher',
+            'class': g,
+            'grade': g,
+            'section': sec,
+            'subject': '—',
+            'is_class_teacher': True,
+            'students': in_class,
+        })
+    for m in subject_maps:
+        g, sec = str(m.get('grade') or ''), str(m.get('section') or '')
+        in_class = _students_in(g, sec)
+        mapping_rows.append({
+            'type': 'subject',
+            'teacher_id': m.get('teacher_id') or '',
+            'teacher_name': m.get('teacher_name') or 'Teacher',
+            'class': g,
+            'grade': g,
+            'section': sec,
+            'subject': m.get('subject') or '—',
+            'is_class_teacher': False,
+            'students': in_class,
+        })
+    mapping_rows.sort(key=lambda r: (r['teacher_name'].lower(), r['class'], r['section'], r['subject']))
+
+    student_maps = []
+    for m in db.student_teacher_maps.find():
+        student_maps.append({
+            'id': str(m.get('_id')),
+            'student_id': m.get('student_id') or '',
+            'student_name': m.get('student_name') or '',
+            'teacher_id': m.get('teacher_id') or '',
+            'teacher_name': m.get('teacher_name') or '',
+            'class': m.get('grade') or '',
+            'grade': m.get('grade') or '',
+            'section': m.get('section') or '',
+            'subject': m.get('subject') or 'Class teacher',
+            'is_class_teacher': bool(m.get('is_class_teacher')),
+        })
+
     return render_template(
         'teacher_mapping.html',
         teachers=teachers,
         grades=grades,
         sections=sections,
         subjects=subjects,
-        homeroom_lookup=homeroom_lookup,
-        subject_lookup=subject_lookup,
+        mapping_rows=mapping_rows,
+        students=all_students,
+        student_maps=student_maps,
     )
 
 
@@ -5430,6 +5860,76 @@ def api_clear_mappings():
 
     result = db.teacher_mappings.delete_many(query)
     return jsonify({'success': True, 'deleted': result.deleted_count})
+
+
+@app.route('/api/teacher-mapping/delete', methods=['POST'])
+def api_delete_one_mapping():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    grade = str(data.get('grade', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    mapping_type = str(data.get('type', '')).strip()
+    subject = str(data.get('subject', '')).strip()
+    query = {'grade': grade, 'section': section, 'type': mapping_type}
+    if mapping_type == 'subject':
+        query['subject'] = subject
+    db.teacher_mappings.delete_one(query)
+    return jsonify({'success': True})
+
+
+@app.route('/api/student-mapping', methods=['POST'])
+def api_set_student_mapping():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    student_id = str(data.get('student_id', '')).strip()
+    student_name = str(data.get('student_name', '')).strip()
+    teacher_id = str(data.get('teacher_id', '')).strip()
+    teacher_name = str(data.get('teacher_name', '')).strip()
+    grade = str(data.get('grade', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    subject = str(data.get('subject', '')).strip()
+    is_class_teacher = bool(data.get('is_class_teacher'))
+    if not student_id or not teacher_id or not grade or not section:
+        return jsonify({'success': False, 'error': 'Student, teacher, class, and section are required'}), 400
+    if not subject:
+        subject = 'Class teacher' if is_class_teacher else 'Subject'
+    db.student_teacher_maps.update_one(
+        {
+            'student_id': student_id,
+            'teacher_id': teacher_id,
+            'grade': grade,
+            'section': section,
+            'subject': subject,
+        },
+        {'$set': {
+            'student_id': student_id,
+            'student_name': student_name,
+            'teacher_id': teacher_id,
+            'teacher_name': teacher_name,
+            'grade': grade,
+            'section': section,
+            'subject': subject,
+            'is_class_teacher': is_class_teacher,
+            'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'updated_by': session.get('username', 'Admin'),
+        }},
+        upsert=True,
+    )
+    return jsonify({'success': True})
+
+
+@app.route('/api/student-mapping/delete', methods=['POST'])
+def api_delete_student_mapping():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    mid = str(data.get('id', '')).strip()
+    if not mid:
+        return jsonify({'success': False, 'error': 'id is required'}), 400
+    db.student_teacher_maps.delete_one({'_id': ObjectId(mid)})
+    return jsonify({'success': True})
 
 # -- API: Direct Messaging --
 @app.route('/api/send_direct_message', methods=['POST'])
