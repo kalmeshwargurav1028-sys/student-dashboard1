@@ -92,64 +92,7 @@
 
 
 
-                {# ── CLASSROOM ─────────────────────────────────────────── #}
-                {% if session.get('role') != 'teacher' %}
-                <li class="px-3 pt-4 pb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Classroom</span>
-                </li>
-                {% endif %}
-
-                {% if session.get('role') != 'teacher' %}
-                <li>
-                    <a href="{{ url_for('timetable') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/timetable' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Timetable</span>
-                    </a>
-                </li>
-
-                <li>
-                    <a href="{{ url_for('assignments') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/assignments' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Assignments</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                {% if (role_permissions.get('modify_attendance') or session.get('role') == 'admin') and session.get('role') != 'teacher' %}
-                <li>
-                    <a href="{{ url_for('attendance') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/attendance' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Attendance</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                {% if (role_permissions.get('manage_grades') or session.get('role') == 'admin') and session.get('role') != 'teacher' %}
-                <li>
-                    <a href="{{ url_for('gradebook') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/gradebook' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Gradebook</span>
-                    </a>
-                </li>
-                {% endif %}
-
-                {% if role_permissions.get('edit_materials') %}
-                <li>
-                    {% if session.get('role') == 'teacher' %}
-                    <!-- Share Resource and My Shared Resources moved to Quick Actions for Teachers -->
-                    {% else %}
-                    <a href="{{ url_for('materials') }}"
-                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/materials' in current_path and '/student' not in current_path %}bg-white/20 text-white font-semibold{% endif %}">
-                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                        <span class="sidebar-text whitespace-nowrap text-sm">Study Materials</span>
-                    </a>
-                    {% endif %}
-                </li>
-                {% endif %}
+                {# Classroom tools stay on the teacher sidebar, not Super Admin. #}
 
                 {% if session.get('role') == 'teacher' %}
                 <li class="px-3 pt-4 pb-1">
@@ -224,14 +167,11 @@
                 {% endif %}
 
 
-                {# ── ACADEMIC ──────────────────────────────────────────── #}
-                {% if session.get('role') != 'teacher' %}
-                <li class="px-3 pt-4 pb-1">
-                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Academic</span>
-                </li>
-                {% endif %}
-
+                {# ── ADMINISTRATION ─────────────────────────────────────── #}
                 {% if session.get('role') == 'admin' %}
+                <li class="px-3 pt-4 pb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Administration</span>
+                </li>
                 <li>
                     <a href="{{ url_for('teacher_mapping') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/admin/teacher-mapping' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -257,6 +197,20 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                         </svg>
                         <span class="sidebar-text whitespace-nowrap text-sm">Announcements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}#roles"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Role permissions</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('admin_dashboard') }}#reports"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Teacher reports</span>
                     </a>
                 </li>
                 {% endif %}

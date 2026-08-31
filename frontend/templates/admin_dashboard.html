@@ -1,362 +1,226 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<div class="w-full py-8 px-8 sm:px-10 lg:px-12">
-    <div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-8 flex flex-row justify-between items-center gap-4 w-full">
-        <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
-            <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-            <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl"></div>
-        </div>
-        <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
-            <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
-                <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="Indus Portal" class="h-full w-full object-contain rounded-lg">
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs sm:text-sm text-blue-100 font-medium">Welcome back</p>
-                <h1 class="text-lg sm:text-xl font-semibold tracking-wide truncate">{{ session.get('username', 'Admin') }}</h1>
-                <p class="text-xs sm:text-sm text-blue-100 mt-0.5">Super Admin &nbsp;·&nbsp; {{ academic_year_label }}</p>
-            </div>
-        </div>
-        <div class="relative z-30 shrink-0" data-profile-menu>
-            <button type="button" onclick="event.stopPropagation(); toggleBannerProfile(this)" class="flex items-center gap-3 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 rounded-xl border border-white/10 focus:outline-none w-full text-left">
-                <div class="flex flex-col items-end">
-                    <span class="text-sm font-semibold text-white">My Profile</span>
-                    <span class="text-[10px] uppercase font-bold tracking-wider text-blue-200">Manage Settings</span>
-                </div>
-                <div class="relative h-10 w-10 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center shrink-0">
-                    {% if session.get('profile_photo') %}
-                    <img src="{{ url_for('static', filename='uploads/' + session.get('profile_photo')) }}" alt="" class="h-full w-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                    {% endif %}
-                    <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="" class="h-full w-full object-contain {% if session.get('profile_photo') %}hidden{% endif %}">
-                </div>
-            </button>
-            <div data-profile-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">
-                <a href="{{ url_for('admin_profile') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors">View Profile</a>
-                <div class="border-t border-gray-100 my-1"></div>
-                <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">Logout</a>
-            </div>
-        </div>
-    </div>
+{% block header_title %}Overview{% endblock %}
 
-        <!-- Dashboard View -->
+{% block content %}
+<div class="w-full py-6 px-6 sm:px-8 lg:px-10">
+
     <div id="view-dashboard" class="view-section">
 
-        <!-- Quick Actions Panel -->
-        <div class="mb-8 bg-white shadow-sm rounded-xl border border-gray-100 p-4">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Quick Actions</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="{{ url_for('profile_form') }}" class="flex flex-col items-center justify-center p-4 bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-emerald-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-user-plus text-emerald-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-emerald-800">Add User</span>
-                </a>
-                <a href="#announcements" onclick="showView('announcements'); return false;" class="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-amber-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-bullhorn text-amber-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-amber-800">New Announcement</span>
-                </a>
-                <a href="#reports" onclick="showView('reports'); return false;" class="flex flex-col items-center justify-center p-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-indigo-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-chart-pie text-indigo-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-indigo-800">View Reports</span>
-                </a>
-                <a href="#roles" onclick="showView('roles'); return false;" class="flex flex-col items-center justify-center p-4 bg-purple-50 hover:bg-purple-100 border border-purple-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-purple-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-shield-halved text-purple-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-purple-800">Role Config</span>
-                </a>
-            </div>
-        </div>
-
-        <div class="mb-8 bg-white shadow-sm rounded-xl border border-gray-100 p-4">
-            <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Portal control (Super Admin)</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="{{ url_for('admin_school_policies') }}" class="flex flex-col items-center justify-center p-4 bg-sky-50 hover:bg-sky-100 border border-sky-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-sky-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-file-lines text-sky-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-sky-800">School Policies</span>
-                </a>
-                <a href="{{ url_for('school_announcements') }}" class="flex flex-col items-center justify-center p-4 bg-amber-50 hover:bg-amber-100 border border-amber-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-amber-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-bullhorn text-amber-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-amber-800">Announcements</span>
-                </a>
-                <a href="{{ url_for('teacher_mapping') }}" class="flex flex-col items-center justify-center p-4 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-indigo-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-map text-indigo-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-indigo-800">Teacher Mapping</span>
-                </a>
-                <a href="{{ url_for('staff_management') }}" class="flex flex-col items-center justify-center p-4 bg-rose-50 hover:bg-rose-100 border border-rose-100 rounded-lg transition-colors group">
-                    <div class="bg-white p-2 rounded-full shadow-sm border border-rose-200 mb-2 group-hover:scale-110 transition-transform">
-                        <i class="fa-solid fa-user-shield text-rose-600"></i>
-                    </div>
-                    <span class="text-xs font-bold text-rose-800">Staff & Admins</span>
-                </a>
-            </div>
-        </div>
-
-        <!-- Analytics Overview -->
         <div class="mb-8">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">User Activity Stats</h2>
-            
-            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 mb-8">
-                <!-- Admins Stats -->
-                <div class="bg-gradient-to-br from-red-50 to-rose-100 overflow-hidden shadow-sm rounded-xl border border-red-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-red-100">
-                            👑
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-red-800 truncate">Total Admins</dt>
-                                <dd class="flex items-baseline"><div class="text-2xl font-black text-red-900">{{ stats.total_admins }}</div></dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
-                            🛡️
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-blue-800 truncate">Active Admins</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-black text-blue-900">{{ stats.active_admins }}</div>
-                                    <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">Past 15 mins</span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Students Stats -->
-                <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
-                            🎓
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-emerald-800 truncate">Total Students</dt>
-                                <dd class="flex items-baseline"><div class="text-2xl font-black text-emerald-900">{{ stats.total_students }}</div></dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-br from-emerald-50 to-teal-100 overflow-hidden shadow-sm rounded-xl border border-emerald-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-emerald-100">
-                            ⚡
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-emerald-800 truncate">Active Students</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-black text-emerald-900">{{ stats.active_students }}</div>
-                                    <span class="ml-2 text-xs font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-full shadow-sm">Past 15 mins</span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                <!-- Teachers Stats -->
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
-                            👨‍🏫
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-blue-800 truncate">Total Teachers</dt>
-                                <dd class="flex items-baseline"><div class="text-2xl font-black text-blue-900">{{ stats.total_teachers }}</div></dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 overflow-hidden shadow-sm rounded-xl border border-blue-200 p-5">
-                    <div class="flex items-center">
-                        <div class="flex-shrink-0 bg-white rounded-md p-3 text-2xl shadow-sm border border-blue-100">
-                            ✅
-                        </div>
-                        <div class="ml-5 w-0 flex-1">
-                            <dl>
-                                <dt class="text-sm font-bold text-blue-800 truncate">Active Teachers</dt>
-                                <dd class="flex items-baseline">
-                                    <div class="text-2xl font-black text-blue-900">{{ stats.active_teachers }}</div>
-                                    <span class="ml-2 text-xs font-bold text-blue-700 bg-white px-2 py-0.5 rounded-full shadow-sm">Past 15 mins</span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-                
+            <p class="text-sm text-slate-500">{{ academic_year_label }}</p>
+            <h1 class="text-2xl font-semibold text-slate-900 tracking-tight">{{ session.get('username', 'Admin') }}</h1>
+            <p class="text-sm text-slate-500 mt-1">Super Admin · school control, people, and permissions</p>
+        </div>
 
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+                <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Students</p>
+                <p class="mt-2 text-3xl font-semibold text-slate-900">{{ stats.total_students }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ stats.active_students }} active in the last 15 minutes</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+                <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Teachers</p>
+                <p class="mt-2 text-3xl font-semibold text-slate-900">{{ stats.total_teachers }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ stats.active_teachers }} active in the last 15 minutes</p>
+            </div>
+            <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+                <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Admins</p>
+                <p class="mt-2 text-3xl font-semibold text-slate-900">{{ stats.total_admins }}</p>
+                <p class="mt-1 text-sm text-slate-500">{{ stats.active_admins }} active in the last 15 minutes</p>
             </div>
         </div>
 
-        <!-- Filters and Search -->
-        <div class="mb-4 flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-sm border border-gray-100 gap-4">
-            <div class="relative w-full sm:w-64">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-search text-gray-400"></i>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+            <div class="bg-white border border-slate-200 rounded-lg">
+                <div class="px-5 py-3 border-b border-slate-200">
+                    <h2 class="text-sm font-semibold text-slate-900">People</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Accounts, mapping, and access</p>
                 </div>
-                <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search by name, email..." class="w-full pl-10 pr-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                <div class="divide-y divide-slate-100">
+                    <a href="{{ url_for('profile_form') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Add user</span>
+                        <span class="text-xs text-slate-400">Teacher or Super Admin</span>
+                    </a>
+                    <a href="{{ url_for('staff_management') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Staff &amp; admins</span>
+                        <span class="text-xs text-slate-400">Manage accounts</span>
+                    </a>
+                    <a href="{{ url_for('teacher_mapping') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Teacher mapping</span>
+                        <span class="text-xs text-slate-400">Class and subject</span>
+                    </a>
+                    <a href="#roles" onclick="showView('roles'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Role permissions</span>
+                        <span class="text-xs text-slate-400">Who can do what</span>
+                    </a>
+                </div>
             </div>
-            
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <select id="roleFilter" onchange="filterUsers()" class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
-                    <option value="all">All Roles</option>
-                    <option value="admin">Admins</option>
-                    <option value="teacher">Teachers</option>
-                    <option value="student">Students</option>
-                </select>
-                
-                <select id="dateFilter" onchange="filterUsers()" class="block w-full sm:w-40 border-gray-200 rounded-lg text-sm py-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700">
-                    <option value="7">Last 1 Week</option>
-                    <option value="30">Last 1 Month</option>
-                    <option value="all">All Time</option>
-                </select>
+            <div class="bg-white border border-slate-200 rounded-lg">
+                <div class="px-5 py-3 border-b border-slate-200">
+                    <h2 class="text-sm font-semibold text-slate-900">School</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Content teachers and students see</p>
+                </div>
+                <div class="divide-y divide-slate-100">
+                    <a href="{{ url_for('admin_school_policies') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">School policies</span>
+                        <span class="text-xs text-slate-400">Edit published policy pages</span>
+                    </a>
+                    <a href="{{ url_for('school_announcements') }}" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Announcements</span>
+                        <span class="text-xs text-slate-400">Post to the school</span>
+                    </a>
+                    <a href="#announcements" onclick="showView('announcements'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Broadcast</span>
+                        <span class="text-xs text-slate-400">Targeted notice</span>
+                    </a>
+                    <a href="#reports" onclick="showView('reports'); return false;" class="flex items-center justify-between px-5 py-3 hover:bg-slate-50 transition-colors">
+                        <span class="text-sm text-slate-800">Teacher reports</span>
+                        <span class="text-xs text-slate-400">Daily logs submitted</span>
+                    </a>
+                </div>
             </div>
         </div>
 
-        <!-- Active Users Tables -->
-        <div class="grid grid-cols-1 gap-8">
-            
-            <!-- Admins Table -->
-            <div class="bg-white shadow-sm rounded-xl border border-red-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-red-100 bg-red-50 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-red-800">👑 Admin Activity</h3>
-                    <span class="text-xs font-bold text-red-600 bg-white px-3 py-1 rounded-full border border-red-200 shadow-sm">Admins Only View</span>
+        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-900">Directory</h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Who is on the portal and when they last signed in</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                    <input type="text" id="userSearchInput" onkeyup="filterUsers()" placeholder="Search name or email" class="w-full sm:w-56 px-3 py-2 border border-slate-200 rounded-md text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400 focus:border-slate-400">
+                    <select id="roleFilter" onchange="filterUsers()" class="border border-slate-200 rounded-md text-sm py-2 px-2 text-slate-700 bg-white">
+                        <option value="all">All roles</option>
+                        <option value="admin">Admins</option>
+                        <option value="teacher">Teachers</option>
+                    </select>
+                    <select id="dateFilter" onchange="filterUsers()" class="border border-slate-200 rounded-md text-sm py-2 px-2 text-slate-700 bg-white">
+                        <option value="7">Last 7 days</option>
+                        <option value="30">Last 30 days</option>
+                        <option value="all">All time</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-0">
+            <div class="border-b border-slate-100 last:border-b-0" data-activity="admin">
+                <div class="px-5 py-3 bg-slate-50 border-b border-slate-200">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Admin Activity</h3>
                 </div>
                 <div class="max-h-64 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
+                    <table class="min-w-full divide-y divide-slate-100">
                         <thead class="bg-white sticky top-0 z-10">
                             <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Admin</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Last Active</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Admin</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Last active</th>
                             </tr>
                         </thead>
-                        <tbody class="bg-white divide-y divide-gray-50">
+                        <tbody class="bg-white divide-y divide-slate-50">
                             {% for t in active_admins %}
-                            <tr class="hover:bg-red-50/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ t.email }}</div>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center text-xs font-medium text-slate-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Active
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-400">Just now</td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">Just now</td>
                             </tr>
                             {% endfor %}
                             {% for t in inactive_admins %}
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ t.email }}</div>
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-500">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center text-xs font-medium text-slate-400">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></span> Inactive
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ t.last_active }}</td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">{{ t.last_active }}</td>
                             </tr>
                             {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Teachers Table -->
-            <div class="bg-white shadow-sm rounded-xl border border-blue-100 overflow-hidden">
-                <div class="px-6 py-4 border-b border-blue-100 bg-blue-50 flex items-center justify-between">
-                    <h3 class="text-lg font-bold text-blue-800">👨‍🏫 Teacher Activity</h3>
-                    <span class="text-xs font-bold text-blue-600 bg-white px-3 py-1 rounded-full border border-blue-200 shadow-sm">Teacher</span>
-                </div>
-                <div class="max-h-64 overflow-y-auto">
-                    <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-white sticky top-0 z-10">
-                            <tr>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Teacher</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Role</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Status</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-wider">Last Active</th>
-                                <th scope="col" class="relative px-6 py-4"><span class="sr-only">Actions</span></th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-50">
-                            {% for t in active_teachers %}
-                            <tr class="hover:bg-blue-50/30 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700 border border-blue-100">
-                                        {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-blue-50 text-blue-700">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-1.5 mt-1.5 animate-pulse"></span> Active
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-400">Just now</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% for t in inactive_teachers %}
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-bold text-gray-900">{{ t.name }}</div>
-                                    <div class="text-xs text-gray-400 mt-0.5">{{ t.email }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-50 text-gray-600 border border-gray-200">
-                                        {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full bg-gray-100 text-gray-500">
-                                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 mr-1.5 mt-1.5"></span> Inactive
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{{ t.last_active }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-blue-600 hover:text-blue-900 bg-blue-50 px-3 py-1.5 rounded-md text-xs font-bold shadow-sm">Reset Password</button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                            {% if not active_teachers and not inactive_teachers %}
-                            <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 font-bold">No teachers registered.</td></tr>
+                            {% if not active_admins and not inactive_admins %}
+                            <tr><td colspan="3" class="px-5 py-8 text-center text-sm text-slate-400">No admins yet.</td></tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-
+            <div data-activity="teacher">
+                <div class="px-5 py-3 bg-slate-50 border-b border-t border-slate-200">
+                    <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500">Teacher Activity</h3>
+                </div>
+                <div class="max-h-64 overflow-y-auto">
+                    <table class="min-w-full divide-y divide-slate-100">
+                        <thead class="bg-white sticky top-0 z-10">
+                            <tr>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Teacher</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Last active</th>
+                                <th scope="col" class="relative px-5 py-3"><span class="sr-only">Actions</span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-slate-50">
+                            {% for t in active_teachers %}
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-600">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center text-xs font-medium text-slate-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2"></span> Active
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">Just now</td>
+                                <td class="px-5 py-3 whitespace-nowrap text-right">
+                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-sm text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline">Reset password</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% for t in inactive_teachers %}
+                            <tr class="hover:bg-slate-50">
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-slate-900">{{ t.name }}</div>
+                                    <div class="text-xs text-slate-400 mt-0.5">{{ t.email }}</div>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-600">
+                                    {{ (t.custom_role if t.custom_role else 'Teacher')|capitalize }}
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap">
+                                    <span class="inline-flex items-center text-xs font-medium text-slate-400">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2"></span> Inactive
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3 whitespace-nowrap text-sm text-slate-500">{{ t.last_active }}</td>
+                                <td class="px-5 py-3 whitespace-nowrap text-right">
+                                    <button onclick="openResetModal('teacher', '{{ t.id }}', '{{ t.name }}')" class="text-sm text-slate-600 hover:text-slate-900 underline-offset-2 hover:underline">Reset password</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if not active_teachers and not inactive_teachers %}
+                            <tr><td colspan="5" class="px-5 py-8 text-center text-sm text-slate-400">No teachers registered.</td></tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
         </div>
 
-    </div> <!-- Close view-dashboard -->
+    </div>
 
     <!-- Role Management View -->
     
@@ -1438,60 +1302,30 @@ async function saveNewRole() {
 
     function filterUsers() {
         const searchText = (document.getElementById('userSearchInput').value || '').toLowerCase();
-        const roleFilter = document.getElementById('roleFilter').value; // 'all', 'admin', 'teacher', 'student'
-        const dateFilter = document.getElementById('dateFilter').value; // '7', '30', 'all'
+        const roleFilter = document.getElementById('roleFilter').value;
+        const dateFilter = document.getElementById('dateFilter').value;
 
-        // Get all tables in the dashboard view
-        const tables = document.querySelectorAll('#view-dashboard .grid table');
-        
-        tables.forEach(table => {
-            // Determine the table's role based on its heading or structure
-            // Admin table has 'Admins Only View' badge or 'Admin Activity' heading
-            const isAdminTable = table.closest('div').innerHTML.includes('Admin Activity');
-            const isTeacherTable = table.closest('div').innerHTML.includes('Teacher Activity');
-            
-            // If the table role doesn't match the filter, hide the whole table container
-            const container = table.closest('div.bg-white.shadow-sm');
-            let showTable = true;
-            
-            if (roleFilter === 'admin' && !isAdminTable) showTable = false;
-            if (roleFilter === 'teacher' && !isTeacherTable) showTable = false;
-            if (roleFilter === 'student') showTable = false; // No student table in dashboard
-            
-            if (!showTable) {
-                container.style.display = 'none';
-                return;
-            } else {
-                container.style.display = 'block';
-            }
+        document.querySelectorAll('#view-dashboard [data-activity]').forEach(container => {
+            const role = container.getAttribute('data-activity');
+            let showTable = roleFilter === 'all' || roleFilter === role;
+            container.style.display = showTable ? '' : 'none';
+            if (!showTable) return;
 
-            const rows = table.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                if(row.children.length === 1 && row.textContent.includes('No ')) return; // Skip empty state rows
-                
+            container.querySelectorAll('tbody tr').forEach(row => {
+                if (row.children.length === 1 && row.textContent.includes('No ')) return;
+
                 const textContent = row.textContent.toLowerCase();
-                
-                // Text search
                 const matchesSearch = textContent.includes(searchText);
-                
-                // Date filter (simple implementation based on text content)
+
                 let matchesDate = true;
                 if (dateFilter !== 'all') {
                     const lastActiveText = (row.querySelector('td:nth-child(3)') || row.querySelector('td:nth-last-child(2)') || row).textContent.toLowerCase();
-                    if (dateFilter === '7' || dateFilter === '30') {
-                        // Very rough approximation since we don't have actual Date objects in the DOM
-                        // We assume "Just now", "mins ago", "hours ago", "days ago"
-                        if (lastActiveText.includes('month') || lastActiveText.includes('year')) {
-                            matchesDate = false;
-                        }
+                    if ((dateFilter === '7' || dateFilter === '30') && (lastActiveText.includes('month') || lastActiveText.includes('year'))) {
+                        matchesDate = false;
                     }
                 }
-                
-                if (matchesSearch && matchesDate) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+
+                row.style.display = (matchesSearch && matchesDate) ? '' : 'none';
             });
         });
     }
