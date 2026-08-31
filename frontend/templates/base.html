@@ -88,6 +88,33 @@
                         <span class="sidebar-text whitespace-nowrap text-sm">Staff Management</span>
                     </a>
                 </li>
+                {% set utility_open = current_path.startswith('/admin/utility') %}
+                <li class="mt-1">
+                    <button type="button" id="utility-toggle" class="w-[calc(100%-1rem)] mx-2 flex items-center justify-between px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg transition-colors">
+                        <span class="flex items-center min-w-0">
+                            <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            <span class="sidebar-text whitespace-nowrap text-sm">Utility</span>
+                        </span>
+                        <svg data-utility-chevron class="h-4 w-4 flex-shrink-0 sidebar-text transition-transform {% if utility_open %}rotate-180{% endif %}" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    </button>
+                    <ul id="utility-menu" class="{% if not utility_open %}hidden{% endif %} mt-1 space-y-0.5 ml-4 pl-2 border-l border-blue-400/30">
+                        <li>
+                            <a href="{{ url_for('utility_registration') }}" class="flex items-center px-3 py-2 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg mx-2 text-sm {% if current_path.startswith('/admin/utility/registration') %}bg-white/20 text-white font-semibold{% endif %}">Registration</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('utility_users_monitor') }}" class="flex items-center px-3 py-2 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg mx-2 text-sm {% if current_path.startswith('/admin/utility/users') %}bg-white/20 text-white font-semibold{% endif %}">Users Monitor</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('utility_role_manager') }}" class="flex items-center px-3 py-2 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg mx-2 text-sm {% if '#roles' in request.full_path %}bg-white/20 text-white font-semibold{% endif %}">Role Manager</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('utility_refresh_data') }}" class="flex items-center px-3 py-2 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg mx-2 text-sm {% if current_path.startswith('/admin/utility/refresh') %}bg-white/20 text-white font-semibold{% endif %}">Refresh Data</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('utility_cache_monitor') }}" class="flex items-center px-3 py-2 text-blue-100 hover:bg-blue-600/70 hover:text-white rounded-lg mx-2 text-sm {% if current_path.startswith('/admin/utility/cache') %}bg-white/20 text-white font-semibold{% endif %}">Cache Monitor</a>
+                        </li>
+                    </ul>
+                </li>
                 {% endif %}
 
 
@@ -433,6 +460,16 @@
                     sidebar.classList.toggle('w-64');
                     sidebar.classList.toggle('w-20');
                     sidebarTexts.forEach(el => el.classList.toggle('hidden'));
+                });
+            }
+
+            const utilityBtn = document.getElementById('utility-toggle');
+            const utilityMenu = document.getElementById('utility-menu');
+            if (utilityBtn && utilityMenu) {
+                utilityBtn.addEventListener('click', () => {
+                    utilityMenu.classList.toggle('hidden');
+                    const chevron = utilityBtn.querySelector('[data-utility-chevron]');
+                    if (chevron) chevron.classList.toggle('rotate-180');
                 });
             }
         });

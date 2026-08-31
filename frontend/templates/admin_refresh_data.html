@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Refresh Data{% endblock %}
+
+{% block content %}
+<div class="w-full py-8 px-6 sm:px-8">
+    <div class="max-w-xl mx-auto bg-white border border-slate-200 rounded-lg p-6">
+        <h1 class="text-lg font-semibold text-slate-900">Refresh Data</h1>
+        <p class="text-sm text-slate-500 mt-1">Reload counts and directories from the database. This does not delete records.</p>
+        {% if last_refresh %}
+        <p class="text-xs text-slate-400 mt-3">Last refresh: {{ last_refresh }}</p>
+        {% else %}
+        <p class="text-xs text-slate-400 mt-3">No refresh has been run yet.</p>
+        {% endif %}
+        <form method="POST" class="mt-6">
+            <button type="submit" class="inline-flex items-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium py-2.5 px-4 rounded-md text-sm">Refresh now</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

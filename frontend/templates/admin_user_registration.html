@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block header_title %}User Registration{% endblock %}
+
+{% block content %}
+<div class="w-full py-8 px-4 sm:px-8">
+    <div class="max-w-3xl mx-auto space-y-6">
+
+        <div class="bg-white border border-slate-200 rounded-lg p-6 sm:p-8">
+            <div class="flex items-start gap-3 mb-6">
+                <div class="h-10 w-10 rounded-md bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-semibold text-slate-900">User Registration</h1>
+                    <p class="text-sm text-slate-500">Add new user to the system.</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{{ url_for('utility_registration') }}" class="space-y-5">
+                <div>
+                    <label for="role" class="block text-sm font-medium text-slate-700 mb-1">Role <span class="text-red-500">*</span></label>
+                    <select id="role" name="role" required class="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <option value="" disabled selected>Select role...</option>
+                        <option value="teacher">Teacher</option>
+                        <option value="admin">Super Admin</option>
+                        <option value="student">Student</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-sm font-medium text-slate-700 mb-1">Email Address <span class="text-red-500">*</span></label>
+                    <input type="email" id="email" name="email" required placeholder="Enter email address" class="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="first_name" class="block text-sm font-medium text-slate-700 mb-1">First name</label>
+                        <input type="text" id="first_name" name="first_name" placeholder="Optional" class="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400">
+                    </div>
+                    <div>
+                        <label for="last_name" class="block text-sm font-medium text-slate-700 mb-1">Last name</label>
+                        <input type="text" id="last_name" name="last_name" placeholder="Optional" class="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-400">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Schools <span class="text-red-500">*</span></label>
+                    <details class="border border-slate-300 rounded-md bg-white">
+                        <summary class="px-3 py-2.5 text-sm text-slate-500 cursor-pointer">Select schools...</summary>
+                        <div class="px-3 pb-3 space-y-2 border-t border-slate-100">
+                            {% for school in schools %}
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" name="schools" value="{{ school }}" class="rounded border-slate-300">
+                                <span>{{ school }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    <p class="mt-1 text-xs text-slate-400">Click to open dropdown and select multiple schools.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Grades <span class="text-red-500">*</span></label>
+                    <details class="border border-slate-300 rounded-md bg-white">
+                        <summary class="px-3 py-2.5 text-sm text-slate-500 cursor-pointer">Select grades...</summary>
+                        <div class="px-3 pb-3 grid grid-cols-2 sm:grid-cols-3 gap-2 border-t border-slate-100">
+                            {% for grade in grades %}
+                            <label class="flex items-center gap-2 text-sm text-slate-700">
+                                <input type="checkbox" name="grades" value="{{ grade }}" class="rounded border-slate-300">
+                                <span>{{ grade }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </details>
+                    <p class="mt-1 text-xs text-slate-400">Click to open dropdown and select multiple grades.</p>
+                </div>
+
+                <div>
+                    <label for="department" class="block text-sm font-medium text-slate-700 mb-1">Department</label>
+                    <select id="department" name="department" class="w-full border border-slate-300 rounded-md px-3 py-2.5 text-sm text-slate-800 bg-white focus:outline-none focus:ring-1 focus:ring-slate-400">
+                        <option value="">Select department...</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept }}">{{ dept }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="w-full inline-flex items-center justify-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium py-2.5 px-4 rounded-md text-sm transition-colors">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                    Save Registration
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg p-6 sm:p-8">
+            <div class="flex items-start gap-3 mb-5">
+                <div class="h-10 w-10 rounded-md bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 font-bold text-xs">XLS</div>
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Bulk User Registration</h2>
+                    <p class="text-sm text-slate-500">Upload multiple users from Excel file.</p>
+                </div>
+            </div>
+            <form method="POST" action="{{ url_for('utility_registration_bulk') }}" enctype="multipart/form-data" class="space-y-4">
+                <input type="file" name="excel_file" accept=".xlsx,.xls" required class="block w-full text-sm text-slate-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button type="submit" class="inline-flex items-center justify-center bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-medium py-2.5 px-4 rounded-md text-sm">Upload Excel</button>
+                    <a href="{{ url_for('utility_registration_template') }}" class="inline-flex items-center justify-center border border-slate-300 text-slate-700 bg-white hover:bg-slate-50 font-medium py-2.5 px-4 rounded-md text-sm">Download template</a>
+                </div>
+                <p class="text-xs text-slate-400">Columns: Role, Email, First Name, Last Name, Schools, Grades, Department, Password. Separate multiple schools or grades with a semicolon.</p>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@ import random
 import string
 import csv
 import io
+import re
 from datetime import datetime, timedelta
 import traceback
 from flask import Flask, render_template, request, redirect, url_for, session, flash, Response, send_file, jsonify
@@ -1985,6 +1986,377 @@ def delete_staff(staff_id):
             return jsonify({'success': False, 'error': 'Staff member not found.'}), 404
     except Exception as e:
         return jsonify({'success': False, 'error': f"Database error: {str(e)}"}), 500
+
+UTILITY_GRADES = [f'Grade {n}' for n in range(1, 13)]
+UTILITY_DEPARTMENTS = [
+    'Academics', 'Administration', 'Science', 'Mathematics', 'Languages',
+    'Humanities', 'Sports', 'Arts', 'IT', 'Pastoral Care',
+]
+
+
+def _admin_required():
+    return session.get('logged_in') and session.get('role') == 'admin'
+
+
+def _utility_schools():
+    settings = db.settings.find_one({}, {'school_name': 1}) or {}
+    name = (settings.get('school_name') or 'Indus International School').strip()
+    schools = [name]
+    if name.lower() != 'indus international school':
+        schools.append('Indus International School')
+    return schools
+
+
+def _email_in_use(email):
+    email = (email or '').strip().lower()
+    if not email:
+        return True
+    pattern = {'$regex': f'^{re.escape(email)}$', '$options': 'i'}
+    return bool(
+        db.admins.find_one({'email': pattern})
+        or db.users.find_one({'email': pattern})
+        or db.student_users.find_one({'email': pattern})
+    )
+
+
+def _next_student_id():
+    max_num = 0
+    for s in db.students.find({}, {'id': 1, '_id': 0}):
+        sid = str(s.get('id') or '')
+        if sid.startswith('IND'):
+            try:
+                max_num = max(max_num, int(sid[3:]))
+            except ValueError:
+                pass
+    return f'IND{max_num + 1:03d}'
+
+
+def _grade_to_class(grade):
+    digits = ''.join(c for c in (grade or '') if c.isdigit())
+    if not digits:
+        return '10th'
+    n = int(digits)
+    if 10 <= n % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(n % 10, 'th')
+    return f'{n}{suffix}'
+
+
+def _temp_password(email):
+    local = (email or 'user').split('@')[0]
+    cleaned = ''.join(c for c in local if c.isalpha()) or 'Indus'
+    return f'{cleaned[:1].upper()}{cleaned[1:8].lower()}@123'
+
+
+def _register_portal_user(role, email, schools, grades, department, first_name='', last_name='', password=''):
+    role = (role or '').strip().lower()
+    email = (email or '').strip().lower()
+    if role not in ('teacher', 'admin', 'student'):
+        return False, 'Select a valid role.'
+    if not email or '@' not in email:
+        return False, 'Enter a valid email address.'
+    if _email_in_use(email):
+        return False, f'{email} is already registered.'
+    if not schools:
+        return False, 'Select at least one school.'
+    if not grades:
+        return False, 'Select at least one grade.'
+
+    password = (password or '').strip() or _temp_password(email)
+    hashed = generate_password_hash(password)
+    name = f'{first_name} {last_name}'.strip() or email.split('@')[0].replace('.', ' ').title()
+    now = datetime.utcnow().isoformat()
+    assigned = grades[0] if grades else 'all'
+
+    if role == 'admin':
+        db.admins.insert_one({
+            'email': email,
+            'password': hashed,
+            'name': name,
+            'schools': schools,
+            'grades': grades,
+            'department': department,
+            'created_at': now,
+        })
+    elif role == 'teacher':
+        db.users.insert_one({
+            'first_name': first_name or name.split(' ')[0],
+            'last_name': last_name or ' '.join(name.split(' ')[1:]),
+            'name': name,
+            'email': email,
+            'role': 'teacher',
+            'assigned_class': assigned,
+            'schools': schools,
+            'grades': grades,
+            'department': department,
+            'password': hashed,
+            'verified': True,
+            'created_at': now,
+        })
+    else:
+        student_id = _next_student_id()
+        db.students.insert_one({
+            'id': student_id,
+            'name': name,
+            'email': email,
+            'student_class': _grade_to_class(grades[0]),
+            'division': 'A',
+            'board': 'CBSE',
+            'academic_year': str(datetime.utcnow().year),
+            'schools': schools,
+            'grades': grades,
+            'department': department,
+            'attendance': '100',
+            'performance': '80',
+            'subjects': {},
+            'created_at': now,
+        })
+        db.student_users.insert_one({
+            'student_id': student_id,
+            'email': email,
+            'password': hashed,
+        })
+
+    log_notification(
+        'User registered',
+        f"{session.get('username')} registered {role} {email}.",
+        role_target='admin',
+    )
+    return True, password
+
+
+def _utility_context():
+    return {
+        'schools': _utility_schools(),
+        'grades': UTILITY_GRADES,
+        'departments': UTILITY_DEPARTMENTS,
+    }
+
+
+@app.route('/admin/utility/registration', methods=['GET', 'POST'])
+def utility_registration():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    ctx = _utility_context()
+    if request.method == 'POST':
+        ok, result = _register_portal_user(
+            request.form.get('role'),
+            request.form.get('email'),
+            request.form.getlist('schools'),
+            request.form.getlist('grades'),
+            request.form.get('department', '').strip(),
+            request.form.get('first_name', '').strip(),
+            request.form.get('last_name', '').strip(),
+        )
+        if ok:
+            flash(f'User registered. Temporary password: {result}')
+            return redirect(url_for('utility_registration'))
+        flash(result)
+    return render_template('admin_user_registration.html', **ctx)
+
+
+@app.route('/admin/utility/registration/template')
+def utility_registration_template():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = 'Users'
+    headers = ['Role', 'Email', 'First Name', 'Last Name', 'Schools', 'Grades', 'Department', 'Password']
+    ws.append(headers)
+    ws.append([
+        'teacher',
+        'jane.doe@school.com',
+        'Jane',
+        'Doe',
+        _utility_schools()[0],
+        'Grade 6;Grade 7',
+        'Mathematics',
+        '',
+    ])
+    ws.append([
+        'student',
+        'student@school.com',
+        'Aarav',
+        'Sharma',
+        _utility_schools()[0],
+        'Grade 8',
+        'Academics',
+        '',
+    ])
+    note = wb.create_sheet('Notes')
+    note.append(['Role must be teacher, admin, or student.'])
+    note.append(['Schools and Grades can be separated with a semicolon.'])
+    note.append(['Leave Password blank to auto-generate.'])
+    buf = io.BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name='user_registration_template.xlsx',
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+
+
+@app.route('/admin/utility/registration/bulk', methods=['POST'])
+def utility_registration_bulk():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    upload = request.files.get('excel_file')
+    if not upload or not upload.filename:
+        flash('Choose an Excel file to upload.')
+        return redirect(url_for('utility_registration'))
+    filename = (upload.filename or '').lower()
+    if not filename.endswith(('.xlsx', '.xls')):
+        flash('Upload an .xlsx Excel file.')
+        return redirect(url_for('utility_registration'))
+    try:
+        import openpyxl
+        wb = openpyxl.load_workbook(upload, data_only=True)
+        ws = wb.active
+    except Exception:
+        flash('Could not read that Excel file.')
+        return redirect(url_for('utility_registration'))
+
+    rows = list(ws.iter_rows(values_only=True))
+    if not rows:
+        flash('The spreadsheet is empty.')
+        return redirect(url_for('utility_registration'))
+    header = [str(c or '').strip().lower() for c in rows[0]]
+
+    def col(*names):
+        for name in names:
+            if name in header:
+                return header.index(name)
+        return None
+
+    idx_role = col('role')
+    idx_email = col('email', 'email address')
+    idx_first = col('first name', 'firstname', 'first_name')
+    idx_last = col('last name', 'lastname', 'last_name')
+    idx_schools = col('schools', 'school')
+    idx_grades = col('grades', 'grade')
+    idx_dept = col('department')
+    idx_password = col('password')
+    if idx_role is None or idx_email is None:
+        flash('The first row must include Role and Email columns.')
+        return redirect(url_for('utility_registration'))
+
+    created, skipped = [], []
+    for raw in rows[1:]:
+        if not raw or all(v is None or str(v).strip() == '' for v in raw):
+            continue
+        def cell(i):
+            if i is None or i >= len(raw) or raw[i] is None:
+                return ''
+            return str(raw[i]).strip()
+        email = cell(idx_email)
+        role = cell(idx_role).lower()
+        schools = [s.strip() for s in cell(idx_schools).split(';') if s.strip()] or _utility_schools()[:1]
+        grades = [g.strip() for g in cell(idx_grades).split(';') if g.strip()]
+        if not grades:
+            grades = ['Grade 10']
+        ok, result = _register_portal_user(
+            role, email, schools, grades, cell(idx_dept),
+            cell(idx_first), cell(idx_last), cell(idx_password),
+        )
+        if ok:
+            created.append(email)
+        else:
+            skipped.append(f'{email or "(missing email)"}: {result}')
+
+    if created:
+        flash(f'Registered {len(created)} user(s) from Excel.')
+    if skipped:
+        flash(f'Skipped {len(skipped)} row(s). ' + '; '.join(skipped[:8]))
+    if not created and not skipped:
+        flash('No data rows found under the header.')
+    return redirect(url_for('utility_registration'))
+
+
+@app.route('/admin/utility/users')
+def utility_users_monitor():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    people = []
+    for a in db.admins.find({}, {'password': 0}):
+        people.append({
+            'name': a.get('name') or a.get('email') or 'Admin',
+            'email': a.get('email', ''),
+            'role': 'Super Admin',
+            'status': 'Active' if a.get('last_active') else 'Registered',
+            'last_active': a.get('last_active') or a.get('created_at') or '—',
+            'department': a.get('department') or '—',
+        })
+    for u in db.users.find({}, {'password': 0}):
+        name = u.get('name') or f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get('email')
+        people.append({
+            'name': name,
+            'email': u.get('email', ''),
+            'role': (u.get('custom_role') or u.get('role') or 'teacher').replace('_', ' ').title(),
+            'status': 'Active' if u.get('last_active') else 'Registered',
+            'last_active': u.get('last_active') or u.get('created_at') or '—',
+            'department': u.get('department') or '—',
+        })
+    for su in db.student_users.find({}, {'password': 0}):
+        student = db.students.find_one({'id': su.get('student_id')}) or {}
+        people.append({
+            'name': student.get('name') or su.get('email') or 'Student',
+            'email': su.get('email') or student.get('email') or '',
+            'role': 'Student',
+            'status': 'Registered',
+            'last_active': student.get('last_active') or '—',
+            'department': student.get('department') or student.get('student_class') or '—',
+        })
+    people.sort(key=lambda p: (p['role'], p['name'] or ''))
+    return render_template('admin_users_monitor.html', people=people)
+
+
+@app.route('/admin/utility/roles')
+def utility_role_manager():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    return redirect(url_for('admin_dashboard') + '#roles')
+
+
+@app.route('/admin/utility/refresh', methods=['GET', 'POST'])
+def utility_refresh_data():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    settings = db.settings.find_one({}, {'_id': 0}) or {}
+    if request.method == 'POST':
+        stamp = datetime.utcnow().isoformat()
+        db.settings.update_one({}, {'$set': {'last_data_refresh': stamp}}, upsert=True)
+        log_notification(
+            'Data refresh',
+            f"{session.get('username')} refreshed portal data.",
+            role_target='admin',
+        )
+        flash('Portal lists will reload from the database.')
+        return redirect(url_for('utility_refresh_data'))
+    return render_template('admin_refresh_data.html', last_refresh=settings.get('last_data_refresh'))
+
+
+@app.route('/admin/utility/cache')
+def utility_cache_monitor():
+    if not _admin_required():
+        return redirect(url_for('login'))
+    settings = db.settings.find_one({}, {'_id': 0}) or {}
+    stats = {
+        'admins': db.admins.count_documents({}),
+        'teachers': db.users.count_documents({}),
+        'students': db.students.count_documents({}),
+        'student_logins': db.student_users.count_documents({}),
+        'announcements': db.announcements.count_documents({}),
+    }
+    return render_template(
+        'admin_cache_monitor.html',
+        stats=stats,
+        last_refresh=settings.get('last_data_refresh'),
+    )
 
 @app.route('/admin/delete_report/<report_id>', methods=['POST'])
 def admin_delete_report(report_id):
