@@ -5918,8 +5918,11 @@ def admin_student_detail():
         bucket = section if section in class_groups[grade]['sections'] else 'Other'
         class_groups[grade]['sections'][bucket].append(row)
     for g in grades:
+        flat = []
         for sec in class_groups[g]['sections']:
             class_groups[g]['sections'][sec].sort(key=lambda r: (r['name'] or '').lower())
+            flat.extend(class_groups[g]['sections'][sec])
+        class_groups[g]['rows'] = flat
     unassigned.sort(key=lambda r: (r['name'] or '').lower())
     default_grade = next((g for g in grades if class_groups[g]['count']), grades[0])
     return render_template(
@@ -5929,7 +5932,67 @@ def admin_student_detail():
         unassigned=unassigned,
         default_grade=default_grade,
         total=sum(class_groups[g]['count'] for g in grades) + len(unassigned),
+        sections=['A', 'B', 'C', 'D'],
     )
+
+
+def _class_label_from_grade(grade):
+    n = str(grade)
+    if n == '1':
+        return '1st'
+    if n == '2':
+        return '2nd'
+    if n == '3':
+        return '3rd'
+    return f'{n}th'
+
+
+@app.route('/api/admin/student', methods=['POST'])
+def api_admin_update_student():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    student_id = str(data.get('id') or '').strip()
+    name = str(data.get('name') or '').strip()
+    email = str(data.get('email') or '').strip()
+    grade = str(data.get('grade') or '').strip()
+    section = str(data.get('section') or '').strip().upper()
+    if not student_id or not name:
+        return jsonify({'success': False, 'error': 'Student and name are required'}), 400
+    if grade and grade not in [str(g) for g in range(1, 13)]:
+        return jsonify({'success': False, 'error': 'Grade must be 1–12'}), 400
+    if section and section not in ('A', 'B', 'C', 'D'):
+        return jsonify({'success': False, 'error': 'Section must be A–D'}), 400
+    updates = {
+        'name': name,
+        'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    }
+    if email:
+        updates['email'] = email
+    if grade:
+        updates['student_class'] = _class_label_from_grade(grade)
+    if section:
+        updates['division'] = section
+    result = db.students.update_one({'id': student_id}, {'$set': updates})
+    if result.matched_count == 0:
+        return jsonify({'success': False, 'error': 'Student not found'}), 404
+    if email:
+        db.student_users.update_one({'student_id': student_id}, {'$set': {'email': email}})
+    return jsonify({'success': True})
+
+
+@app.route('/api/admin/student/delete', methods=['POST'])
+def api_admin_delete_student():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
+    data = request.get_json() or {}
+    student_id = str(data.get('id') or '').strip()
+    if not student_id:
+        return jsonify({'success': False, 'error': 'Student id is required'}), 400
+    db.students.delete_one({'id': student_id})
+    db.student_users.delete_many({'student_id': student_id})
+    db.student_teacher_maps.delete_many({'student_id': student_id})
+    return jsonify({'success': True})
 
 
 # -- API: save a homeroom mapping --
