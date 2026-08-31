@@ -39,12 +39,12 @@
 <body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
     {% block sidebar %}
-    {% if session.get('logged_in') and session.get('role') == 'admin' %}
-    <!-- Sidebar (admin only) -->
+    {% if session.get('logged_in') %}
+    <!-- Sidebar -->
     <aside id="sidebar" class="bg-[#2563eb] dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-blue-700 dark:border-gray-950 shadow-xl">
         <!-- Sidebar Header -->
         <div class="h-16 flex items-center justify-between px-4 bg-[#2157d0] dark:bg-gray-900 border-b border-blue-700/50 dark:border-gray-700">
-            <a href="{{ url_for('dashboard') }}" class="text-xl font-bold flex items-center gap-2 whitespace-nowrap overflow-hidden" id="sidebar-logo-text">
+            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% elif session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-xl font-bold flex items-center gap-2 whitespace-nowrap overflow-hidden" id="sidebar-logo-text">
                 <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto flex-shrink-0" alt="Logo">
                 <span class="sidebar-text transition-opacity duration-300">Indus Portal</span>
             </a>
@@ -127,7 +127,7 @@
                 </li>
                 {% endif %}
 
-                {% if role_permissions.get('manage_grades') or session.get('role') == 'admin' %}
+                {% if (role_permissions.get('manage_grades') or session.get('role') == 'admin') and session.get('role') != 'teacher' %}
                 <li>
                     <a href="{{ url_for('gradebook') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/gradebook' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
@@ -152,7 +152,75 @@
                 {% endif %}
 
                 {% if session.get('role') == 'teacher' %}
-                <!-- Online Tests and Daily Logs moved to Quick Actions for Teachers -->
+                <li class="px-3 pt-4 pb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Classroom</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('resources_assignments') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/resources-assignments' in current_path or '/unit-plan' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Resources</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('attendance') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/attendance' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Attendance</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('gradebook') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/gradebook' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Gradebook</span>
+                    </a>
+                </li>
+                <li class="px-3 pt-4 pb-1">
+                    <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">School</span>
+                </li>
+                <li>
+                    <a href="{{ url_for('school_announcements') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/school-announcements' in current_path or '/create-announcement' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Announcements</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('school_policies') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/school-policies' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">School Policies</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('parent_alerts_page') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'parent' in current_path or 'alert' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Messaging</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('colleague_resources') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'colleague' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Resource Hub</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('reports') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/reports' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Progress Report</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('teacher_courses') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if current_path == '/courses' or '/course' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Mapping course</span>
+                    </a>
+                </li>
                 {% endif %}
 
 
@@ -161,10 +229,6 @@
                 <li class="px-3 pt-4 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Academic</span>
                 </li>
-                {% endif %}
-
-                {% if session.get('role') == 'teacher' %}
-                <!-- Colleague Resources and Course Management moved to Quick Actions for Teachers -->
                 {% endif %}
 
                 {% if session.get('role') == 'admin' %}
@@ -196,10 +260,6 @@
                     </a>
                 </li>
                 {% endif %}
-                
-                {% if session.get('role') == 'teacher' %}
-                <!-- Reporting section moved to Quick Actions for Teachers -->
-                {% endif %}
 
                 {% else %}
                 {# ══════════════════════════════════════════════════════════
@@ -221,7 +281,88 @@
                     <span class="text-[10px] font-bold uppercase tracking-widest text-blue-300 dark:text-gray-500 sidebar-text">Academics</span>
                 </li>
                 <li>
-                    <!-- Student links moved to Quick Actions -->
+                    <a href="{{ url_for('timetable') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/timetable' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Timetable</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('assignments') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/assignments' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Assignments</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_materials') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/student' in current_path and 'material' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Study Materials</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_gradebook', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'gradebook' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Gradebook</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_online_tests') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'online_test' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h3m6 5H6a2 2 0 01-2-2V5a2 2 0 012-2h7.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Online Tests</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_courses', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'course' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">My Courses</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_ai_mentor', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'ai_mentor' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">AI Mentor</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('daily_logs') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'daily' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Daily Logs</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('parent_portal') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'parent' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Parent portal</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_id_card', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'id_card' in current_path or 'id-card' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">ID card</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('student_profile', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'profile' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">My Profile</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('promotion_certificate', student_id=session.get('user_id')) }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-blue-600/70 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if 'certificate' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Certificate</span>
+                    </a>
                 </li>
 
                 {% endif %}
@@ -240,14 +381,7 @@
         {% if session.get('logged_in') %}
         <header class="bg-white dark:bg-gray-800 shadow-sm h-16 flex items-center justify-between px-8 sm:px-10 lg:px-12 z-10 shrink-0 border-b border-gray-100 dark:border-gray-700 transition-colors">
             <div class="flex items-center min-w-0">
-                {% if session.get('role') != 'admin' %}
-                <a href="{% if session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="flex items-center gap-2 shrink-0">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" class="h-8 w-auto" alt="Indus Portal">
-                    <span class="hidden sm:inline text-base font-bold text-[#1e4e8c] dark:text-gray-100">Indus Portal</span>
-                </a>
-                {% else %}
                 <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">{% block header_title %}{% endblock %}</h2>
-                {% endif %}
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
@@ -267,7 +401,6 @@
                         </div>
                     </div>
                 </div>
-                {% if session.get('role') == 'admin' %}
                 <!-- Live Date and Time -->
                 <div class="hidden md:flex flex-col text-right mr-1 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
@@ -296,7 +429,6 @@
                         <a href="{{ url_for('logout') }}" class="block px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 border-t border-gray-100 dark:border-gray-700">Logout</a>
                     </div>
                 </div>
-                {% endif %}
             </div>
         </header>
         {% endif %}
