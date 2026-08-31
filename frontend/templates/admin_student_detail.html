@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block header_title %}Student Detail{% endblock %}
+
+{% block content %}
+<div class="max-w-full mx-auto px-6 sm:px-8 lg:px-10 py-6 space-y-5">
+  <div class="flex flex-wrap items-end justify-between gap-3">
+    <div>
+      <p class="text-xs font-semibold uppercase tracking-widest text-sky-600">Administration</p>
+      <h1 class="text-2xl font-semibold text-slate-900 mt-0.5">Student Detail</h1>
+      <p class="mt-1 text-sm text-slate-500">Class 1–12 with grade, section, name, and email.</p>
+    </div>
+    <p class="text-sm text-slate-500"><span class="font-semibold text-slate-900">{{ total }}</span> students</p>
+  </div>
+
+  <div class="flex flex-wrap gap-1.5">
+    {% for g in grades %}
+    <button type="button" data-class-tab="{{ g }}" onclick="showClass('{{ g }}')"
+      class="class-tab px-3 py-1.5 rounded-lg text-xs font-semibold border {% if g == default_grade %}bg-sky-600 text-white border-sky-600{% else %}bg-white text-slate-600 border-slate-200 hover:border-sky-300{% endif %}">
+      Class {{ g }}
+      <span class="ml-1 opacity-80">{{ class_groups[g].count }}</span>
+    </button>
+    {% endfor %}
+    {% if unassigned %}
+    <button type="button" data-class-tab="unassigned" onclick="showClass('unassigned')"
+      class="class-tab px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white text-slate-600 border-slate-200 hover:border-sky-300">
+      Unassigned <span class="ml-1 opacity-80">{{ unassigned|length }}</span>
+    </button>
+    {% endif %}
+  </div>
+
+  {% for g in grades %}
+  <div data-class-panel="{{ g }}" class="class-panel {% if g != default_grade %}hidden{% endif %} space-y-4">
+    {% set has_any = class_groups[g].count > 0 %}
+    {% if not has_any %}
+    <div class="bg-white rounded-2xl border border-slate-200 px-5 py-12 text-center text-sm text-slate-400">No students in Class {{ g }} yet.</div>
+    {% else %}
+      {% for sec, rows in class_groups[g].sections.items() %}
+        {% if rows %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+            <h2 class="text-sm font-semibold text-slate-900">Class {{ g }} · Grade {{ g }} · Section {{ sec }}</h2>
+            <span class="text-xs text-slate-400">{{ rows|length }}</span>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+              <thead class="bg-slate-50 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th class="px-5 py-2.5">Name</th>
+                  <th class="px-4 py-2.5">Email</th>
+                  <th class="px-4 py-2.5">Class</th>
+                  <th class="px-4 py-2.5">Grade</th>
+                  <th class="px-4 py-2.5">Section</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                {% for st in rows %}
+                <tr class="hover:bg-slate-50">
+                  <td class="px-5 py-2.5 font-medium text-slate-900">
+                    {% if st.id %}
+                    <a href="{{ url_for('student_profile', student_id=st.id) }}" class="hover:text-sky-700">{{ st.name }}</a>
+                    {% else %}
+                    {{ st.name }}
+                    {% endif %}
+                  </td>
+                  <td class="px-4 py-2.5 text-slate-600">{{ st.email }}</td>
+                  <td class="px-4 py-2.5 text-slate-600">{{ st.class }}</td>
+                  <td class="px-4 py-2.5 text-slate-600">{{ st.grade }}</td>
+                  <td class="px-4 py-2.5 text-slate-600">{{ st.section }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  {% if unassigned %}
+  <div data-class-panel="unassigned" class="class-panel hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div class="px-5 py-3 border-b border-slate-100">
+        <h2 class="text-sm font-semibold text-slate-900">No class assigned</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-slate-50 text-left text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            <tr>
+              <th class="px-5 py-2.5">Name</th>
+              <th class="px-4 py-2.5">Email</th>
+              <th class="px-4 py-2.5">Class</th>
+              <th class="px-4 py-2.5">Grade</th>
+              <th class="px-4 py-2.5">Section</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for st in unassigned %}
+            <tr class="hover:bg-slate-50">
+              <td class="px-5 py-2.5 font-medium text-slate-900">{{ st.name }}</td>
+              <td class="px-4 py-2.5 text-slate-600">{{ st.email }}</td>
+              <td class="px-4 py-2.5 text-slate-600">{{ st.class }}</td>
+              <td class="px-4 py-2.5 text-slate-600">{{ st.grade }}</td>
+              <td class="px-4 py-2.5 text-slate-600">{{ st.section }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+function showClass(id) {
+  document.querySelectorAll('.class-panel').forEach(function (el) {
+    el.classList.toggle('hidden', el.getAttribute('data-class-panel') !== id);
+  });
+  document.querySelectorAll('.class-tab').forEach(function (btn) {
+    const on = btn.getAttribute('data-class-tab') === id;
+    btn.classList.toggle('bg-sky-600', on);
+    btn.classList.toggle('text-white', on);
+    btn.classList.toggle('border-sky-600', on);
+    btn.classList.toggle('bg-white', !on);
+    btn.classList.toggle('text-slate-600', !on);
+    btn.classList.toggle('border-slate-200', !on);
+  });
+}
+</script>
+{% endblock %}

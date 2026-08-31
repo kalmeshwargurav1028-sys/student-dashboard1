@@ -5842,6 +5842,19 @@ def teacher_mapping():
         })
     mapping_rows.sort(key=lambda r: (r['teacher_name'].lower(), r['class'], r['section'], r['subject']))
 
+    grouped_maps = []
+    by_teacher = {}
+    for row in mapping_rows:
+        key = row.get('teacher_id') or row.get('teacher_name')
+        if key not in by_teacher:
+            by_teacher[key] = {
+                'teacher_id': row.get('teacher_id') or '',
+                'teacher_name': row.get('teacher_name') or 'Teacher',
+                'rows': [],
+            }
+            grouped_maps.append(by_teacher[key])
+        by_teacher[key]['rows'].append(row)
+
     student_maps = []
     for m in db.student_teacher_maps.find():
         student_maps.append({
@@ -5864,8 +5877,58 @@ def teacher_mapping():
         sections=sections,
         subjects=subjects,
         mapping_rows=mapping_rows,
+        grouped_maps=grouped_maps,
         students=all_students,
         student_maps=student_maps,
+    )
+
+
+def _grade_number(raw):
+    m = re.search(r'\d+', str(raw or ''))
+    if not m:
+        return ''
+    return str(int(m.group()))
+
+
+@app.route('/admin/student-detail')
+def admin_student_detail():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return redirect(url_for('login'))
+    grades = [str(g) for g in range(1, 13)]
+    class_groups = {
+        g: {'count': 0, 'sections': {'A': [], 'B': [], 'C': [], 'D': [], 'Other': []}}
+        for g in grades
+    }
+    unassigned = []
+    for s in db.students.find({}, {'_id': 0, 'id': 1, 'name': 1, 'email': 1, 'student_class': 1, 'division': 1}):
+        grade = _grade_number(s.get('student_class'))
+        section = str(s.get('division') or '').strip().upper() or '—'
+        row = {
+            'id': s.get('id') or '',
+            'name': s.get('name') or s.get('email') or s.get('id') or 'Student',
+            'email': s.get('email') or '—',
+            'class': str(s.get('student_class') or grade or '—'),
+            'grade': grade or '—',
+            'section': section if section != '—' else '—',
+        }
+        if grade not in class_groups:
+            unassigned.append(row)
+            continue
+        class_groups[grade]['count'] += 1
+        bucket = section if section in class_groups[grade]['sections'] else 'Other'
+        class_groups[grade]['sections'][bucket].append(row)
+    for g in grades:
+        for sec in class_groups[g]['sections']:
+            class_groups[g]['sections'][sec].sort(key=lambda r: (r['name'] or '').lower())
+    unassigned.sort(key=lambda r: (r['name'] or '').lower())
+    default_grade = next((g for g in grades if class_groups[g]['count']), grades[0])
+    return render_template(
+        'admin_student_detail.html',
+        grades=grades,
+        class_groups=class_groups,
+        unassigned=unassigned,
+        default_grade=default_grade,
+        total=sum(class_groups[g]['count'] for g in grades) + len(unassigned),
     )
 
 

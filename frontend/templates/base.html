@@ -71,8 +71,6 @@
                     {% endif %}
                 </li>
 
-                {% include '_academic_year_nav.html' %}
-
                 <li>
                     {% if session.get('role') == 'admin' %}
                     <a href="{{ url_for('admin_dashboard') }}"
@@ -204,6 +202,15 @@
                     </a>
                 </li>
                 <li>
+                    <a href="{{ url_for('admin_student_detail') }}"
+                       class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-sky-600/55 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/admin/student-detail' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
+                        <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span class="sidebar-text whitespace-nowrap text-sm">Student Detail</span>
+                    </a>
+                </li>
+                <li>
                     <a href="{{ url_for('admin_school_policies') }}"
                        class="flex items-center px-4 py-2.5 text-blue-100 hover:bg-sky-600/55 dark:hover:bg-gray-700 hover:text-white group transition-colors rounded-lg mx-2 {% if '/admin/school-policies' in current_path %}bg-white/20 text-white font-semibold{% endif %}">
                         <svg class="h-5 w-5 flex-shrink-0 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -231,8 +238,6 @@
                 <li class="px-3 pt-2 pb-1">
                     <span class="text-[10px] font-bold uppercase tracking-widest text-sky-100 dark:text-gray-500 sidebar-text">My Space</span>
                 </li>
-
-                {% include '_academic_year_nav.html' %}
 
                 <li>
                     <a href="{{ url_for('student_home') }}"
@@ -350,6 +355,22 @@
             </div>
             <div class="flex items-center gap-3 shrink-0">
                 <div class="relative">
+                    <button type="button" id="calBtn" onclick="toggleCalMenu()" class="flex items-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 {% if request.path.startswith('/school-calendar') or request.path.startswith('/school-updates') %}text-sky-600{% endif %}" title="School calendar">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="hidden sm:inline text-xs font-semibold text-gray-700 dark:text-gray-200">{{ academic_year_short }}</span>
+                    </button>
+                    <div id="calDropdown" class="hidden absolute top-10 right-0 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
+                        <div class="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                            <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Academic Year</p>
+                            <p class="text-sm font-bold text-gray-800 dark:text-gray-200">{{ academic_year_short }}</p>
+                        </div>
+                        <a href="{{ url_for('school_calendar') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 {% if request.path.startswith('/school-calendar') %}bg-sky-50 text-sky-700 font-semibold{% endif %}">School Calendar</a>
+                        <a href="{{ url_for('school_updates') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 {% if request.path.startswith('/school-updates') %}bg-sky-50 text-sky-700 font-semibold{% endif %}">Updates</a>
+                    </div>
+                </div>
+                <div class="relative">
                     <button type="button" id="bellBtn" onclick="toggleNotifs()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white focus:outline-none relative p-1">
                         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
@@ -457,15 +478,6 @@
                 });
             }
 
-            const yearBtn = document.getElementById('year-toggle');
-            const yearMenu = document.getElementById('year-menu');
-            if (yearBtn && yearMenu) {
-                yearBtn.addEventListener('click', () => {
-                    yearMenu.classList.toggle('hidden');
-                    const chevron = yearBtn.querySelector('[data-year-chevron]');
-                    if (chevron) chevron.classList.toggle('rotate-180');
-                });
-            }
         });
 
         // ===========================================================================
@@ -482,12 +494,33 @@
         // Notifications Logic
         let notifDropdownOpen = false;
         let profileDropdownOpen = false;
+        let calDropdownOpen = false;
+
+        function closeCalMenu() {
+            const dropdown = document.getElementById('calDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+            calDropdownOpen = false;
+        }
+
+        function toggleCalMenu() {
+            const dropdown = document.getElementById('calDropdown');
+            if (!dropdown) return;
+            calDropdownOpen = !calDropdownOpen;
+            dropdown.classList.toggle('hidden', !calDropdownOpen);
+            if (calDropdownOpen) {
+                const notif = document.getElementById('notifDropdown');
+                if (notif) { notif.classList.add('hidden'); notifDropdownOpen = false; }
+                const profile = document.getElementById('headerProfileDropdown') || document.getElementById('profileDropdown');
+                if (profile) { profile.classList.add('hidden'); profileDropdownOpen = false; }
+            }
+        }
         
         function toggleNotifs() {
             const dropdown = document.getElementById('notifDropdown');
             notifDropdownOpen = !notifDropdownOpen;
             if(notifDropdownOpen) {
                 dropdown.classList.remove('hidden');
+                closeCalMenu();
             } else {
                 dropdown.classList.add('hidden');
             }
@@ -519,6 +552,12 @@
             if(bell && notifDropdown && notifDropdownOpen && !bell.contains(e.target) && !notifDropdown.contains(e.target)) {
                 notifDropdown.classList.add('hidden');
                 notifDropdownOpen = false;
+            }
+
+            const calBtn = document.getElementById('calBtn');
+            const calDropdown = document.getElementById('calDropdown');
+            if (calBtn && calDropdown && calDropdownOpen && !calBtn.contains(e.target) && !calDropdown.contains(e.target)) {
+                closeCalMenu();
             }
             
             const profileBtn = document.querySelector('button[onclick="toggleProfileDropdown()"]');
