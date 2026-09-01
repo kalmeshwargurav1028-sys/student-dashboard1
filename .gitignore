@@ -1,5 +1,7 @@
 __pycache__/
 .env
+.env.*
+!.env.example
 *.pyc
 *log.txt
 *.log
@@ -8,3 +10,5 @@ venv/
 cookies.txt
 cookie.txt
 logs/
+data/config.db
+data/downloaded_files/

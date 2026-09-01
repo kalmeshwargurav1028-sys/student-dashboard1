@@ -1,5 +1,10 @@
 # Indus Portal - Student Management Dashboard
 
+<p align="center">
+  <img src="frontend/static/images/kalmeshwar.jpg" alt="Kalmeshwar Gurav" width="140">
+</p>
+<p align="center"><strong>Kalmeshwar Gurav</strong></p>
+
 A comprehensive web-based student management dashboard built with Flask and MongoDB. The Indus Portal provides educators and administrators with a centralized platform to manage student records, track attendance, monitor performance analytics, and communicate via integrated notifications. It also features an AI-powered Mentor assistant using Google's Gemini API.
 
 ## Features
