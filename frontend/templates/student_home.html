@@ -5,20 +5,6 @@
 {% block content %}
 <div class="w-full py-4 px-4 sm:px-6 lg:px-8">
 
-    <div class="flex items-center justify-end gap-4 mb-3 text-[#1e5a97]">
-        <div class="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-blue-100">
-            <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span id="student-banner-time" class="text-sm font-bold tracking-wide"></span>
-        </div>
-        <div class="relative cursor-pointer group" onclick="document.getElementById('student-hidden-calendar').showPicker()">
-            <div class="flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-sm border border-blue-100 group-hover:border-blue-300 transition-colors">
-                <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                <span id="student-banner-date" class="text-sm font-semibold"></span>
-            </div>
-            <input type="date" id="student-hidden-calendar" class="absolute opacity-0 w-0 h-0 top-0 left-0 -z-10">
-        </div>
-    </div>
-
     <div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-md text-white mb-6 flex flex-row justify-between items-center gap-4 w-full">
         <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
             <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
@@ -141,16 +127,4 @@
 
     </div>
 </div>
-
-<script>
-function updateStudentBannerClock() {
-  const now = new Date();
-  const timeEl = document.getElementById('student-banner-time');
-  const dateEl = document.getElementById('student-banner-date');
-  if (timeEl) timeEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  if (dateEl) dateEl.textContent = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
-}
-updateStudentBannerClock();
-setInterval(updateStudentBannerClock, 1000);
-</script>
 {% endblock %}

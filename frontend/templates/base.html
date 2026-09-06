@@ -39,7 +39,7 @@
 <body class="text-gray-800 dark:text-gray-200 antialiased h-screen flex overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
 
     {% block sidebar %}
-    {% if session.get('logged_in') %}
+    {% if session.get('logged_in') and session.get('role') != 'student' %}
     <!-- Sidebar -->
     <aside id="sidebar" class="bg-sky-500 dark:bg-gray-800 text-white w-64 flex-shrink-0 transition-all duration-300 flex flex-col h-full z-20 border-r border-sky-600 dark:border-gray-950 shadow-xl">
         <!-- Sidebar Header -->
