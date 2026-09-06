@@ -4,30 +4,36 @@
 {% block content %}
 <div class="w-full max-w-4xl mx-auto py-8 px-4 sm:px-8">
     <div class="flex items-center gap-3 mb-6">
-        <a href="{{ url_for('dashboard') }}" class="text-gray-400 hover:text-gray-600 transition">
+        <a href="{% if viewer == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-gray-400 hover:text-gray-600 transition">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
         <h1 class="text-2xl font-bold text-gray-900">Resources & Assignments</h1>
     </div>
 
     <p class="text-[11px] font-semibold tracking-[0.18em] text-gray-400 uppercase mb-4">
-        Click a grade to see subjects · Click a subject to see options
+        Click a class to see subjects · Click a subject to see options
     </p>
 
     <div id="gradeList" class="space-y-3"></div>
     <p id="emptyClassrooms" class="hidden text-sm text-gray-500 bg-white rounded-2xl border border-gray-100 p-8 text-center">
+        {% if viewer == 'student' %}
+        No class or subject is mapped to your account yet. Ask your school to assign your class, teacher, and subjects.
+        {% else %}
         No classrooms are mapped to your account yet. Ask Super Admin to assign you in Teacher Mapping.
+        {% endif %}
     </p>
 </div>
 
 <script>
+const VIEWER = {{ (viewer or session.get('role')) | tojson }};
 const CLASSROOMS = {{ (classrooms or []) | tojson }};
 const URLS = {
     unitPlan: '{{ url_for("unit_plan") }}',
     resource: '{{ url_for("share_resource") }}',
     clmFlow: '{{ url_for("clm_flow") }}',
     aiClm: '{{ url_for("ai_clm_plan") }}',
-    tests: '{{ url_for("create_online_test") }}',
+    tests: '{{ url_for("create_online_test") if viewer != "student" else url_for("student_online_tests") }}',
+    materials: '{{ url_for("student_materials") }}',
     assignments: '{{ url_for("assignments") }}'
 };
 
@@ -65,27 +71,38 @@ function actionBtn(href, color, label, icon, badge) {
 
 function optionsPanel(room, subject) {
     const q = qs(room.grade, room.section, subject);
+    const teacher = (room.subject_teachers && room.subject_teachers[subject]) || '';
     const clipboard = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>';
     const folder = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2zm9 3v6m-3-3h6"/></svg>';
     const flow = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7h8M8 12h8M8 17h5M5 7h.01M5 12h.01M5 17h.01"/></svg>';
     const calendar = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>';
     const test = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h3m6 5H6a2 2 0 01-2-2V5a2 2 0 012-2h7.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>';
     const book = '<svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>';
+    let actions = '';
+    if (VIEWER === 'student') {
+        actions = actionBtn(URLS.assignments + '?' + q, 'text-green-600', 'Assignments', book)
+            + actionBtn(URLS.materials + '?' + q, 'text-teal-500', 'Resources', folder)
+            + actionBtn(URLS.tests + '?' + q, 'text-pink-500', 'Tests', test);
+    } else {
+        actions = actionBtn(URLS.unitPlan + '?' + q, 'text-blue-500', 'Unit Plan', clipboard)
+            + actionBtn(URLS.resource + '?' + q, 'text-teal-500', 'Create resources', folder)
+            + actionBtn(URLS.clmFlow + '?' + q, 'text-violet-500', 'CLM Flow', flow)
+            + actionBtn(URLS.aiClm + '?' + q, 'text-orange-500', 'AI CLM Plan', calendar, 'AI')
+            + actionBtn(URLS.tests + '?' + q, 'text-pink-500', 'Tests', test)
+            + actionBtn(URLS.assignments + '?' + q, 'text-green-600', 'Assignments', book);
+    }
     return '<div class="mt-5 rounded-2xl bg-[#f8fbff] border border-blue-100 p-5">'
         + '<div class="flex items-center justify-between mb-5">'
         + '<div class="flex items-center gap-3">'
         + '<span class="h-10 w-10 rounded-full bg-[#2f6fed] flex items-center justify-center">' + subjectGlyph(subject) + '</span>'
         + '<div><p class="text-[11px] font-bold tracking-widest text-gray-400 uppercase">Choose an option</p>'
-        + '<p class="text-base font-bold text-gray-900">' + subject + '</p></div></div>'
+        + '<p class="text-base font-bold text-gray-900">' + subject + '</p>'
+        + (teacher ? '<p class="text-xs text-gray-500 mt-0.5">Teacher · ' + teacher + '</p>' : '')
+        + '</div></div>'
         + '<button type="button" onclick="closeOptions(\'' + room.key + '\')" class="text-sm text-gray-400 hover:text-gray-700">Close</button>'
         + '</div>'
         + '<div class="flex flex-wrap justify-start gap-5 sm:gap-7">'
-        + actionBtn(URLS.unitPlan + '?' + q, 'text-blue-500', 'Unit Plan', clipboard)
-        + actionBtn(URLS.resource + '?' + q, 'text-teal-500', 'Create resources', folder)
-        + actionBtn(URLS.clmFlow + '?' + q, 'text-violet-500', 'CLM Flow', flow)
-        + actionBtn(URLS.aiClm + '?' + q, 'text-orange-500', 'AI CLM Plan', calendar, 'AI')
-        + actionBtn(URLS.tests + '?' + q, 'text-pink-500', 'Tests', test)
-        + actionBtn(URLS.assignments + '?' + q, 'text-green-600', 'Assignments', book)
+        + actions
         + '</div></div>';
 }
 
@@ -109,10 +126,12 @@ function render() {
             body += '<div class="flex flex-wrap gap-3">';
             (room.subjects || []).forEach(function(sub) {
                 const isSel = selected === sub;
-                body += '<button type="button" onclick="selectSubject(\'' + room.key + '\', \'' + sub.replace(/'/g, "\\'") + '\')" class="w-28 sm:w-32 rounded-2xl border p-4 text-center transition '
+                const teacher = (room.subject_teachers && room.subject_teachers[sub]) || '';
+                body += '<button type="button" onclick="selectSubject(\'' + room.key + '\', \'' + sub.replace(/'/g, "\\'") + '\')" class="w-32 sm:w-36 rounded-2xl border p-4 text-center transition '
                     + (isSel ? 'border-blue-400 bg-blue-50' : 'border-gray-100 bg-white hover:border-blue-200') + '">'
                     + '<span class="mx-auto h-12 w-12 rounded-full bg-[#2f6fed] flex items-center justify-center mb-2">' + subjectGlyph(sub) + '</span>'
                     + '<span class="block text-sm font-semibold text-gray-800">' + sub + '</span>'
+                    + (teacher ? '<span class="block text-[11px] text-gray-400 mt-0.5">' + teacher + '</span>' : '')
                     + (isSel ? '<span class="mt-1 inline-flex items-center gap-0.5 text-[11px] font-semibold text-blue-600">Selected <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></span>' : '')
                     + '</button>';
             });
@@ -162,6 +181,9 @@ function closeOptions(key) {
     render();
 }
 
+if (CLASSROOMS.length === 1) {
+    CLASSROOMS[0]._open = true;
+}
 render();
 </script>
 {% endblock %}

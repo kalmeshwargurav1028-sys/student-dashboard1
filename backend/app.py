@@ -2394,6 +2394,57 @@ def _teacher_classrooms():
     rooms.sort(key=lambda r: (int(r['grade']) if str(r['grade']).isdigit() else 99, r['section']))
     return rooms
 
+
+def _student_classrooms():
+    student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
+    grade = _grade_number(student.get('student_class'))
+    section = str(student.get('division') or '').strip().upper()
+    if not grade:
+        return []
+    grade_keys = {grade}
+    raw_class = str(student.get('student_class') or '').strip()
+    if raw_class:
+        grade_keys.add(raw_class)
+    subject_teachers = {}
+    for m in db.teacher_mappings.find({
+        'grade': {'$in': list(grade_keys)},
+        'section': {'$regex': f'^{re.escape(section)}$', '$options': 'i'} if section else {'$exists': True},
+    }):
+        subject = str(m.get('subject') or '').strip()
+        if m.get('type') == 'homeroom' and not subject:
+            continue
+        if not subject:
+            continue
+        subject_teachers[subject] = str(m.get('teacher_name') or subject_teachers.get(subject) or '')
+    for m in db.student_teacher_maps.find({
+        '$or': [
+            {'student_id': session.get('user_id')},
+            {'grade': {'$in': list(grade_keys)}, 'section': section, 'student_id': session.get('user_id')},
+        ]
+    }):
+        subject = str(m.get('subject') or '').strip()
+        if not subject or subject.lower() == 'class teacher':
+            continue
+        subject_teachers[subject] = str(m.get('teacher_name') or subject_teachers.get(subject) or '')
+    subjects = sorted(subject_teachers)
+    if not subjects:
+        return []
+    variations = get_class_variations(grade) + get_class_variations(raw_class)
+    count = db.students.count_documents({
+        'student_class': {'$in': list(set(v for v in variations if v))},
+        **({'division': {'$regex': f'^{re.escape(section)}$', '$options': 'i'}} if section else {}),
+    })
+    return [{
+        'key': f'{grade}|{section or "—"}',
+        'grade': grade,
+        'section': section,
+        'label': f'{grade}{section}' if section else f'Grade {grade}',
+        'student_count': count,
+        'subjects': subjects,
+        'subject_teachers': subject_teachers,
+    }]
+
+
 def _class_context():
     return {
         'grade': (request.values.get('grade') or '').strip(),
@@ -2403,11 +2454,19 @@ def _class_context():
 
 @app.route('/resources-assignments')
 def resources_assignments():
-    if not session.get('logged_in') or session.get('role') != 'teacher':
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    role = session.get('role')
+    if role == 'teacher':
+        classrooms = _teacher_classrooms()
+    elif role == 'student':
+        classrooms = _student_classrooms()
+    else:
         return redirect(url_for('login'))
     return render_template(
         'resources_assignments.html',
-        classrooms=_teacher_classrooms()
+        classrooms=classrooms,
+        viewer=role,
     )
 
 @app.route('/create-announcement', methods=['GET', 'POST'])
@@ -3709,18 +3768,28 @@ def assignments():
                 db.assignments.delete_one({'_id': ObjectId(request.form.get('id'))})
                 flash('Assignment deleted!')
                 
-        return redirect(url_for('assignments'))
+        return redirect(url_for('assignments', **{k: request.args[k] for k in ('grade', 'section', 'subject') if request.args.get(k)}))
         
     # Get entries
     query = {}
+    filter_grade = (request.args.get('grade') or '').strip()
+    filter_subject = (request.args.get('subject') or '').strip()
     if role == 'student':
         student = db.students.find_one(get_student_query({'id': session.get('user_id')}))
+        class_keys = []
+        if filter_grade:
+            class_keys.extend(get_class_variations(filter_grade))
         if student and student.get('student_class'):
-            query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
-        else:
-            query['class_name'] = '__no_class__'
+            class_keys.extend(get_class_variations(student.get('student_class')))
+        query['class_name'] = {'$in': list(set(class_keys))} if class_keys else '__no_class__'
+        if filter_subject:
+            query['subject'] = {'$regex': f'^{re.escape(filter_subject)}$', '$options': 'i'}
     elif role == 'teacher':
         query['created_by'] = session.get('username')
+        if filter_grade:
+            query['class_name'] = {'$in': get_class_variations(filter_grade)}
+        if filter_subject:
+            query['subject'] = {'$regex': f'^{re.escape(filter_subject)}$', '$options': 'i'}
         
     assignments_data = list(db.assignments.find(query).sort('due_date', 1))
     
@@ -3756,7 +3825,15 @@ def assignments():
                 if teacher:
                     a['teacher_name'] = teacher.get('name') or teacher.get('username')
                 
-    return render_template('assignments.html', assignments=assignments_data)
+    return render_template(
+        'assignments.html',
+        assignments=assignments_data,
+        class_filter={
+            'grade': filter_grade,
+            'section': (request.args.get('section') or '').strip(),
+            'subject': filter_subject,
+        },
+    )
 
 @app.route('/daily_logs', methods=['GET', 'POST'])
 def daily_logs():
@@ -3901,6 +3978,12 @@ def student_materials():
             mat_section = mat.get('section', 'All')
             if mat_section == 'All' or not mat_section or mat_section == division:
                 materials.append(mat)
+    subject = (request.args.get('subject') or '').strip().lower()
+    if subject:
+        materials = [
+            mat for mat in materials
+            if not mat.get('subject') or str(mat.get('subject')).strip().lower() == subject
+        ]
         
     return render_template('student_materials.html', student=student, materials=materials)
 
@@ -6299,6 +6382,12 @@ def student_online_tests():
         
     student_class = student.get('student_class')
     tests = list(db.online_tests.find({'target_class': student_class, 'status': 'published'}))
+    subject = (request.args.get('subject') or '').strip().lower()
+    if subject:
+        tests = [
+            t for t in tests
+            if not t.get('subject') or str(t.get('subject')).strip().lower() == subject
+        ]
     
     submissions = list(db.test_submissions.find({'student_id': session.get('user_id')}))
     submissions_map = {str(sub['test_id']): sub for sub in submissions}

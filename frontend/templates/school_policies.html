@@ -2,37 +2,75 @@
 {% block header_title %}School Policies{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
-    <div class="mb-6 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-gray-400 hover:text-gray-600 transition">
+{% set home = url_for('admin_dashboard') if session.get('role') == 'admin' else (url_for('student_home') if session.get('role') == 'student' else url_for('dashboard')) %}
+{% set palettes = [
+    ('bg-teal-500', 'bg-teal-50 text-teal-700'),
+    ('bg-sky-500', 'bg-sky-50 text-sky-700'),
+    ('bg-violet-500', 'bg-violet-50 text-violet-700'),
+    ('bg-orange-500', 'bg-orange-50 text-orange-700'),
+    ('bg-pink-500', 'bg-pink-50 text-pink-700'),
+    ('bg-emerald-500', 'bg-emerald-50 text-emerald-700')
+] %}
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+<section class="rounded-3xl px-5 py-6 sm:px-7 sm:py-7 bg-slate-50">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div class="flex items-start gap-3">
+            <a href="{{ home }}" class="mt-1 text-slate-400 hover:text-slate-700">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <h1 class="text-2xl font-bold text-gray-900">School Policies</h1>
+            <div class="h-10 w-10 rounded-xl bg-teal-500 text-white flex items-center justify-center shrink-0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">School Policies</h1>
+                <p class="text-sm text-slate-500 mt-0.5">Rules and guidelines for everyone in the school</p>
+            </div>
         </div>
         {% if session.get('role') == 'admin' %}
-        <a href="{{ url_for('admin_school_policies') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">Edit policies</a>
+        <a href="{{ url_for('admin_school_policies') }}" class="h-9 px-3 rounded-xl text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 inline-flex items-center">Edit policies</a>
         {% endif %}
     </div>
 
-    <div class="space-y-4">
+    {% if policies %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         {% for p in policies %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <h2 class="text-base font-semibold text-[#1e4e8c] mb-2">{{ p.title }}</h2>
+        {% set pal = palettes[loop.index0 % 6] %}
+        {% set title_l = (p.title or '')|lower %}
+        <article class="rounded-2xl bg-white border border-slate-100 px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+            <span class="h-10 w-10 rounded-xl {{ pal[0] }} text-white flex items-center justify-center mb-4">
+                {% if 'attend' in title_l %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                {% elif 'assign' in title_l or 'assess' in title_l %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                {% elif 'commun' in title_l or 'message' in title_l %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M7 19l-3 2V6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H7z"/></svg>
+                {% elif 'resource' in title_l %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                {% else %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2"/></svg>
+                {% endif %}
+            </span>
+            <h2 class="text-[15px] font-semibold text-slate-900">{{ p.title }}</h2>
             {% if p.body %}
-            <p class="text-sm text-gray-600 whitespace-pre-line">{{ p.body }}</p>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed whitespace-pre-line">{{ p.body }}</p>
             {% endif %}
             {% if p.pdf_url %}
-            <a href="{{ p.pdf_url }}" target="_blank" rel="noopener"
-               class="inline-flex items-center gap-2 mt-3 text-sm font-medium text-blue-700 hover:text-blue-900">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+            <a href="{{ p.pdf_url }}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 mt-4 text-sm font-semibold {{ pal[1] }} h-8 px-3 rounded-lg">
                 Open PDF{% if p.pdf_filename %} · {{ p.pdf_filename }}{% endif %}
             </a>
             {% endif %}
-        </div>
-        {% else %}
-        <p class="text-sm text-gray-500">No school policies have been published yet.</p>
+        </article>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 px-6 py-16 text-center">
+        <div class="mx-auto h-12 w-12 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8"/></svg>
+        </div>
+        <p class="font-semibold text-slate-800">No policies published yet</p>
+        <p class="text-sm text-slate-500 mt-1">School rules will appear here once an admin adds them.</p>
+    </div>
+    {% endif %}
+</section>
 </div>
 {% endblock %}

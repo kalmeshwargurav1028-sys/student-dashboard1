@@ -1,119 +1,126 @@
 {% extends "base.html" %}
 
-{% block header_title %}My Gradebook{% endblock %}
+{% block header_title %}Progress Report{% endblock %}
 
 {% block content %}
-<div class="w-full px-8 sm:px-10 lg:px-12 py-8">
-    <!-- Header Section -->
-    <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl shadow-lg p-8 mb-8 text-white relative overflow-hidden">
-        <!-- Background Pattern -->
-        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 24px 24px;"></div>
-        
-        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-6">
-                <div class="h-24 w-24 rounded-full bg-white/20 p-1 backdrop-blur-sm">
-                    {% if student.photo_url %}
-                    <img src="{{ student.photo_url }}" alt="Profile" class="h-full w-full rounded-full object-cover border-2 border-white/50">
-                    {% else %}
-                    <div class="h-full w-full rounded-full bg-white/20 flex items-center justify-center text-4xl font-bold border-2 border-white/50">
-                        {{ student.name[0]|upper if student.name else 'S' }}
-                    </div>
-                    {% endif %}
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold mb-1">{{ student.name }}</h1>
-                    <p class="text-blue-100 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"></path></svg>
-                        ID: {{ student.id }}
-                    </p>
-                </div>
+{% set colors = ['bg-emerald-500', 'bg-violet-500', 'bg-orange-500', 'bg-sky-500', 'bg-pink-500', 'bg-teal-500'] %}
+{% set scored = grades|selectattr('total')|list %}
+{% set avg = (scored|map(attribute='total')|sum / scored|length) if scored else 0 %}
+{% set best = scored|sort(attribute='total', reverse=true)|first if scored else none %}
+{% set weak = scored|sort(attribute='total')|first if scored else none %}
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+<section class="rounded-3xl px-5 py-6 sm:px-7 sm:py-7 bg-slate-50">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div class="flex items-start gap-3">
+            <a href="{{ url_for('student_home') if session.get('role') == 'student' else url_for('dashboard') }}" class="mt-1 text-slate-400 hover:text-slate-700">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div class="h-10 w-10 rounded-xl bg-orange-500 text-white flex items-center justify-center shrink-0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422A12.083 12.083 0 0112 21.5 12.083 12.083 0 015.84 10.578L12 14z"/></svg>
             </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">Progress Report</h1>
+                <p class="text-sm text-slate-500 mt-0.5">See how you are doing across every subject</p>
+            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <a href="{{ url_for('academic_profile_pdf', student_id=student.id) }}" target="_blank" class="inline-flex items-center h-9 px-3 rounded-xl text-sm font-semibold text-sky-700 bg-white border border-sky-200 hover:bg-sky-50">Profile PDF</a>
+            <a href="{{ url_for('promotion_certificate', student_id=student.id) }}" target="_blank" class="inline-flex items-center h-9 px-3 rounded-xl text-sm font-semibold text-white bg-orange-500 hover:bg-orange-600">Certificate</a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('edit_certificate', student_id=student.id) }}" class="inline-flex items-center h-9 px-3 rounded-xl text-sm font-semibold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50">Edit certificate</a>
+            {% endif %}
         </div>
     </div>
 
-    <!-- Grades Table -->
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
-        <div class="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-900/50">
-            <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Academic Performance
-            </h2>
-            <div class="flex items-center gap-3">
-                <a href="{{ url_for('academic_profile_pdf', student_id=student.id) }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-blue-600 shadow-sm text-sm font-medium rounded-md text-blue-600 bg-transparent hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                    <svg class="-ml-1 mr-2 h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                    Profile PDF
-                </a>
-                <a href="{{ url_for('promotion_certificate', student_id=student.id) }}" target="_blank" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gradient-to-r from-amber-500 to-yellow-600 hover:from-amber-600 hover:to-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-colors">
-                    <svg class="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-                    </svg>
-                    Certificate
-                </a>
-                
-                {% if session.get('role') == 'admin' %}
-                <a href="{{ url_for('edit_certificate', student_id=student.id) }}" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
-                    <svg class="mr-2 h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                    </svg>
-                    Edit Certificate Details
-                </a>
-                {% endif %}
-            </div>
+    <div class="flex items-center gap-3 rounded-2xl bg-white border border-slate-100 shadow-[0_8px_24px_rgba(15,23,42,0.06)] px-5 py-4 mb-5">
+        <div class="h-12 w-12 rounded-xl overflow-hidden bg-orange-50 text-orange-600 flex items-center justify-center font-bold shrink-0">
+            {% if student.photo_url %}
+            <img src="{{ student.photo_url }}" alt="" class="h-full w-full object-cover">
+            {% else %}
+            {{ student.name[0]|upper if student.name else 'S' }}
+            {% endif %}
         </div>
-        
-        <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50/50 dark:bg-gray-800/50 border-b border-gray-100 dark:border-gray-700">
-                        <th class="py-4 px-6 font-semibold text-sm text-gray-600 dark:text-gray-300 uppercase tracking-wider">Subject</th>
-                        <th class="py-4 px-6 font-semibold text-sm text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">Continuous Assessment (40%)</th>
-                        <th class="py-4 px-6 font-semibold text-sm text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">Final Exam (60%)</th>
-                        <th class="py-4 px-6 font-semibold text-sm text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">Total (100%)</th>
-                        <th class="py-4 px-6 font-semibold text-sm text-gray-600 dark:text-gray-300 uppercase tracking-wider text-center">Grade</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                    {% if not grades %}
-                    <tr>
-                        <td colspan="5" class="py-12 text-center text-gray-500 dark:text-gray-400">
-                            <svg class="w-12 h-12 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <p class="text-lg font-medium">No grades available yet.</p>
-                        </td>
-                    </tr>
-                    {% endif %}
-                    
-                    {% for g in grades %}
-                    <tr class="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors group">
-                        <td class="py-4 px-6">
-                            <div class="font-medium text-gray-900 dark:text-white">{{ g.subject }}</div>
-                        </td>
-                        <td class="py-4 px-6 text-center text-gray-600 dark:text-gray-300">{{ g.ca_mark or '-' }}</td>
-                        <td class="py-4 px-6 text-center text-gray-600 dark:text-gray-300">{{ g.exam_mark or '-' }}</td>
-                        <td class="py-4 px-6 text-center font-bold text-gray-900 dark:text-white">{{ g.total|round(1) if g.total else '-' }}</td>
-                        <td class="py-4 px-6 text-center">
-                            {% if g.total %}
-                                {% if g.total >= 90 %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">A+</span>
-                                {% elif g.total >= 80 %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">A</span>
-                                {% elif g.total >= 70 %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">B</span>
-                                {% elif g.total >= 60 %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">C</span>
-                                {% elif g.total >= 50 %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">D</span>
-                                {% else %}
-                                    <span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">F</span>
-                                {% endif %}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="min-w-0">
+            <p class="font-semibold text-slate-900 truncate">{{ student.name }}</p>
+            <p class="text-sm text-slate-500">ID {{ student.id }}{% if student.student_class %} · Class {{ student.student_class }}{% endif %}{% if student.division %}{{ student.division }}{% endif %}</p>
         </div>
     </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Average</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900">{{ '%.0f'|format(avg) if scored else '—' }}{% if scored %}<span class="text-sm font-medium text-slate-400">%</span>{% endif %}</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Subjects</p>
+            <p class="mt-1 text-2xl font-bold text-slate-900">{{ grades|length }}</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Strongest</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900">{{ best.subject if best else '—' }}</p>
+            <p class="text-xs text-emerald-600 font-medium">{{ '%.0f'|format(best.total) ~ '%' if best else '' }}</p>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Needs work</p>
+            <p class="mt-1 text-sm font-semibold text-slate-900">{{ weak.subject if weak else '—' }}</p>
+            <p class="text-xs text-orange-600 font-medium">{{ '%.0f'|format(weak.total) ~ '%' if weak else '' }}</p>
+        </div>
+    </div>
+
+    {% if not grades %}
+    <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 px-6 py-16 text-center">
+        <div class="mx-auto h-12 w-12 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>
+        </div>
+        <p class="font-semibold text-slate-800">No marks yet</p>
+        <p class="text-sm text-slate-500 mt-1 mb-6">Your teachers will add scores here after assessments.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-3xl mx-auto">
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">Continuous assessment</p>
+                <p class="text-sm text-slate-500 mt-1">Classwork and tests count for 40% of each subject.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">Final exam</p>
+                <p class="text-sm text-slate-500 mt-1">The exam is 60%. Together they make the subject total.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">Grades</p>
+                <p class="text-sm text-slate-500 mt-1">A+ 90 · A 80 · B 70 · C 60 · D 50</p>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for g in grades %}
+        {% set letter = 'F' %}
+        {% if g.total >= 90 %}{% set letter = 'A+' %}
+        {% elif g.total >= 80 %}{% set letter = 'A' %}
+        {% elif g.total >= 70 %}{% set letter = 'B' %}
+        {% elif g.total >= 60 %}{% set letter = 'C' %}
+        {% elif g.total >= 50 %}{% set letter = 'D' %}
+        {% endif %}
+        <div class="rounded-2xl bg-white border border-slate-100 px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+            <div class="flex items-start justify-between gap-3">
+                <span class="h-10 w-10 rounded-xl {{ colors[loop.index0 % 6] }} text-white flex items-center justify-center text-sm font-bold shrink-0">{{ g.subject[0]|upper }}</span>
+                <span class="inline-flex h-8 min-w-[2rem] px-2 items-center justify-center rounded-full text-xs font-bold
+                    {% if letter in ['A+','A'] %}bg-emerald-100 text-emerald-700
+                    {% elif letter == 'B' %}bg-sky-100 text-sky-700
+                    {% elif letter == 'C' %}bg-amber-100 text-amber-700
+                    {% else %}bg-orange-100 text-orange-700{% endif %}">{{ letter }}</span>
+            </div>
+            <p class="mt-3 text-[15px] font-semibold text-slate-900">{{ g.subject }}</p>
+            <p class="text-2xl font-bold text-slate-900 mt-1">{{ g.total|round(0)|int if g.total else '—' }}<span class="text-sm font-medium text-slate-400">/100</span></p>
+            <div class="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-full rounded-full {{ colors[loop.index0 % 6] }}" style="width: {{ [g.total or 0, 100]|min }}%"></div>
+            </div>
+            <div class="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-500">
+                <span>CA 40% · <span class="font-semibold text-slate-700">{{ g.ca_mark or '—' }}</span></span>
+                <span>Exam 60% · <span class="font-semibold text-slate-700">{{ g.exam_mark or '—' }}</span></span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
 </div>
 {% endblock %}

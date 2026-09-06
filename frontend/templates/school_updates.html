@@ -1,40 +1,69 @@
 {% extends "base.html" %}
-{% block header_title %}Updates {{ academic_year_short }}{% endblock %}
+{% block header_title %}Announcements{% endblock %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto py-8 px-8 sm:px-10 lg:px-12">
-    <div class="mb-6 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-            <a href="{% if session.get('role') == 'admin' %}{{ url_for('admin_dashboard') }}{% elif session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="text-gray-400 hover:text-gray-600 transition">
+{% set home = url_for('admin_dashboard') if session.get('role') == 'admin' else (url_for('student_home') if session.get('role') == 'student' else url_for('dashboard')) %}
+<div class="w-full px-4 sm:px-6 lg:px-8 py-6">
+<section class="rounded-3xl px-5 py-6 sm:px-7 sm:py-7 bg-slate-50">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div class="flex items-start gap-3">
+            <a href="{{ home }}" class="mt-1 text-slate-400 hover:text-slate-700">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
+            <div class="h-10 w-10 rounded-xl bg-pink-500 text-white flex items-center justify-center shrink-0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+            </div>
             <div>
-                <h1 class="text-2xl font-bold text-gray-900">Updates</h1>
-                <p class="text-sm text-gray-500 mt-1">School notices for Academic Year {{ academic_year_short }}.</p>
+                <h1 class="text-xl font-bold text-slate-900">Announcements</h1>
+                <p class="text-sm text-slate-500 mt-0.5">School news and updates for {{ academic_year_short }}</p>
             </div>
         </div>
         {% if session.get('role') in ('admin', 'teacher') %}
-        <a href="{{ url_for('create_announcement_page') }}" class="text-sm font-medium text-blue-600 hover:text-blue-800">Post update</a>
+        <a href="{{ url_for('create_announcement_page') }}" class="h-9 px-3 rounded-xl text-sm font-semibold text-white bg-pink-500 hover:bg-pink-600 inline-flex items-center">Post update</a>
         {% endif %}
     </div>
 
-    <div class="space-y-4">
+    {% if announcements %}
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {% for ann in announcements %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-            <div class="flex items-start justify-between gap-4">
-                <h2 class="text-base font-semibold text-[#1e4e8c]">{{ ann.title }}</h2>
-                <span class="text-xs text-gray-400 shrink-0">{{ ann.date_sent }}</span>
+        <article class="rounded-2xl bg-white border border-slate-100 px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+            <div class="flex items-start justify-between gap-3">
+                <span class="h-10 w-10 rounded-xl bg-pink-500 text-white flex items-center justify-center shrink-0">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6"/></svg>
+                </span>
+                <span class="text-xs font-semibold text-slate-400 shrink-0">{{ ann.date_sent }}</span>
             </div>
-            <p class="text-sm text-gray-600 mt-2 whitespace-pre-line">{{ ann.body }}</p>
+            <h2 class="mt-3 text-[15px] font-semibold text-slate-900">{{ ann.title }}</h2>
+            <p class="text-sm text-slate-500 mt-2 leading-relaxed whitespace-pre-line">{{ ann.body }}</p>
             {% if ann.audience %}
-            <p class="text-xs text-blue-500 mt-3">For: {{ ann.audience }}</p>
+            <span class="inline-flex mt-4 h-7 px-2.5 items-center rounded-lg text-[11px] font-semibold bg-pink-50 text-pink-700">{{ ann.audience|capitalize }}</span>
             {% endif %}
-        </div>
-        {% else %}
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center text-sm text-gray-500">
-            No school updates yet.
-        </div>
+        </article>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 px-6 py-16 text-center">
+        <div class="mx-auto h-12 w-12 rounded-xl bg-pink-100 text-pink-600 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6"/></svg>
+        </div>
+        <p class="font-semibold text-slate-800">No announcements yet</p>
+        <p class="text-sm text-slate-500 mt-1 mb-6">School news and notices will show up here.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left max-w-3xl mx-auto">
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">School notices</p>
+                <p class="text-sm text-slate-500 mt-1">Holidays, timing changes, and whole-school news.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">Class updates</p>
+                <p class="text-sm text-slate-500 mt-1">Messages from your teachers for your grade.</p>
+            </div>
+            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4">
+                <p class="text-[15px] font-semibold text-slate-900">Events</p>
+                <p class="text-sm text-slate-500 mt-1">Tests, assemblies, and calendar reminders.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</section>
 </div>
 {% endblock %}

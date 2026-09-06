@@ -357,7 +357,17 @@
                   </div>
                   <h1 class="text-2xl font-bold">Assignments &amp; Deadlines</h1>
                 </div>
-                <p class="text-indigo-100 text-sm">Track your homework, projects, and exams all in one place.</p>
+                <p class="text-indigo-100 text-sm">
+                  {% if class_filter and class_filter.subject %}
+                  {{ class_filter.subject }}{% if class_filter.grade %} · Class {{ class_filter.grade }}{{ class_filter.section }}{% endif %}
+                  {% else %}
+                  Track your homework, projects, and exams all in one place.
+                  {% endif %}
+                </p>
+                <a href="{{ url_for('resources_assignments') }}" class="inline-flex items-center gap-1 mt-3 text-sm text-white/80 hover:text-white">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                  Back to class and subjects
+                </a>
               </div>
               <div class="bg-white/20 backdrop-blur-sm text-white px-5 py-3 rounded-xl font-bold text-lg flex flex-col items-center border border-white/20">
                 <span class="text-3xl font-extrabold">{{ assignments|selectattr('status', 'equalto', 'pending')|list|length + assignments|selectattr('status', 'equalto', 'urgent')|list|length }}</span>
@@ -416,6 +426,9 @@
                   <div class="flex flex-wrap gap-2 items-center mb-2">
                     <span class="asgn-subject-tag">{{ assignment.subject }}</span>
                     <span class="asgn-subject-tag" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;">Class {{ assignment.class_name }}</span>
+                    {% if assignment.teacher_name %}
+                    <span class="asgn-subject-tag" style="background:#f5f3ff;color:#6d28d9;border-color:#ddd6fe;">{{ assignment.teacher_name }}</span>
+                    {% endif %}
 
                     {% if assignment.status == 'urgent' %}
                     <span class="status-pill bg-red-100 text-red-700 border border-red-200 animate-pulse">🔥 Due in {{ assignment.days_left }} day{{ 's' if assignment.days_left != 1 else '' }}</span>
