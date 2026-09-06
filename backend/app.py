@@ -2445,6 +2445,102 @@ def _student_classrooms():
     }]
 
 
+def _teacher_label(user):
+    if not user:
+        return 'Teacher'
+    first = (user.get('first_name') or '').strip()
+    last = (user.get('last_name') or '').strip()
+    if first or last:
+        return f'{first} {last}'.strip()
+    return user.get('name') or (user.get('email') or 'Teacher').split('@')[0]
+
+
+def _student_mapped_teachers(student):
+    grade = _grade_number(student.get('student_class'))
+    section = str(student.get('division') or '').strip().upper()
+    raw_class = str(student.get('student_class') or '').strip()
+    grade_keys = {k for k in (grade, raw_class) if k}
+    if section:
+        grade_keys.update(get_class_variations(raw_class) or [])
+    teachers = {}
+
+    def add_teacher(teacher_id, name, subject):
+        tid = str(teacher_id or '').strip()
+        if not tid:
+            return
+        row = teachers.setdefault(tid, {
+            'teacher_id': tid,
+            'name': name or 'Teacher',
+            'subjects': [],
+        })
+        if name and row['name'] == 'Teacher':
+            row['name'] = name
+        label = (subject or '').strip()
+        if label and label.lower() != 'class teacher' and label not in row['subjects']:
+            row['subjects'].append(label)
+
+    query_grade = {'grade': {'$in': list(grade_keys)}} if grade_keys else {}
+    section_q = {'section': {'$regex': f'^{re.escape(section)}$', '$options': 'i'}} if section else {}
+    for m in db.teacher_mappings.find({**query_grade, **section_q}):
+        subject = m.get('subject') or ('Homeroom' if m.get('type') == 'homeroom' else '')
+        add_teacher(m.get('teacher_id'), m.get('teacher_name'), subject)
+    for m in db.student_teacher_maps.find({
+        '$or': [
+            {'student_id': student.get('id')},
+            {**query_grade, **section_q, 'student_id': student.get('id')},
+        ]
+    }):
+        add_teacher(m.get('teacher_id'), m.get('teacher_name'), m.get('subject'))
+
+    for tid, row in teachers.items():
+        try:
+            user = db.users.find_one({'_id': ObjectId(tid)}, {'password': 0})
+        except Exception:
+            user = db.users.find_one({'$or': [{'id': tid}, {'email': tid}]}, {'password': 0})
+        row['subjects'] = sorted(row['subjects'], key=lambda x: (x == 'Homeroom', x.lower()))
+        if user:
+            row['name'] = _teacher_label(user) or row['name']
+            row['subject'] = row['subjects'][0] if row['subjects'] else user.get('subject') or 'Faculty'
+        else:
+            row['subject'] = row['subjects'][0] if row['subjects'] else 'Faculty'
+        row['subjects_label'] = ' · '.join(row['subjects']) if row['subjects'] else row['subject']
+    return sorted(teachers.values(), key=lambda t: t['name'].lower())
+
+
+def _attendance_score(status):
+    if status == 'Present':
+        return 1.0
+    if status == 'Late':
+        return 0.5
+    return 0.0
+
+
+def _teacher_attendance_summary(student_id, teacher_id):
+    present = 0.0
+    total = 0
+    last_status = None
+    last_date = None
+    for doc in db.attendance.find({'teacher_id': teacher_id}):
+        records = doc.get('records') or {}
+        if student_id not in records:
+            continue
+        total += 1
+        status = records.get(student_id)
+        present += _attendance_score(status)
+        date = doc.get('date') or ''
+        if date and (not last_date or date > last_date):
+            last_date = date
+            last_status = status
+    pct = round((present / total) * 100, 1) if total else 0
+    return {
+        'present': present,
+        'total': total,
+        'pct': pct,
+        'last_status': last_status,
+        'last_date': last_date,
+    }
+
+
 def _class_context():
     return {
         'grade': (request.values.get('grade') or '').strip(),
@@ -2595,6 +2691,66 @@ def student_profile(student_id):
             }
         
     return render_template('student_profile.html', student=student, teachers=teachers, homeroom_teacher=homeroom_teacher)
+
+
+@app.route('/student/attendance')
+def student_attendance():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') != 'student':
+        return redirect(url_for('attendance'))
+    student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0})
+    if not student:
+        flash('Student not found.')
+        return redirect(url_for('student_home'))
+    cards = []
+    for teacher in _student_mapped_teachers(student):
+        summary = _teacher_attendance_summary(student.get('id'), teacher['teacher_id'])
+        cards.append({**teacher, **summary})
+    overall_p = sum(c['present'] for c in cards)
+    overall_t = sum(c['total'] for c in cards)
+    if overall_t == 0:
+        # Older school-wide register (no teacher_id) as a single fallback
+        present = 0.0
+        total = 0
+        for doc in db.attendance.find({'$or': [{'teacher_id': {'$exists': False}}, {'teacher_id': ''}, {'teacher_id': None}]}):
+            records = doc.get('records') or {}
+            if student.get('id') not in records:
+                continue
+            total += 1
+            present += _attendance_score(records.get(student.get('id')))
+        if total:
+            cards.append({
+                'teacher_id': '',
+                'name': 'Class register',
+                'subjects_label': 'School attendance before teacher-wise marking',
+                'subject': 'Class',
+                'present': present,
+                'total': total,
+                'pct': round((present / total) * 100, 1),
+                'last_status': None,
+                'last_date': None,
+            })
+            overall_p, overall_t = present, total
+    overall_pct = round((overall_p / overall_t) * 100, 1) if overall_t else float(student.get('attendance') or 0)
+    return render_template(
+        'student_attendance.html',
+        student=student,
+        teacher_cards=cards,
+        overall_pct=overall_pct,
+    )
+
+
+@app.route('/student/messages')
+def student_messages():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') != 'student':
+        return redirect(url_for('parent_alerts_page'))
+    student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0}) or {}
+    teachers = _student_mapped_teachers(student)
+    return render_template('student_messages.html', student=student, teachers=teachers)
+
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
@@ -4618,7 +4774,7 @@ def attendance():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     if session.get('role') == 'student':
-        return redirect(url_for('student_profile', student_id=session.get('user_id')))
+        return redirect(url_for('student_attendance'))
     if not has_permission('modify_attendance'):
         flash('You do not have permission to access Attendance.')
         return redirect(url_for('dashboard'))
@@ -4652,8 +4808,13 @@ def attendance():
                 update_fields[f'records.{s_id}'] = 'Present'
                 
         if update_fields:
+            teacher_id = str(session.get('user_id') or 'staff')
+            update_fields['teacher_id'] = teacher_id
+            update_fields['teacher_name'] = session.get('username') or session.get('name') or 'Staff'
+            update_fields['subject'] = request.form.get('subject') or ('Homeroom' if mode_post == 'homeroom' else '')
+            update_fields['mode'] = mode_post
             db.attendance.update_one(
-                {'date': selected_date},
+                {'date': selected_date, 'teacher_id': teacher_id},
                 {'$set': update_fields},
                 upsert=True
             )
@@ -4735,12 +4896,17 @@ def attendance():
             flash(f'Attendance for {selected_date} saved successfully.')
         return redirect(url_for('attendance', date=selected_date, mode=mode_post, target_class=target_class_post, subject=request.form.get('subject', '')))
         
-    # GET request
-    daily_doc = db.attendance.find_one({'date': selected_date})
+    # GET request — this teacher's register for the day
+    teacher_id = str(session.get('user_id') or 'staff')
+    daily_doc = db.attendance.find_one({'date': selected_date, 'teacher_id': teacher_id})
+    if not daily_doc:
+        daily_doc = db.attendance.find_one({'date': selected_date, 'teacher_id': {'$exists': False}})
     daily_records = daily_doc.get('records', {}) if daily_doc else {}
-    
-    all_docs = list(db.attendance.find({}, {'date': 1, '_id': 0}))
-    all_dates = sorted([doc.get('date') for doc in all_docs if doc.get('date')], reverse=True)
+
+    teacher_docs = list(db.attendance.find({'teacher_id': teacher_id}, {'date': 1, '_id': 0}))
+    if not teacher_docs:
+        teacher_docs = list(db.attendance.find({'teacher_id': {'$exists': False}}, {'date': 1, '_id': 0}))
+    all_dates = sorted({doc.get('date') for doc in teacher_docs if doc.get('date')}, reverse=True)
     
     total_count = len(students)
     present_count = 0
@@ -4764,6 +4930,10 @@ def attendance():
         'ratio': round((present_count + late_count) / total_count * 100, 1) if total_count > 0 and len(daily_records) > 0 else 0
     }
     
+    mapped_subjects = sorted({
+        m.get('subject') for m in db.teacher_mappings.find({'teacher_id': teacher_id, 'type': 'subject'})
+        if m.get('subject')
+    })
     return render_template(
         'attendance.html',
         students=students,
@@ -4773,7 +4943,8 @@ def attendance():
         stats=stats,
         mode=mode,
         target_class=target_class,
-        subject=subject
+        subject=subject,
+        mapped_subjects=mapped_subjects
     )
 
 @app.route('/gradebook', methods=['GET', 'POST'])

@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block header_title %}Attendance{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-8">
+<section class="rounded-3xl px-5 py-6 sm:px-7 sm:py-7 bg-slate-50">
+    <div class="flex items-start justify-between gap-4 mb-6">
+        <div class="flex items-start gap-3">
+            <a href="{{ url_for('student_home') }}" class="mt-1 text-slate-400 hover:text-slate-700" aria-label="Back">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div class="h-10 w-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            </div>
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">Attendance</h1>
+                <p class="text-sm text-slate-500 mt-0.5">How often you are present in each teacher's class</p>
+            </div>
+        </div>
+        <div class="rounded-2xl bg-white border border-slate-100 px-4 py-2 text-right shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Overall</p>
+            <p class="text-xl font-bold {% if overall_pct|float >= 80 %}text-emerald-600{% elif overall_pct|float >= 60 %}text-amber-600{% else %}text-orange-600{% endif %}">{{ overall_pct }}%</p>
+        </div>
+    </div>
+
+    {% if teacher_cards %}
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for t in teacher_cards %}
+        <article class="rounded-2xl bg-white border border-slate-100 px-5 py-5 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
+            <div class="flex items-start justify-between gap-3">
+                <span class="h-10 w-10 rounded-xl bg-orange-600 text-white flex items-center justify-center font-bold shrink-0">{{ (t.name or 'T')[0]|upper }}</span>
+                <span class="inline-flex h-8 px-2.5 items-center rounded-lg text-xs font-semibold
+                    {% if t.total == 0 %}bg-slate-100 text-slate-500
+                    {% elif t.pct >= 80 %}bg-emerald-50 text-emerald-700
+                    {% elif t.pct >= 60 %}bg-amber-50 text-amber-700
+                    {% else %}bg-orange-50 text-orange-700{% endif %}">
+                    {% if t.total %}{{ t.pct }}%{% else %}Not marked{% endif %}
+                </span>
+            </div>
+            <p class="mt-3 text-[15px] font-semibold text-slate-900">{{ t.name }}</p>
+            <p class="text-sm text-slate-500 mt-0.5">{{ t.subjects_label }}</p>
+            {% if t.total %}
+            <p class="mt-3 text-2xl font-bold text-slate-900">{{ t.present|round(1) }}<span class="text-sm font-medium text-slate-400"> / {{ t.total }} classes</span></p>
+            <div class="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                <div class="h-full rounded-full {% if t.pct >= 80 %}bg-emerald-500{% elif t.pct >= 60 %}bg-amber-400{% else %}bg-orange-500{% endif %}" style="width: {{ [t.pct, 100]|min }}%"></div>
+            </div>
+            {% if t.last_status %}
+            <p class="mt-2 text-xs text-slate-500">Last class {{ t.last_date }} · {{ t.last_status }}</p>
+            {% endif %}
+            {% else %}
+            <p class="mt-3 text-sm text-slate-500">This teacher has not marked your class yet.</p>
+            {% endif %}
+        </article>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="rounded-2xl bg-white border border-dashed border-slate-200 px-6 py-16 text-center">
+        <div class="mx-auto h-12 w-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center mb-3">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+        </div>
+        <p class="font-semibold text-slate-800">No teachers mapped yet</p>
+        <p class="text-sm text-slate-500 mt-1">Ask the school to assign your class teacher and subjects.</p>
+    </div>
+    {% endif %}
+</section>
+</div>
+{% endblock %}

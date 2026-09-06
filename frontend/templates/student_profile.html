@@ -1,14 +1,9 @@
 {% extends 'base.html' %}
 
-{% block header_title %}{% if session.get('role') == 'student' %}Attendance{% else %}Student Profile{% endif %}{% endblock %}
+{% block header_title %}{% if session.get('role') == 'student' %}My Profile{% else %}Student Profile{% endif %}{% endblock %}
 
 {% block content %}
-{% set att_present = namespace(p=0, t=0) %}
-{% for rec in student.attendance_history or [] %}
-    {% set att_present.p = att_present.p + (rec.days_present or 0) %}
-    {% set att_present.t = att_present.t + (rec.total_days or 0) %}
-{% endfor %}
-{% set att_pct = ((att_present.p / att_present.t * 100)|round(1)) if att_present.t else student.get('attendance', 0) %}
+{% set att_pct = student.get('attendance', 0) %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-8">
 <section class="rounded-3xl px-5 py-6 sm:px-7 sm:py-7 bg-slate-50">
 
@@ -17,12 +12,12 @@
             <a href="{% if session.get('role') == 'student' %}{{ url_for('student_home') }}{% else %}{{ url_for('dashboard') }}{% endif %}" class="mt-1 text-slate-400 hover:text-slate-700">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
             </a>
-            <div class="h-10 w-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            <div class="h-10 w-10 rounded-xl bg-sky-500 text-white flex items-center justify-center shrink-0">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             </div>
             <div>
-                <h1 class="text-xl font-bold text-slate-900">{% if session.get('role') == 'student' %}Attendance{% else %}Student profile{% endif %}</h1>
-                <p class="text-sm text-slate-500 mt-0.5">{% if session.get('role') == 'student' %}Check your attendance{% else %}Review this student's profile and attendance{% endif %}</p>
+                <h1 class="text-xl font-bold text-slate-900">{% if session.get('role') == 'student' %}My Profile{% else %}Student profile{% endif %}</h1>
+                <p class="text-sm text-slate-500 mt-0.5">{% if session.get('role') == 'student' %}Your school details{% else %}Review this student's profile{% endif %}</p>
             </div>
         </div>
         <div class="flex gap-2">
@@ -39,7 +34,7 @@
                 {% if student.get('photo_url') %}
                 <img src="{{ student.get('photo_url') }}" alt="" class="h-12 w-12 rounded-xl object-cover">
                 {% else %}
-                <div class="h-12 w-12 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">{{ student.name[0] }}</div>
+                <div class="h-12 w-12 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center font-bold">{{ student.name[0] }}</div>
                 {% endif %}
             </div>
             <div class="min-w-0">
@@ -62,7 +57,7 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-8">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
         <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Email</p>
             <p class="mt-1 text-sm font-medium text-slate-800 break-all">{{ student.get('email') or 'Not provided' }}</p>
@@ -81,206 +76,6 @@
         </div>
     </div>
 
-    <div id="attendance" class="mb-8">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h2 class="text-lg font-bold text-slate-900">Days present this year</h2>
-                <p class="text-sm text-slate-500">Month by month attendance</p>
-            </div>
-            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-2 text-right shadow-[0_8px_24px_rgba(15,23,42,0.04)]">
-                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Overall</p>
-                <p class="text-xl font-bold {% if att_pct|float >= 80 %}text-emerald-600{% elif att_pct|float >= 60 %}text-amber-600{% else %}text-orange-600{% endif %}">{{ att_pct }}%</p>
-            </div>
-        </div>
-        {% if student.attendance_history %}
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {% for rec in student.attendance_history %}
-            {% set pct = (rec.days_present / rec.total_days * 100) | round(1) if rec.total_days else 0 %}
-            <div class="rounded-2xl bg-white border border-slate-100 px-4 py-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-                <p class="text-sm font-semibold text-slate-900">{{ rec.month }}</p>
-                <p class="mt-1 text-2xl font-bold text-slate-900">{{ pct }}<span class="text-sm font-medium text-slate-400">%</span></p>
-                <div class="mt-3 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                    <div class="h-full rounded-full {% if pct >= 80 %}bg-emerald-500{% elif pct >= 60 %}bg-amber-400{% else %}bg-orange-500{% endif %}" style="width: {{ [pct, 100]|min }}%"></div>
-                </div>
-                <p class="mt-2 text-xs text-slate-500">{{ rec.days_present }} of {{ rec.total_days }} days</p>
-            </div>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="rounded-2xl bg-slate-50 border border-dashed border-slate-200 px-6 py-12 text-center text-sm text-slate-500">No attendance history yet.</div>
-        {% endif %}
-    </div>
-
-
-    <!-- Teacher Contact Directory -->
-    {% if teachers %}
-    <div id="teachers" class="mt-2">
-        <div class="flex items-center gap-3 mb-4">
-            <span class="h-10 w-10 rounded-xl bg-sky-400 text-white flex items-center justify-center">
-                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h8M8 14h5M7 19l-3 2V6a2 2 0 012-2h12a2 2 0 012 2v9a2 2 0 01-2 2H7z"/></svg>
-            </span>
-            <div>
-                <h2 class="text-lg font-bold text-slate-900">Messaging</h2>
-                <p class="text-sm text-slate-500">Chat with your teachers</p>
-            </div>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {% for teacher in teachers %}
-                <div class="bg-white border border-slate-100 rounded-2xl p-4 flex items-center justify-between shadow-[0_8px_24px_rgba(15,23,42,0.06)]">
-                    <div class="flex items-center gap-4">
-                        <div class="h-12 w-12 rounded-full bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                            <span class="text-xl font-bold text-indigo-600">{{ teacher.display_name[0] }}</span>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-gray-900 text-sm">{{ teacher.display_name }}</h4>
-                            <p class="text-xs text-gray-500 capitalize">{{ teacher.get('subject', 'Faculty Member') }}</p>
-                        </div>
-                    </div>
-                    <button onclick="openChat('{{ teacher._id }}', '{{ teacher.display_name }}')" class="p-2 bg-sky-50 rounded-xl text-sky-600 hover:bg-sky-100" title="Message teacher">
-                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                    </button>
-                </div>
-                {% endfor %}
-        </div>
-    </div>
-    {% endif %}
-
-    {% if homeroom_teacher and session.get('role') == 'student' %}
-    <div class="mt-4">
-        <button type="button" onclick="openChat('{{ homeroom_teacher.id }}', '{{ homeroom_teacher.name }}')" class="inline-flex items-center h-9 px-3 rounded-xl text-sm font-semibold text-sky-700 bg-white border border-sky-200 hover:bg-sky-50">
-            Message homeroom teacher
-        </button>
-    </div>
-    {% endif %}
-
 </section>
 </div>
-
-
-<!-- Chat Widget Container -->
-<div id="chatWidget" class="fixed bottom-4 right-4 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200 hidden flex-col z-50 overflow-hidden transform transition-all duration-300 scale-95 opacity-0">
-    <!-- Header -->
-    <div class="bg-indigo-600 px-4 py-3 flex items-center justify-between">
-        <h3 id="chatTitle" class="text-white font-bold text-sm">Chat with Teacher</h3>
-        <button onclick="closeChat()" class="text-white hover:text-gray-200 focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-        </button>
-    </div>
-    <!-- Messages Area -->
-    <div id="chatMessages" class="p-4 h-64 overflow-y-auto bg-gray-50 flex flex-col gap-3">
-        <!-- Messages will be populated here by JS -->
-    </div>
-    <!-- Input Area -->
-    <div class="p-3 bg-white border-t border-gray-100 flex gap-2">
-        <input type="text" id="chatInput" class="flex-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full px-3 py-2 border border-gray-300 rounded-xl text-sm" placeholder="Type a message..." autocomplete="off" onkeypress="handleChatKeypress(event)">
-        <button onclick="sendMessage()" class="inline-flex items-center p-2 border border-transparent rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" /></svg>
-        </button>
-    </div>
-</div>
-
-<script>
-// Chat Widget Logic
-let currentChatUserId = null;
-let chatPollingInterval = null;
-const currentUserId = "{{ session.get('user_id') }}";
-
-function openChat(userId, userName) {
-    currentChatUserId = userId;
-    document.getElementById('chatTitle').innerText = 'Chat with ' + userName;
-    const widget = document.getElementById('chatWidget');
-    widget.classList.remove('hidden');
-    setTimeout(() => {
-        widget.classList.remove('scale-95', 'opacity-0');
-        widget.classList.add('scale-100', 'opacity-100');
-    }, 10);
-    
-    fetchMessages();
-    if (chatPollingInterval) clearInterval(chatPollingInterval);
-    chatPollingInterval = setInterval(fetchMessages, 3000);
-}
-
-function closeChat() {
-    const widget = document.getElementById('chatWidget');
-    widget.classList.remove('scale-100', 'opacity-100');
-    widget.classList.add('scale-95', 'opacity-0');
-    setTimeout(() => {
-        widget.classList.add('hidden');
-    }, 300);
-    currentChatUserId = null;
-    if (chatPollingInterval) clearInterval(chatPollingInterval);
-}
-
-function fetchMessages() {
-    if (!currentChatUserId) return;
-    
-    fetch('/api/messages/' + currentChatUserId)
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                renderMessages(data.messages);
-                // Mark messages as read
-                fetch('/api/messages/read/' + currentChatUserId, { method: 'POST' });
-            }
-        })
-        .catch(err => console.error(err));
-}
-
-function renderMessages(messages) {
-    const container = document.getElementById('chatMessages');
-    const isAtBottom = container.scrollHeight - container.scrollTop === container.clientHeight;
-    
-    container.innerHTML = '';
-    
-    if (messages.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-400 text-xs mt-4">No messages yet. Say hi!</div>';
-    } else {
-        messages.forEach(msg => {
-            const isMe = msg.sender_id === currentUserId;
-            const bubbleDiv = document.createElement('div');
-            bubbleDiv.className = 'flex w-full ' + (isMe ? 'justify-end' : 'justify-start');
-            
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm ' + 
-                              (isMe ? 'bg-indigo-600 text-white rounded-br-sm' : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100');
-            msgDiv.textContent = msg.content;
-            
-            bubbleDiv.appendChild(msgDiv);
-            container.appendChild(bubbleDiv);
-        });
-    }
-    
-    if (isAtBottom) {
-        container.scrollTop = container.scrollHeight;
-    }
-}
-
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const content = input.value.trim();
-    if (!content || !currentChatUserId) return;
-    
-    input.value = '';
-    
-    fetch('/api/messages/' + currentChatUserId, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: content })
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            fetchMessages();
-        }
-    })
-    .catch(err => console.error(err));
-}
-
-function handleChatKeypress(event) {
-    if (event.key === 'Enter') {
-        sendMessage();
-    }
-}
-</script>
-
 {% endblock %}
