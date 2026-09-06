@@ -46,12 +46,9 @@
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.464V20z"/></svg>
                                 </a>
                                 {% if person.can_delete %}
-                                <form method="POST" action="{{ url_for('utility_user_delete', kind=person.kind, user_id=person.id) }}" onsubmit="return confirm('Delete {{ person.name }}? This cannot be undone.');">
-                                    <input type="hidden" name="page" value="{{ page }}">
-                                    <button type="submit" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete">
-                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
-                                    </button>
-                                </form>
+                                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete" onclick="openDeleteUser('{{ person.kind }}', '{{ person.id }}', {{ person.name|tojson }}, {{ person.email|tojson }}, {{ person.role|tojson }})">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
+                                </button>
                                 {% else %}
                                 <span class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-100 text-slate-300 cursor-not-allowed" title="You cannot delete your own account">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
@@ -102,4 +99,43 @@
         </div>
     </div>
 </div>
+
+<div id="deleteUserModal" class="hidden fixed inset-0 z-50">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="closeDeleteUser()"></div>
+    <div class="relative min-h-full flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-xl">
+            <div class="px-5 py-4 border-b border-slate-100">
+                <h2 class="text-base font-semibold text-slate-900">Remove user</h2>
+                <p class="text-sm text-slate-500 mt-1">This account will lose portal access.</p>
+            </div>
+            <div class="px-5 py-4 space-y-2">
+                <p id="deleteUserName" class="text-sm font-medium text-slate-900"></p>
+                <p id="deleteUserMeta" class="text-sm text-slate-500"></p>
+                <p class="text-sm text-slate-500">This cannot be undone.</p>
+            </div>
+            <form id="deleteUserForm" method="POST" class="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-2">
+                <input type="hidden" name="page" value="{{ page }}">
+                <button type="button" onclick="closeDeleteUser()" class="px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 text-white">Delete user</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteUser(kind, id, name, email, role) {
+    var modal = document.getElementById('deleteUserModal');
+    var form = document.getElementById('deleteUserForm');
+    document.getElementById('deleteUserName').textContent = name || email || 'This user';
+    document.getElementById('deleteUserMeta').textContent = (role || '') + (email ? ' · ' + email : '');
+    form.action = '/admin/utility/users/' + encodeURIComponent(kind) + '/' + encodeURIComponent(id) + '/delete';
+    modal.classList.remove('hidden');
+}
+function closeDeleteUser() {
+    document.getElementById('deleteUserModal').classList.add('hidden');
+}
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDeleteUser();
+});
+</script>
 {% endblock %}

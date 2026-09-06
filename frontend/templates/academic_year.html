@@ -2,6 +2,96 @@
 {% block header_title %}Academic Year {{ academic_year_key }}{% endblock %}
 
 {% block content %}
+{% if role == 'admin' %}
+<div class="w-full py-6 px-6 sm:px-8 lg:px-10">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
+        <div>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">{{ school_name }}</p>
+            <h1 class="text-2xl font-semibold text-slate-900 mt-1">Academic Year {{ academic_period }}</h1>
+            <p class="text-sm text-slate-500 mt-1">School directory and year calendar. Assessment scores stay with teachers and students.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            {% if photo_url %}
+            <img src="{{ photo_url }}" alt="" class="h-10 w-10 rounded-full object-cover border border-slate-200">
+            {% endif %}
+            <div class="text-right">
+                <p class="text-sm font-medium text-slate-800">{{ display_name }}</p>
+                <p class="text-xs text-slate-400">Super Admin</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Students</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.students }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ admin.logins }} with a portal login</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Teachers</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.teachers }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ admin.mapped }} mapped · {{ admin.unmapped }} not mapped</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Classes</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.classes }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ admin.homerooms }} homeroom · {{ admin.subject_maps }} subject maps</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Attendance</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.avg_attendance }}%</p>
+            <p class="mt-1 text-sm text-slate-500">School average this year</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white border border-slate-200 rounded-lg">
+            <div class="px-5 py-4 border-b border-slate-100">
+                <h2 class="text-sm font-semibold text-slate-900">Enrollment by class</h2>
+            </div>
+            <div class="divide-y divide-slate-100">
+                {% for row in admin.class_rows %}
+                <div class="px-5 py-3 flex items-center gap-4">
+                    <p class="w-24 text-sm font-medium text-slate-800 shrink-0">{{ row.name }}</p>
+                    <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                        <div class="h-full bg-sky-500 rounded-full" style="width: {{ row.pct }}%"></div>
+                    </div>
+                    <p class="w-10 text-right text-sm text-slate-600">{{ row.count }}</p>
+                </div>
+                {% else %}
+                <p class="px-5 py-8 text-sm text-slate-400 text-center">No students enrolled yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white border border-slate-200 rounded-lg">
+            <div class="px-5 py-4 border-b border-slate-100">
+                <h2 class="text-sm font-semibold text-slate-900">Year calendar</h2>
+                <p class="text-xs text-slate-400 mt-1">{{ admin.event_counts.term }} terms · {{ admin.event_counts.holiday }} holidays · {{ admin.event_counts.exam }} exams · {{ admin.event_counts.event }} events</p>
+            </div>
+            <div class="divide-y divide-slate-100 max-h-[22rem] overflow-y-auto">
+                {% for e in admin.events %}
+                <div class="px-5 py-3 flex items-start justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-medium text-slate-800">{{ e.title }}</p>
+                        <p class="text-xs text-slate-400 mt-0.5 capitalize">{{ e.kind }}{% if e.notes %} · {{ e.notes }}{% endif %}</p>
+                    </div>
+                    <p class="text-xs text-slate-500 whitespace-nowrap">{{ e.date }}</p>
+                </div>
+                {% else %}
+                <p class="px-5 py-8 text-sm text-slate-400 text-center">No year events yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="flex flex-wrap gap-3">
+        <a href="{{ url_for('utility_users_monitor') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Users Monitor</a>
+        <a href="{{ url_for('utility_registration') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">User Registration</a>
+        <a href="{{ url_for('admin_school_policies') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">School Policies</a>
+    </div>
+</div>
+{% else %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-5">
 
     <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-5">
@@ -242,4 +332,5 @@
     });
 })();
 </script>
+{% endif %}
 {% endblock %}
