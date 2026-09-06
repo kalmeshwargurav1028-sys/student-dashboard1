@@ -1261,11 +1261,13 @@ def login():
         if admin and verify_password(admin.get('password', ''), password):
             stored_email = admin.get('email') or email
             upgrade_password_if_plaintext(db.admins, {'_id': admin['_id']}, admin.get('password'), password)
+            admin_name = admin.get('name') or ' '.join(filter(None, [admin.get('first_name'), admin.get('last_name')])).strip()
             session_data = {
                 'role': 'admin',
                 'user_id': str(admin['_id']),
-                'username': admin.get('name') or stored_email.split('@')[0],
+                'username': admin_name or stored_email.split('@')[0],
                 'email': stored_email,
+                'photo_url': admin.get('photo_url') or '',
                 'redirect_url': url_for('admin_dashboard')
             }
             return initiate_2fa(stored_email, session_data)
@@ -2753,42 +2755,229 @@ def utility_registration_bulk():
     return redirect(url_for('utility_registration'))
 
 
+def _monitor_people():
+    people = []
+    current_id = str(session.get('user_id') or '')
+    for a in db.admins.find({}, {'password': 0}):
+        uid = str(a.get('_id'))
+        name = a.get('name') or f"{a.get('first_name', '')} {a.get('last_name', '')}".strip() or a.get('email') or 'Admin'
+        people.append({
+            'id': uid,
+            'kind': 'admin',
+            'name': name,
+            'first_name': a.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': a.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': a.get('email', ''),
+            'role': 'Super Admin',
+            'last_active': a.get('last_active') or a.get('created_at') or '—',
+            'department': a.get('department') or '',
+            'can_delete': uid != current_id,
+        })
+    for u in db.users.find({}, {'password': 0}):
+        uid = str(u.get('_id'))
+        name = u.get('name') or f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get('email')
+        people.append({
+            'id': uid,
+            'kind': 'staff',
+            'name': name,
+            'first_name': u.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': u.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': u.get('email', ''),
+            'role': (u.get('custom_role') or u.get('role') or 'teacher').replace('_', ' ').title(),
+            'last_active': u.get('last_active') or u.get('created_at') or '—',
+            'department': u.get('department') or '',
+            'can_delete': uid != current_id,
+        })
+    for su in db.student_users.find({}, {'password': 0}):
+        student = db.students.find_one({'id': su.get('student_id')}) or {}
+        uid = str(su.get('_id'))
+        name = student.get('name') or su.get('email') or 'Student'
+        people.append({
+            'id': uid,
+            'kind': 'student',
+            'student_id': su.get('student_id') or '',
+            'name': name,
+            'first_name': name.split(' ')[0] if name else '',
+            'last_name': ' '.join(name.split(' ')[1:]) if name and ' ' in name else '',
+            'email': su.get('email') or student.get('email') or '',
+            'role': 'Student',
+            'last_active': student.get('last_active') or student.get('created_at') or '—',
+            'department': student.get('department') or student.get('student_class') or '',
+            'can_delete': True,
+        })
+    people.sort(key=lambda p: (p['role'], p['name'] or ''))
+    return people
+
+
+def _find_monitor_user(kind, user_id):
+    try:
+        oid = ObjectId(user_id)
+    except Exception:
+        return None
+    if kind == 'admin':
+        return db.admins.find_one({'_id': oid})
+    if kind == 'staff':
+        return db.users.find_one({'_id': oid})
+    if kind == 'student':
+        return db.student_users.find_one({'_id': oid})
+    return None
+
+
 @app.route('/admin/utility/users')
 def utility_users_monitor():
     if not _admin_required():
         return redirect(url_for('login'))
-    people = []
-    for a in db.admins.find({}, {'password': 0}):
-        people.append({
-            'name': a.get('name') or a.get('email') or 'Admin',
-            'email': a.get('email', ''),
+    people = _monitor_people()
+    per_page = 20
+    try:
+        page = max(1, int(request.args.get('page', 1)))
+    except (TypeError, ValueError):
+        page = 1
+    total = len(people)
+    pages = max(1, (total + per_page - 1) // per_page) if total else 1
+    page = min(page, pages)
+    start = (page - 1) * per_page
+    page_people = people[start:start + per_page]
+    return render_template(
+        'admin_users_monitor.html',
+        people=page_people,
+        page=page,
+        pages=pages,
+        per_page=per_page,
+        total=total,
+        start=start + 1 if total else 0,
+        end=min(start + per_page, total),
+    )
+
+
+@app.route('/admin/utility/users/<kind>/<user_id>', methods=['GET', 'POST'])
+def utility_user_edit(kind, user_id):
+    if not _admin_required():
+        return redirect(url_for('login'))
+    if kind not in ('admin', 'staff', 'student'):
+        flash('User not found.')
+        return redirect(url_for('utility_users_monitor'))
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        flash('User not found.')
+        return redirect(url_for('utility_users_monitor'))
+
+    page = request.args.get('page') or request.form.get('page') or '1'
+    student = db.students.find_one({'id': doc.get('student_id')}) if kind == 'student' else {}
+    if kind == 'admin':
+        name = doc.get('name') or doc.get('email') or 'Admin'
+        person = {
+            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': doc.get('email', ''),
             'role': 'Super Admin',
-            'status': 'Active' if a.get('last_active') else 'Registered',
-            'last_active': a.get('last_active') or a.get('created_at') or '—',
-            'department': a.get('department') or '—',
-        })
-    for u in db.users.find({}, {'password': 0}):
-        name = u.get('name') or f"{u.get('first_name', '')} {u.get('last_name', '')}".strip() or u.get('email')
-        people.append({
-            'name': name,
-            'email': u.get('email', ''),
-            'role': (u.get('custom_role') or u.get('role') or 'teacher').replace('_', ' ').title(),
-            'status': 'Active' if u.get('last_active') else 'Registered',
-            'last_active': u.get('last_active') or u.get('created_at') or '—',
-            'department': u.get('department') or '—',
-        })
-    for su in db.student_users.find({}, {'password': 0}):
-        student = db.students.find_one({'id': su.get('student_id')}) or {}
-        people.append({
-            'name': student.get('name') or su.get('email') or 'Student',
-            'email': su.get('email') or student.get('email') or '',
+            'department': doc.get('department') or '',
+        }
+    elif kind == 'staff':
+        name = doc.get('name') or f"{doc.get('first_name', '')} {doc.get('last_name', '')}".strip() or doc.get('email')
+        person = {
+            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': doc.get('email', ''),
+            'role': (doc.get('custom_role') or doc.get('role') or 'teacher').replace('_', ' ').title(),
+            'department': doc.get('department') or '',
+        }
+    else:
+        name = (student or {}).get('name') or doc.get('email') or 'Student'
+        person = {
+            'first_name': name.split(' ')[0] if name else '',
+            'last_name': ' '.join(name.split(' ')[1:]) if name and ' ' in name else '',
+            'email': doc.get('email') or (student or {}).get('email') or '',
             'role': 'Student',
-            'status': 'Registered',
-            'last_active': student.get('last_active') or '—',
-            'department': student.get('department') or student.get('student_class') or '—',
-        })
-    people.sort(key=lambda p: (p['role'], p['name'] or ''))
-    return render_template('admin_users_monitor.html', people=people)
+            'department': (student or {}).get('department') or (student or {}).get('student_class') or '',
+        }
+
+    if request.method == 'POST':
+        first_name = (request.form.get('first_name') or '').strip()
+        last_name = (request.form.get('last_name') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        department = (request.form.get('department') or '').strip()
+        name = f'{first_name} {last_name}'.strip() or email.split('@')[0]
+        if not email or '@' not in email:
+            flash('Enter a valid email address.')
+            return redirect(url_for('utility_user_edit', kind=kind, user_id=user_id, page=page))
+        current_email = (doc.get('email') or '').strip().lower()
+        if email != current_email and _email_in_use(email):
+            flash(f'{email} is already registered.')
+            return redirect(url_for('utility_user_edit', kind=kind, user_id=user_id, page=page))
+        oid = ObjectId(user_id)
+        if kind == 'admin':
+            db.admins.update_one({'_id': oid}, {'$set': {
+                'first_name': first_name, 'last_name': last_name, 'name': name,
+                'email': email, 'department': department,
+            }})
+            if str(oid) == str(session.get('user_id')):
+                session['username'] = name
+                session['email'] = email
+                session.modified = True
+        elif kind == 'staff':
+            db.users.update_one({'_id': oid}, {'$set': {
+                'first_name': first_name, 'last_name': last_name, 'name': name,
+                'email': email, 'department': department,
+            }})
+        else:
+            db.student_users.update_one({'_id': oid}, {'$set': {'email': email}})
+            if doc.get('student_id'):
+                db.students.update_one({'id': doc.get('student_id')}, {'$set': {
+                    'name': name, 'email': email, 'department': department,
+                }})
+        flash('User updated.')
+        return redirect(url_for('utility_users_monitor', page=page))
+
+    return render_template(
+        'admin_user_edit.html',
+        person=person,
+        kind=kind,
+        user_id=user_id,
+        page=page,
+        departments=UTILITY_DEPARTMENTS,
+    )
+
+
+@app.route('/admin/utility/users/<kind>/<user_id>/delete', methods=['POST'])
+def utility_user_delete(kind, user_id):
+    if not _admin_required():
+        return redirect(url_for('login'))
+    page = request.form.get('page') or '1'
+    if kind not in ('admin', 'staff', 'student'):
+        flash('User not found.')
+        return redirect(url_for('utility_users_monitor', page=page))
+    if kind != 'student' and str(user_id) == str(session.get('user_id')):
+        flash('You cannot delete your own account.')
+        return redirect(url_for('utility_users_monitor', page=page))
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        flash('User not found.')
+        return redirect(url_for('utility_users_monitor', page=page))
+    try:
+        oid = ObjectId(user_id)
+        if kind == 'admin':
+            if db.admins.count_documents({}) <= 1:
+                flash('Cannot delete the last Super Admin.')
+                return redirect(url_for('utility_users_monitor', page=page))
+            db.admins.delete_one({'_id': oid})
+        elif kind == 'staff':
+            db.users.delete_one({'_id': oid})
+            db.teacher_mappings.delete_many({'teacher_id': user_id})
+        else:
+            student_id = doc.get('student_id')
+            db.student_users.delete_one({'_id': oid})
+            if student_id:
+                db.students.delete_one({'id': student_id})
+        log_notification(
+            'User deleted',
+            f"{session.get('username')} removed {doc.get('email') or user_id} from Users Monitor.",
+            role_target='admin',
+        )
+        flash('User deleted.')
+    except Exception as e:
+        flash(f'Could not delete user: {e}')
+    return redirect(url_for('utility_users_monitor', page=page))
 
 
 @app.route('/admin/utility/roles')
@@ -3487,18 +3676,20 @@ def admin_profile():
             # Save directly to GridFS
             file_id = fs.put(photo, filename=unique_filename, content_type=photo.content_type)
             photo_url = url_for('get_file', file_id=str(file_id))
+        name = f"{first_name} {last_name}".strip()
         collection.update_one({'_id': ObjectId(user_id)}, {'$set': {
             'first_name': first_name,
             'last_name': last_name,
+            'name': name or user.get('name') or user.get('email', '').split('@')[0],
             'phone': phone,
             'bio': bio,
             'photo_url': photo_url
         }})
         
-        # Update session variables
-        name = f"{first_name} {last_name}".strip()
+        # Update session so the header banner shows the new photo immediately
         session['username'] = name if name else user.get('email', '').split('@')[0]
         session['photo_url'] = photo_url
+        session.modified = True
         
         flash('Admin profile updated successfully!')
         return redirect(url_for('admin_profile'))

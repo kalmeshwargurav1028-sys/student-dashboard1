@@ -14,7 +14,7 @@
             </div>
             <div class="flex items-center gap-3 sm:gap-4 relative z-10 min-w-0">
                 <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
-                    <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="Indus Portal" class="h-full w-full object-contain rounded-lg">
+                    <img src="{{ url_for('static', filename='images/admin-banner-cartoon.png') }}" alt="Administration" class="h-full w-full object-contain rounded-lg">
                 </div>
                 <div class="min-w-0">
                     <p class="text-xs sm:text-sm text-sky-100 font-medium">Welcome back</p>
@@ -29,7 +29,11 @@
                         <span class="text-[10px] uppercase font-bold tracking-wider text-sky-100">Manage Settings</span>
                     </div>
                     <div class="relative h-10 w-10 rounded-xl overflow-hidden border border-white/20 bg-white flex items-center justify-center shrink-0">
-                        <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="" class="h-full w-full object-contain">
+                        {% if session.get('photo_url') %}
+                        <img src="{{ session.get('photo_url') }}" alt="Profile" class="h-full w-full object-cover">
+                        {% else %}
+                        <img src="{{ url_for('static', filename='images/admin-banner-cartoon.png') }}" alt="" class="h-full w-full object-contain">
+                        {% endif %}
                     </div>
                 </button>
                 <div data-profile-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl py-2 border border-gray-100 z-50">

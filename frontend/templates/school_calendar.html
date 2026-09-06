@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block header_title %}School Calendar {{ academic_year_key }}{% endblock %}
+{% block header_title %}Academic Year {{ academic_year_key }}{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto py-8 px-8 sm:px-10 lg:px-12 space-y-6">
@@ -8,8 +8,27 @@
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">School Calendar</h1>
-            <p class="text-sm text-gray-500 mt-1">Academic Year {{ academic_year_key }} — holidays, terms, exams, and school events.</p>
+            <h1 class="text-2xl font-bold text-gray-900">Academic Year {{ academic_year_key }}</h1>
+            <p class="text-sm text-gray-500 mt-1">Full-year calendar — June 2026 to May 2027. Holidays, terms, exams, and school events.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Holidays</p>
+            <p class="text-2xl font-semibold text-gray-900 mt-1">{{ events | selectattr('kind', 'equalto', 'holiday') | list | length }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Terms</p>
+            <p class="text-2xl font-semibold text-gray-900 mt-1">{{ events | selectattr('kind', 'equalto', 'term') | list | length }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Exams</p>
+            <p class="text-2xl font-semibold text-gray-900 mt-1">{{ events | selectattr('kind', 'equalto', 'exam') | list | length }}</p>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-gray-400 font-semibold">Events</p>
+            <p class="text-2xl font-semibold text-gray-900 mt-1">{{ events | selectattr('kind', 'equalto', 'event') | list | length }}</p>
         </div>
     </div>
 

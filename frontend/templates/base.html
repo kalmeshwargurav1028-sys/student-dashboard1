@@ -371,19 +371,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="relative">
-                    <button type="button" id="calBtn" onclick="toggleCalMenu()" class="flex items-center gap-2 h-9 pl-2.5 pr-2 rounded-lg border border-sky-200 bg-white hover:bg-sky-50 text-slate-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none {% if request.path.startswith('/school-calendar') or request.path.startswith('/school-updates') %}border-sky-400 bg-sky-50{% endif %}" title="Academic year">
-                        <svg class="h-4 w-4 text-sky-600 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ academic_year_short }}</span>
-                        <svg data-cal-chevron class="h-3.5 w-3.5 text-slate-400 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
-                    </button>
-                    <div id="calDropdown" class="hidden absolute top-11 right-0 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-100 dark:border-gray-700 z-50 overflow-hidden">
-                        <a href="{{ url_for('school_calendar') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 dark:hover:bg-gray-700 {% if request.path.startswith('/school-calendar') %}bg-sky-50 text-sky-700 font-semibold{% endif %}">School Calendar</a>
-                        <a href="{{ url_for('school_updates') }}" class="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 dark:hover:bg-gray-700 {% if request.path.startswith('/school-updates') %}bg-sky-50 text-sky-700 font-semibold{% endif %}">Updates</a>
-                    </div>
-                </div>
+                <a href="{{ url_for('school_calendar') }}" id="calBtn" class="flex items-center gap-2 h-9 pl-2.5 pr-3 rounded-lg border border-sky-200 bg-white hover:bg-sky-50 text-slate-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none {% if request.path.startswith('/school-calendar') %}border-sky-400 bg-sky-50{% endif %}" title="Open full academic year">
+                    <svg class="h-4 w-4 text-sky-600 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ academic_year_short }}</span>
+                </a>
                 <!-- Live Date and Time -->
                 <div class="hidden md:flex flex-col text-right mr-1 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>
@@ -491,40 +484,12 @@
         // Notifications Logic
         let notifDropdownOpen = false;
         let profileDropdownOpen = false;
-        let calDropdownOpen = false;
-
-        function setCalChevron(open) {
-            const chevron = document.querySelector('[data-cal-chevron]');
-            if (chevron) chevron.classList.toggle('rotate-180', !!open);
-        }
-
-        function closeCalMenu() {
-            const dropdown = document.getElementById('calDropdown');
-            if (dropdown) dropdown.classList.add('hidden');
-            calDropdownOpen = false;
-            setCalChevron(false);
-        }
-
-        function toggleCalMenu() {
-            const dropdown = document.getElementById('calDropdown');
-            if (!dropdown) return;
-            calDropdownOpen = !calDropdownOpen;
-            dropdown.classList.toggle('hidden', !calDropdownOpen);
-            setCalChevron(calDropdownOpen);
-            if (calDropdownOpen) {
-                const notif = document.getElementById('notifDropdown');
-                if (notif) { notif.classList.add('hidden'); notifDropdownOpen = false; }
-                const profile = document.getElementById('headerProfileDropdown') || document.getElementById('profileDropdown');
-                if (profile) { profile.classList.add('hidden'); profileDropdownOpen = false; }
-            }
-        }
         
         function toggleNotifs() {
             const dropdown = document.getElementById('notifDropdown');
             notifDropdownOpen = !notifDropdownOpen;
             if(notifDropdownOpen) {
                 dropdown.classList.remove('hidden');
-                closeCalMenu();
             } else {
                 dropdown.classList.add('hidden');
             }
@@ -558,12 +523,6 @@
                 notifDropdownOpen = false;
             }
 
-            const calBtn = document.getElementById('calBtn');
-            const calDropdown = document.getElementById('calDropdown');
-            if (calBtn && calDropdown && calDropdownOpen && !calBtn.contains(e.target) && !calDropdown.contains(e.target)) {
-                closeCalMenu();
-            }
-            
             const profileBtn = document.querySelector('button[onclick="toggleProfileDropdown()"]');
             const profileDropdown = document.getElementById('headerProfileDropdown') || document.getElementById('profileDropdown');
             if(profileBtn && profileDropdown && profileDropdownOpen && !profileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
