@@ -4,22 +4,53 @@
 {% block content %}
 {% if role == 'admin' %}
 <div class="w-full py-6 px-6 sm:px-8 lg:px-10">
-    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-6">
-        <div>
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">{{ school_name }}</p>
-            <h1 class="text-2xl font-semibold text-slate-900 mt-1">Academic Year {{ academic_period }}</h1>
-            <p class="text-sm text-slate-500 mt-1">School directory and year calendar. Assessment scores stay with teachers and students.</p>
-        </div>
-        <div class="flex items-center gap-3">
-            {% if photo_url %}
-            <img src="{{ photo_url }}" alt="" class="h-10 w-10 rounded-full object-cover border border-slate-200">
-            {% endif %}
-            <div class="text-right">
-                <p class="text-sm font-medium text-slate-800">{{ display_name }}</p>
-                <p class="text-xs text-slate-400">Super Admin</p>
+    <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 mb-6">
+        <div class="flex flex-col xl:flex-row xl:items-center gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                {% if photo_url %}
+                <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
+                {% else %}
+                <div class="h-12 w-12 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="text-[11px] uppercase tracking-wide text-slate-400">Profile</p>
+                    <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
+                    <p class="text-xs text-slate-500">{{ badge }}</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 min-w-0 xl:px-4 xl:border-l xl:border-slate-100">
+                <img src="{{ logo_url }}" alt="" class="h-9 w-9 object-contain">
+                <div class="min-w-0">
+                    <p class="text-[11px] uppercase tracking-wide text-slate-400">School</p>
+                    <p class="text-sm font-medium text-slate-800 truncate">{{ school_name }}</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-end gap-3 xl:ml-auto">
+                <label class="block">
+                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">Academic period</span>
+                    <select name="period" id="ayPeriod" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[8.5rem]">
+                        {% for p in period_choices %}
+                        <option value="{{ p }}" {% if filters.period == p %}selected{% endif %}>{{ p }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+                <label class="block">
+                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">From</span>
+                    <input type="date" name="start" id="ayStart" value="{{ filters.start }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                </label>
+                <label class="block">
+                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">To</span>
+                    <input type="date" name="end" id="ayEnd" value="{{ filters.end }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                </label>
+                <button type="submit" class="inline-flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
+                    Apply filter
+                </button>
             </div>
         </div>
-    </div>
+        <p class="text-xs text-slate-400 mt-3">Year operations for {{ academic_period }}. Calendar events follow the date range.</p>
+    </form>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
@@ -91,6 +122,21 @@
         <a href="{{ url_for('admin_school_policies') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">School Policies</a>
     </div>
 </div>
+<script>
+(function () {
+    var ranges = {{ period_ranges|tojson }};
+    var period = document.getElementById('ayPeriod');
+    var start = document.getElementById('ayStart');
+    var end = document.getElementById('ayEnd');
+    if (!period || !start || !end) return;
+    period.addEventListener('change', function () {
+        var next = ranges[period.value];
+        if (!next) return;
+        start.value = next[0];
+        end.value = next[1];
+    });
+})();
+</script>
 {% else %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-5">
 

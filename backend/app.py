@@ -1909,8 +1909,21 @@ def _ay_trend_from_assignments(assignments, student_ids=None):
     return months, values
 
 
+AY_PERIODS = {
+    '2025-2026': ('2025-06-01', '2026-05-31'),
+    '2026-2027': ('2026-06-01', '2027-05-31'),
+}
+
+
 def _admin_academic_year():
     settings = db.settings.find_one({}, {'_id': 0}) or {}
+    period = (request.args.get('period') or '2026-2027').strip()
+    if period not in AY_PERIODS:
+        period = '2026-2027'
+    period_start, period_end = AY_PERIODS[period]
+    start = (request.args.get('start') or period_start).strip() or period_start
+    end = (request.args.get('end') or period_end).strip() or period_end
+
     students = list(db.students.find({}, {'_id': 0, 'password': 0}))
     teachers = [t for t in db.users.find({}, {'password': 0}) if (t.get('role') or 'teacher') == 'teacher']
     admins = list(db.admins.find({}, {'password': 0}))
@@ -1936,7 +1949,7 @@ def _admin_academic_year():
     for row in class_rows:
         row['pct'] = round(100.0 * row['count'] / class_max, 1) if class_max else 0
 
-    events = _get_school_calendar_events()
+    events = [e for e in _get_school_calendar_events() if _ay_in_range(e.get('date'), start, end)]
     event_counts = {
         'holiday': sum(1 for e in events if e.get('kind') == 'holiday'),
         'term': sum(1 for e in events if e.get('kind') == 'term'),
@@ -1945,7 +1958,9 @@ def _admin_academic_year():
     }
     return {
         'academic_year_key': ACADEMIC_YEAR_KEY,
-        'academic_period': '2026-2027',
+        'academic_period': period,
+        'period_choices': list(AY_PERIODS.keys()),
+        'period_ranges': AY_PERIODS,
         'school_name': _ay_school_name(),
         'role': 'admin',
         'display_name': session.get('username') or 'Admin',
@@ -1974,7 +1989,7 @@ def _admin_academic_year():
         'subject_choices': [],
         'grade_choices': [],
         'student_choices': [],
-        'filters': {},
+        'filters': {'period': period, 'start': start, 'end': end},
         'badge': 'Super Admin',
         'subtitle': '',
         'tip': '',
@@ -3175,7 +3190,7 @@ def _monitor_people():
             'last_name': a.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
             'email': a.get('email', ''),
             'role': 'Super Admin',
-            'last_active': a.get('last_active') or a.get('created_at') or '—',
+            'last_active': _monitor_when(a.get('last_active') or a.get('created_at')),
             'department': a.get('department') or '',
             'can_delete': uid != current_id,
         })
@@ -3190,7 +3205,7 @@ def _monitor_people():
             'last_name': u.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
             'email': u.get('email', ''),
             'role': (u.get('custom_role') or u.get('role') or 'teacher').replace('_', ' ').title(),
-            'last_active': u.get('last_active') or u.get('created_at') or '—',
+            'last_active': _monitor_when(u.get('last_active') or u.get('created_at')),
             'department': u.get('department') or '',
             'can_delete': uid != current_id,
         })
@@ -3207,7 +3222,7 @@ def _monitor_people():
             'last_name': ' '.join(name.split(' ')[1:]) if name and ' ' in name else '',
             'email': su.get('email') or student.get('email') or '',
             'role': 'Student',
-            'last_active': student.get('last_active') or student.get('created_at') or '—',
+            'last_active': _monitor_when(student.get('last_active') or student.get('created_at')),
             'department': student.get('department') or student.get('student_class') or '',
             'can_delete': True,
         })
@@ -3215,18 +3230,26 @@ def _monitor_people():
     return people
 
 
+def _monitor_when(value):
+    if not value:
+        return '—'
+    if hasattr(value, 'strftime'):
+        return value.strftime('%Y-%m-%d %H:%M')
+    text = str(value).replace('T', ' ')
+    return text[:16] if len(text) >= 16 else text
+
+
 def _find_monitor_user(kind, user_id):
-    try:
-        oid = ObjectId(user_id)
-    except Exception:
+    coll = {'admin': db.admins, 'staff': db.users, 'student': db.student_users}.get(kind)
+    if coll is None or not user_id:
         return None
-    if kind == 'admin':
-        return db.admins.find_one({'_id': oid})
-    if kind == 'staff':
-        return db.users.find_one({'_id': oid})
-    if kind == 'student':
-        return db.student_users.find_one({'_id': oid})
-    return None
+    try:
+        doc = coll.find_one({'_id': ObjectId(user_id)})
+        if doc:
+            return doc
+    except Exception:
+        pass
+    return coll.find_one({'_id': user_id}) or coll.find_one({'email': user_id})
 
 
 @app.route('/admin/utility/users')
@@ -3311,7 +3334,7 @@ def utility_user_edit(kind, user_id):
         if email != current_email and _email_in_use(email):
             flash(f'{email} is already registered.')
             return redirect(url_for('utility_user_edit', kind=kind, user_id=user_id, page=page))
-        oid = ObjectId(user_id)
+        oid = doc.get('_id')
         if kind == 'admin':
             db.admins.update_one({'_id': oid}, {'$set': {
                 'first_name': first_name, 'last_name': last_name, 'name': name,
@@ -3345,11 +3368,13 @@ def utility_user_edit(kind, user_id):
     )
 
 
-@app.route('/admin/utility/users/<kind>/<user_id>/delete', methods=['POST'])
+@app.route('/admin/utility/users/<kind>/<user_id>/delete', methods=['GET', 'POST'])
 def utility_user_delete(kind, user_id):
     if not _admin_required():
         return redirect(url_for('login'))
-    page = request.form.get('page') or '1'
+    page = request.form.get('page') or request.args.get('page') or '1'
+    if request.method != 'POST':
+        return redirect(url_for('utility_users_monitor', page=page))
     if kind not in ('admin', 'staff', 'student'):
         flash('User not found.')
         return redirect(url_for('utility_users_monitor', page=page))
@@ -3361,7 +3386,7 @@ def utility_user_delete(kind, user_id):
         flash('User not found.')
         return redirect(url_for('utility_users_monitor', page=page))
     try:
-        oid = ObjectId(user_id)
+        oid = doc.get('_id')
         if kind == 'admin':
             if db.admins.count_documents({}) <= 1:
                 flash('Cannot delete the last Super Admin.')
