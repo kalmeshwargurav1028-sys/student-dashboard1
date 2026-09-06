@@ -1761,42 +1761,374 @@ def _get_school_calendar_events():
     return out
 
 
+AY_SUBJECTS = ['Mathematics', 'Science', 'English', 'Social Studies', 'Physics', 'Chemistry', 'Biology']
+AY_START = '2026-06-01'
+AY_END = '2027-05-31'
+
+
+def _ay_float(value, default=0.0):
+    try:
+        if value is None or value == '' or value == '-':
+            return default
+        return float(str(value).replace('%', '').strip())
+    except (TypeError, ValueError):
+        return default
+
+
+def _ay_in_range(date_str, start, end):
+    if not date_str:
+        return True
+    day = str(date_str)[:10]
+    return start <= day <= end
+
+
+def _ay_category(assignment):
+    raw = (assignment.get('gradebook_category') or '').strip().lower()
+    if raw in ('quiz', 'wt', 'weekly', 'weekly test'):
+        return 'WT'
+    if raw in ('sdl', 'self directed', 'self-directed'):
+        return 'SDL'
+    if raw in ('project', 'steam'):
+        return 'STEAM'
+    if raw in ('exam', 'sa', 'summative'):
+        return 'SA'
+    return 'FA'
+
+
+def _ay_pg_tone(score):
+    if score >= 85:
+        return 'good'
+    if score >= 70:
+        return 'average'
+    return 'low'
+
+
+def _ay_school_name():
+    settings = db.settings.find_one({}, {'school_name': 1}) or {}
+    return (settings.get('school_name') or 'Indus International School, Bangalore').strip()
+
+
+def _ay_empty_cell():
+    return {'tasks': 0, 'score': None}
+
+
+def _ay_subject_row(name):
+    return {
+        'name': name,
+        'FA': _ay_empty_cell(),
+        'WT': _ay_empty_cell(),
+        'SDL': _ay_empty_cell(),
+        'STEAM': _ay_empty_cell(),
+        'FA_TOTAL': _ay_empty_cell(),
+        'pg': None,
+        'sa': None,
+        'pg_tone': 'low',
+    }
+
+
+def _ay_fill_row(row):
+    fa_scores = []
+    fa_tasks = 0
+    for key in ('FA', 'WT', 'SDL', 'STEAM'):
+        cell = row[key]
+        fa_tasks += cell['tasks']
+        if cell['score'] is not None:
+            fa_scores.append(cell['score'])
+    row['FA_TOTAL'] = {
+        'tasks': fa_tasks,
+        'score': round(sum(fa_scores) / len(fa_scores), 1) if fa_scores else None,
+    }
+    scores = [c['score'] for c in (row['FA'], row['WT'], row['SDL'], row['STEAM']) if c['score'] is not None]
+    if row['sa'] is not None:
+        scores.append(row['sa'])
+    if row['pg'] is None and scores:
+        row['pg'] = round(sum(scores) / len(scores), 1)
+    if row['pg'] is not None:
+        row['pg_tone'] = _ay_pg_tone(row['pg'])
+    return row
+
+
+def _ay_add_assignment_to_row(row, assignment, student_ids=None):
+    cat = _ay_category(assignment)
+    if cat == 'SA':
+        grades = []
+        for sub in assignment.get('submissions') or []:
+            if student_ids is not None and sub.get('student_id') not in student_ids:
+                continue
+            if sub.get('grade') not in (None, ''):
+                grades.append(_ay_float(sub.get('grade')))
+        if grades:
+            score = round(sum(grades) / len(grades), 1)
+            row['sa'] = score if row['sa'] is None else round((row['sa'] + score) / 2, 1)
+        return
+    cell = row[cat]
+    cell['tasks'] += 1
+    grades = []
+    for sub in assignment.get('submissions') or []:
+        if student_ids is not None and sub.get('student_id') not in student_ids:
+            continue
+        if sub.get('grade') not in (None, ''):
+            grades.append(_ay_float(sub.get('grade')))
+    if grades:
+        score = round(sum(grades) / len(grades), 1)
+        cell['score'] = score if cell['score'] is None else round((cell['score'] + score) / 2, 1)
+
+
+def _ay_apply_gradebook(row, grade):
+    ca = _ay_float(grade.get('ca_mark'))
+    exam = _ay_float(grade.get('exam_mark'))
+    if grade.get('ca_mark') not in (None, ''):
+        cell = row['FA']
+        cell['tasks'] = max(cell['tasks'], 1)
+        cell['score'] = ca if cell['score'] is None else round((cell['score'] + ca) / 2, 1)
+    if grade.get('exam_mark') not in (None, ''):
+        row['sa'] = exam if row['sa'] is None else round((row['sa'] + exam) / 2, 1)
+    if grade.get('ca_mark') not in (None, '') or grade.get('exam_mark') not in (None, ''):
+        total = ca + exam
+        row['pg'] = total if row['pg'] is None else round((row['pg'] + total) / 2, 1)
+
+
+def _ay_trend_from_assignments(assignments, student_ids=None):
+    months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']
+    buckets = {m: [] for m in months}
+    month_ix = {'06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov',
+                '12': 'Dec', '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May'}
+    for a in assignments:
+        due = str(a.get('due_date') or '')[:10]
+        key = month_ix.get(due[5:7] if len(due) >= 7 else '')
+        if not key:
+            continue
+        for sub in a.get('submissions') or []:
+            if student_ids is not None and sub.get('student_id') not in student_ids:
+                continue
+            if sub.get('grade') not in (None, ''):
+                buckets[key].append(_ay_float(sub.get('grade')))
+    values = []
+    for m in months:
+        values.append(round(sum(buckets[m]) / len(buckets[m]), 1) if buckets[m] else None)
+    return months, values
+
+
+def _academic_year_dashboard():
+    role = session.get('role') or 'teacher'
+    subject_filter = (request.args.get('subject') or '').strip()
+    grade_filter = (request.args.get('grade') or '').strip()
+    student_filter = (request.args.get('student_id') or '').strip()
+    start = (request.args.get('start') or AY_START).strip() or AY_START
+    end = (request.args.get('end') or AY_END).strip() or AY_END
+
+    school_name = _ay_school_name()
+    settings = db.settings.find_one({}, {'_id': 0}) or {}
+    photo = session.get('photo_url') or ''
+    display_name = session.get('username') or 'User'
+    badge = 'Teacher'
+    subtitle = 'Class performance for the academic year'
+    tip = 'Teacher tip: This table shows class averages across assessment types.'
+
+    students = []
+    assignments = list(db.assignments.find({}))
+    grades = list(db.grades.find({}, {'_id': 0}))
+    subject_choices = list(AY_SUBJECTS)
+    grade_choices = []
+    student_choices = []
+
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
+        students = [student] if student else []
+        display_name = student.get('name') or display_name
+        photo = student.get('photo_url') or photo
+        badge = student.get('student_class') or student.get('grade') or 'Student'
+        if badge and not str(badge).lower().startswith('grade'):
+            badge = f'Grade {badge}' if str(badge)[0].isdigit() else badge
+        subtitle = 'Your performance for the full academic year'
+        tip = 'Student tip: This table shows your performance across different assessment types.'
+        cls = student.get('student_class')
+        assignments = [
+            a for a in assignments
+            if (not cls or a.get('class_name') in (cls, student.get('student_class')) or not a.get('class_name'))
+        ]
+    elif role == 'teacher':
+        students = list(db.students.find(get_student_query(), {'_id': 0}))
+        badge = 'Teacher'
+        mappings = list(db.teacher_mappings.find({'teacher_id': session.get('user_id')}))
+        mapped_subjects = sorted({m.get('subject') for m in mappings if m.get('subject')})
+        if mapped_subjects:
+            subject_choices = mapped_subjects
+        teacher_id = session.get('user_id')
+        assignments = [a for a in assignments if a.get('teacher_id') == teacher_id or not teacher_id]
+        student_choices = [{'id': s.get('id'), 'name': s.get('name')} for s in students if s.get('id')]
+        if student_filter:
+            students = [s for s in students if s.get('id') == student_filter]
+        subtitle = 'Class averages and students who need support'
+        tip = 'Teacher tip: Rows are class averages. Filter a student to see one learner.'
+    else:
+        students = list(db.students.find({}, {'_id': 0}))
+        badge = 'Super Admin'
+        display_name = session.get('username') or 'Admin'
+        subtitle = 'School-wide academic year performance'
+        tip = 'Admin tip: This matrix is school-wide. Filter by grade or subject to focus.'
+        grade_choices = sorted({str(s.get('student_class') or '').strip() for s in students if s.get('student_class')})
+        if grade_filter:
+            students = [s for s in students if str(s.get('student_class') or '') == grade_filter]
+
+    assignments = [a for a in assignments if _ay_in_range(a.get('due_date') or a.get('created_at'), start, end)]
+    if subject_filter:
+        assignments = [a for a in assignments if (a.get('subject') or '') == subject_filter]
+
+    student_ids = {s.get('id') for s in students if s.get('id')}
+    grades = [g for g in grades if g.get('student_id') in student_ids]
+    if subject_filter:
+        grades = [g for g in grades if (g.get('subject') or '') == subject_filter]
+
+    extra_subjects = []
+    for g in grades:
+        name = g.get('subject')
+        if name and name not in subject_choices and name not in extra_subjects:
+            extra_subjects.append(name)
+    for a in assignments:
+        name = a.get('subject')
+        if name and name not in subject_choices and name not in extra_subjects:
+            extra_subjects.append(name)
+    matrix_subjects = [s for s in subject_choices if not subject_filter or s == subject_filter]
+    for name in extra_subjects:
+        if not subject_filter or name == subject_filter:
+            matrix_subjects.append(name)
+    if not matrix_subjects:
+        matrix_subjects = list(AY_SUBJECTS[:4])
+
+    rows_map = {name: _ay_subject_row(name) for name in matrix_subjects}
+    for a in assignments:
+        name = a.get('subject') or 'General'
+        if name not in rows_map:
+            if subject_filter and name != subject_filter:
+                continue
+            rows_map[name] = _ay_subject_row(name)
+        scope = student_ids if role != 'admin' or student_ids else None
+        if role == 'student':
+            scope = student_ids
+        _ay_add_assignment_to_row(rows_map[name], a, scope)
+    for g in grades:
+        name = g.get('subject')
+        if not name:
+            continue
+        if name not in rows_map:
+            rows_map[name] = _ay_subject_row(name)
+        _ay_apply_gradebook(rows_map[name], g)
+        if rows_map[name]['pg'] is None:
+            perf = None
+            for s in students:
+                if s.get('id') == g.get('student_id'):
+                    perf = _ay_float(s.get('performance')) or None
+                    break
+            if perf:
+                rows_map[name]['pg'] = perf
+
+    matrix = [_ay_fill_row(rows_map[name]) for name in rows_map]
+    matrix.sort(key=lambda r: r['name'])
+
+    pg_vals = [r['pg'] for r in matrix if r['pg'] is not None]
+    total_assessments = sum((r['FA']['tasks'] + r['WT']['tasks'] + r['SDL']['tasks'] + r['STEAM']['tasks']) for r in matrix)
+    avg_score = round(sum(pg_vals) / len(pg_vals), 1) if pg_vals else 0
+    best = max(matrix, key=lambda r: r['pg'] if r['pg'] is not None else -1) if pg_vals else None
+    worst = min(matrix, key=lambda r: r['pg'] if r['pg'] is not None else 999) if pg_vals else None
+
+    if role == 'student':
+        kpis = [
+            {'label': 'Total Assessments', 'value': total_assessments, 'tone': 'blue'},
+            {'label': 'Average Score', 'value': avg_score, 'tone': 'green'},
+            {'label': 'Good Performing Subject', 'value': (best or {}).get('name') or '—', 'tone': 'good'},
+            {'label': 'Lowest Performing Subject', 'value': (worst or {}).get('name') or '—', 'tone': 'low'},
+        ]
+        insights = [
+            {'title': 'Study Strategy', 'icon': 'bulb', 'text': f"Focus extra practice on {(worst or {}).get('name') or 'your weaker subjects'} this term."},
+            {'title': 'Progress Alert', 'icon': 'chart', 'text': f"Your academic-year average is {avg_score}." if pg_vals else 'No scored assessments yet for this period.'},
+            {'title': 'Target Focus', 'icon': 'target', 'text': 'Aim for 80+ in every subject to stay in the Good band.'},
+            {'title': 'Time Management', 'icon': 'clock', 'text': f"Give more weekly time to {(worst or {}).get('name') or 'subjects still without scores'}."},
+        ]
+    elif role == 'teacher':
+        below = 0
+        for s in students:
+            perf = _ay_float(s.get('performance'))
+            if perf and perf < 60:
+                below += 1
+        kpis = [
+            {'label': 'Class Assessments', 'value': total_assessments, 'tone': 'blue'},
+            {'label': 'Class Average', 'value': avg_score, 'tone': 'green'},
+            {'label': 'Strongest Subject', 'value': (best or {}).get('name') or '—', 'tone': 'good'},
+            {'label': 'Students Needing Support', 'value': below, 'tone': 'low'},
+        ]
+        insights = [
+            {'title': 'Class Focus', 'icon': 'bulb', 'text': f"{(worst or {}).get('name') or 'One subject'} is the weakest class average this year."},
+            {'title': 'Support Alert', 'icon': 'chart', 'text': f"{below} student(s) are below 60 overall."},
+            {'title': 'Target Focus', 'icon': 'target', 'text': 'Move the class average toward 80+ across mapped subjects.'},
+            {'title': 'Planning', 'icon': 'clock', 'text': f"{total_assessments} assessments fall in the selected academic-year range."},
+        ]
+    else:
+        class_avgs = {}
+        for s in students:
+            cls = s.get('student_class') or '—'
+            class_avgs.setdefault(cls, []).append(_ay_float(s.get('performance')))
+        lowest_class = None
+        lowest_val = 101
+        for cls, vals in class_avgs.items():
+            if vals:
+                avg = sum(vals) / len(vals)
+                if avg < lowest_val:
+                    lowest_val = avg
+                    lowest_class = cls
+        kpis = [
+            {'label': 'School Assessments', 'value': total_assessments, 'tone': 'blue'},
+            {'label': 'School Average', 'value': avg_score, 'tone': 'green'},
+            {'label': 'Strongest Subject', 'value': (best or {}).get('name') or '—', 'tone': 'good'},
+            {'label': 'Lowest Grade Band', 'value': lowest_class or '—', 'tone': 'low'},
+        ]
+        insights = [
+            {'title': 'School Snapshot', 'icon': 'bulb', 'text': f"{len(students)} students are included in this academic-year view."},
+            {'title': 'Subject Alert', 'icon': 'chart', 'text': f"{(worst or {}).get('name') or 'A subject'} is the lowest school-wide average."},
+            {'title': 'Grade Focus', 'icon': 'target', 'text': f"{lowest_class or 'A grade'} needs the most academic support." if lowest_class else 'No class averages yet.'},
+            {'title': 'Coverage', 'icon': 'clock', 'text': f"{total_assessments} assessments recorded from {start} to {end}."},
+        ]
+
+    months, trend = _ay_trend_from_assignments(assignments, student_ids if role == 'student' else (student_ids or None))
+    if all(v is None for v in trend) and pg_vals:
+        trend = [None] * 11 + [avg_score]
+
+    return {
+        'academic_year_key': ACADEMIC_YEAR_KEY,
+        'academic_period': '2026-2027',
+        'school_name': school_name,
+        'role': role,
+        'display_name': display_name,
+        'photo_url': photo,
+        'badge': badge,
+        'subtitle': subtitle,
+        'tip': tip,
+        'kpis': kpis,
+        'insights': insights,
+        'matrix': matrix,
+        'trend_labels': months,
+        'trend_values': trend,
+        'subject_choices': subject_choices,
+        'grade_choices': grade_choices,
+        'student_choices': student_choices,
+        'filters': {
+            'subject': subject_filter,
+            'grade': grade_filter,
+            'student_id': student_filter,
+            'start': start,
+            'end': end,
+        },
+        'logo_url': settings.get('logo_url') or url_for('static', filename='images/logo.png'),
+    }
+
+
 @app.route('/school-calendar', methods=['GET', 'POST'])
 def school_calendar():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     if request.method == 'POST':
-        if session.get('role') != 'admin':
-            return redirect(url_for('school_calendar'))
-        action = request.form.get('action')
-        if action == 'add':
-            title = (request.form.get('title') or '').strip()
-            date = (request.form.get('date') or '').strip()
-            kind = (request.form.get('kind') or 'event').strip()
-            notes = (request.form.get('notes') or '').strip()
-            if title and date:
-                db.school_calendar.insert_one({
-                    'academic_year': ACADEMIC_YEAR_KEY,
-                    'title': title,
-                    'date': date,
-                    'kind': kind if kind in ('holiday', 'term', 'exam', 'event') else 'event',
-                    'notes': notes,
-                    'updated_by': session.get('username'),
-                })
-        elif action == 'delete':
-            event_id = request.form.get('id')
-            if event_id:
-                try:
-                    db.school_calendar.delete_one({'_id': ObjectId(event_id)})
-                except Exception:
-                    pass
-        return redirect(url_for('school_calendar'))
-    events = _get_school_calendar_events()
-    return render_template(
-        'school_calendar.html',
-        events=events,
-        academic_year_key=ACADEMIC_YEAR_KEY,
-    )
+        return redirect(url_for('school_calendar', **request.args))
+    return render_template('academic_year.html', **_academic_year_dashboard())
 
 
 @app.route('/school-updates')

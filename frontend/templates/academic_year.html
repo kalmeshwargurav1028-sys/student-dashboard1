@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+{% block header_title %}Academic Year {{ academic_year_key }}{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-5">
+
+    <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-5">
+        <div class="flex flex-col xl:flex-row xl:items-center gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+                {% if photo_url %}
+                <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
+                {% else %}
+                <div class="h-12 w-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
+                {% endif %}
+                <div class="min-w-0">
+                    <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
+                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">{{ badge }}</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 min-w-0 xl:px-4 xl:border-l xl:border-slate-100">
+                <img src="{{ logo_url }}" alt="" class="h-9 w-9 object-contain">
+                <p class="text-sm font-medium text-slate-700 truncate">{{ school_name }}</p>
+            </div>
+
+            <div class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                <span class="text-slate-400 text-xs uppercase tracking-wide">Period</span>
+                <span class="font-semibold text-slate-800">{{ academic_period }}</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
+                {% if role == 'admin' and grade_choices %}
+                <select name="grade" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                    <option value="">All grades</option>
+                    {% for g in grade_choices %}
+                    <option value="{{ g }}" {% if filters.grade == g %}selected{% endif %}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                {% if role == 'teacher' and student_choices %}
+                <select name="student_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                    <option value="">All students</option>
+                    {% for s in student_choices %}
+                    <option value="{{ s.id }}" {% if filters.student_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                <select name="subject" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                    <option value="">All Subjects</option>
+                    {% for s in subject_choices %}
+                    <option value="{{ s }}" {% if filters.subject == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+                <input type="date" name="start" value="{{ filters.start }}" min="2026-06-01" max="2027-05-31" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                <input type="date" name="end" value="{{ filters.end }}" min="2026-06-01" max="2027-05-31" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                <button type="submit" class="inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    Apply
+                </button>
+            </div>
+        </div>
+        <p class="text-xs text-slate-400 mt-3">{{ subtitle }}</p>
+    </form>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {% for card in kpis %}
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-start justify-between {% if card.tone == 'good' %}bg-emerald-50/70 border-emerald-100{% elif card.tone == 'low' %}bg-rose-50/70 border-rose-100{% endif %}">
+            <div>
+                <p class="text-xs font-medium text-slate-500">{{ card.label }}</p>
+                <p class="mt-2 text-2xl font-semibold {% if card.tone == 'good' %}text-emerald-700{% elif card.tone == 'low' %}text-rose-600{% else %}text-slate-900{% endif %}">{{ card.value }}</p>
+            </div>
+            <div class="h-10 w-10 rounded-xl flex items-center justify-center
+                {% if card.tone == 'blue' %}bg-sky-100 text-sky-600
+                {% elif card.tone == 'green' %}bg-emerald-100 text-emerald-600
+                {% elif card.tone == 'good' %}bg-emerald-100 text-emerald-600
+                {% else %}bg-rose-100 text-rose-500{% endif %}">
+                {% if card.tone == 'blue' %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                {% elif card.tone == 'green' %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                {% elif card.tone == 'good' %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+                {% else %}
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-base font-semibold text-slate-900">Performance Insights</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+                {% if role == 'student' %}AI-powered analysis and personalized tips
+                {% elif role == 'teacher' %}Class-level analysis for your mapped students
+                {% else %}School-wide analysis for the academic year{% endif %}
+            </p>
+            <div class="mt-4 space-y-3">
+                {% for item in insights %}
+                <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
+                    <div class="h-9 w-9 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+                        {% if item.icon == 'bulb' %}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        {% elif item.icon == 'chart' %}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        {% elif item.icon == 'target' %}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {% else %}
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <p class="text-sm font-semibold text-slate-800">{{ item.title }}</p>
+                        <p class="text-sm text-slate-500 mt-0.5">{{ item.text }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
+            <h2 class="text-base font-semibold text-slate-900">PG Score Trends</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+                {% if role == 'student' %}Performance growth over the academic year
+                {% elif role == 'teacher' %}Class performance growth across the year
+                {% else %}School performance growth across the year{% endif %}
+            </p>
+            <div class="mt-4 h-64">
+                <canvas id="ayTrend"></canvas>
+            </div>
+            <div class="flex flex-wrap gap-4 mt-3 text-xs text-slate-500">
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-violet-500"></span> PG Score</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-rose-400"></span> Below 60</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> 60–79</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> 80+</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="px-5 pt-5 pb-3">
+            <h2 class="text-base font-semibold text-slate-900">Assessment Performance Matrix</h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+                {% if role == 'student' %}Your performance across different assessment types
+                {% elif role == 'teacher' %}Class averages across different assessment types
+                {% else %}School averages across different assessment types{% endif %}
+            </p>
+            <div class="mt-3 rounded-lg bg-sky-50 text-sky-800 text-sm px-3 py-2 flex items-start gap-2">
+                <svg class="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
+                <span>{{ tip }}</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                    <tr>
+                        <th class="px-5 py-3">Subject</th>
+                        <th class="px-3 py-3">FA</th>
+                        <th class="px-3 py-3">WT</th>
+                        <th class="px-3 py-3">SDL</th>
+                        <th class="px-3 py-3">STEAM</th>
+                        <th class="px-3 py-3">FA Total Score</th>
+                        <th class="px-3 py-3">PG Score</th>
+                        <th class="px-3 py-3">SA Score</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in matrix %}
+                    <tr>
+                        <td class="px-5 py-3 font-medium text-slate-800 whitespace-nowrap">{{ row.name }}</td>
+                        {% for key in ['FA', 'WT', 'SDL', 'STEAM', 'FA_TOTAL'] %}
+                        <td class="px-3 py-3">
+                            <div class="w-24 rounded-lg overflow-hidden border border-slate-100 text-center">
+                                <div class="bg-rose-50 text-rose-600 text-[10px] font-semibold py-1">TASKS {{ row[key].tasks }}</div>
+                                <div class="bg-emerald-50 text-emerald-700 text-[10px] font-semibold py-1">SCORE: {{ row[key].score if row[key].score is not none else '—' }}</div>
+                            </div>
+                        </td>
+                        {% endfor %}
+                        <td class="px-3 py-3">
+                            {% if row.pg is not none %}
+                            <div class="h-12 w-12 rounded-full flex items-center justify-center text-sm font-semibold shadow-sm
+                                {% if row.pg_tone == 'good' %}bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300
+                                {% elif row.pg_tone == 'average' %}bg-amber-50 text-amber-700 ring-2 ring-amber-300
+                                {% else %}bg-rose-50 text-rose-600 ring-2 ring-rose-300{% endif %}">{{ row.pg }}</div>
+                            {% else %}
+                            <div class="h-12 w-12 rounded-full bg-slate-50 text-slate-400 flex items-center justify-center text-xs">—</div>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 py-3">
+                            <div class="inline-flex items-center rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">
+                                SCORE {{ row.sa if row.sa is not none else 0 }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="px-5 py-10 text-center text-slate-400">No academic-year assessment data yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+(function () {
+    const labels = {{ trend_labels|tojson }};
+    const values = {{ trend_values|tojson }};
+    const ctx = document.getElementById('ayTrend');
+    if (!ctx) return;
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'PG Score',
+                data: values,
+                borderColor: '#7c3aed',
+                backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                tension: 0.35,
+                spanGaps: true,
+                pointRadius: 4,
+                pointBackgroundColor: values.map(function (v) {
+                    if (v == null) return '#cbd5e1';
+                    if (v >= 80) return '#10b981';
+                    if (v >= 60) return '#f59e0b';
+                    return '#f43f5e';
+                })
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { min: 0, max: 100, title: { display: true, text: 'PG Score' } }
+            }
+        }
+    });
+})();
+</script>
+{% endblock %}
