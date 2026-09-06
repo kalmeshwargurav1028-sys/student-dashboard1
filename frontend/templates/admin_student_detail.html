@@ -2,41 +2,119 @@
 {% block header_title %}Student Detail{% endblock %}
 
 {% block content %}
+{% set ordinal = {'1': '1st', '2': '2nd', '3': '3rd'} %}
 <div class="max-w-full mx-auto px-6 sm:px-8 lg:px-10 py-6">
 
-  <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+  <div class="flex flex-wrap items-end justify-between gap-4 mb-6">
     <div>
       <p class="text-xs font-semibold uppercase tracking-widest text-sky-600">Directory</p>
       <h1 class="text-2xl font-semibold text-slate-900 mt-0.5">Student Detail</h1>
+      <p class="text-sm text-slate-500 mt-1">Pick a grade, then an assigned section, to open that class list.</p>
     </div>
     <div class="flex items-center gap-3">
       <div class="relative">
         <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M10 18a8 8 0 100-16 8 8 0 000 16z"/></svg>
-        <input type="search" id="student-search" oninput="filterStudents()" placeholder="Search name or email" class="h-9 w-56 pl-9 pr-3 text-sm border border-slate-200 rounded-lg bg-white focus:ring-2 focus:ring-sky-200 focus:border-sky-400">
+        <input type="search" id="student-search" oninput="onSearch()" placeholder="Search name or email" class="h-10 w-64 pl-9 pr-3 text-sm border border-slate-200 rounded-xl bg-white focus:ring-2 focus:ring-sky-200 focus:border-sky-400">
       </div>
-      <div class="h-9 px-3 rounded-lg bg-slate-100 text-sm font-semibold text-slate-700 flex items-center">{{ total }} students</div>
+      <div class="h-10 px-3 rounded-xl bg-sky-50 text-sm font-semibold text-sky-800 flex items-center border border-sky-100">{{ total }} students</div>
     </div>
   </div>
 
-  <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-    <div class="px-4 py-3 border-b border-slate-100 overflow-x-auto">
-      <div class="flex gap-1 min-w-max">
+  <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4" aria-label="Breadcrumb">
+    <button type="button" onclick="clearSearch()" class="hover:text-sky-700">All grades</button>
+    <span class="text-slate-300">/</span>
+    <span id="crumb-grade" class="font-medium text-slate-800">{{ ordinal.get(default_grade, default_grade ~ 'th') }} grade</span>
+    <span id="crumb-slash" class="text-slate-300 {% if not default_section %}hidden{% endif %}">/</span>
+    <span id="crumb-section" class="font-medium text-sky-700 {% if not default_section %}hidden{% endif %}">{% if default_section == 'Other' %}Other{% elif default_section %}Section {{ default_section }}{% endif %}</span>
+    <span id="crumb-search" class="hidden font-medium text-sky-700">Search results</span>
+  </nav>
+
+  <div id="browse-view">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 mb-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-800">Grades 1–12</h2>
+        <p class="text-xs text-slate-400">Tap a grade to see its sections</p>
+      </div>
+      <div class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-12 gap-2">
         {% for g in grades %}
-        <button type="button" data-class-tab="{{ g }}" onclick="showClass('{{ g }}')"
-          class="class-tab inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold {% if g == default_grade %}bg-sky-600 text-white{% else %}text-slate-600 hover:bg-slate-100{% endif %}">
-          {{ g }}
-          <span class="inline-flex h-4 min-w-[1rem] px-1 items-center justify-center rounded {% if g == default_grade %}bg-white/20 text-white{% else %}bg-slate-100 text-slate-500{% endif %} text-[10px]">{{ class_groups[g].count }}</span>
+        {% set filled = class_groups[g].count > 0 %}
+        <button type="button" data-grade-tab="{{ g }}" onclick="showGrade('{{ g }}')"
+          class="grade-tab group relative flex flex-col items-center justify-center rounded-2xl border px-2 py-3 min-h-[5.5rem] transition-all
+            {% if g == default_grade %}bg-sky-600 border-sky-600 text-white shadow-md shadow-sky-200
+            {% elif filled %}bg-white border-slate-200 text-slate-800 hover:border-sky-300 hover:bg-sky-50
+            {% else %}bg-slate-50 border-dashed border-slate-200 text-slate-400 hover:border-slate-300{% endif %}">
+          <span data-grade-label class="text-[10px] font-semibold uppercase tracking-wider {% if g == default_grade %}text-sky-100{% else %}text-slate-400{% endif %}">Grade</span>
+          <span class="text-2xl font-bold leading-none mt-0.5">{{ g }}</span>
+          <span data-grade-count class="mt-1.5 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full text-[10px] font-semibold
+            {% if g == default_grade %}bg-white/20 text-white
+            {% elif filled %}bg-sky-100 text-sky-700
+            {% else %}bg-slate-100 text-slate-400{% endif %}">{{ class_groups[g].count }}</span>
         </button>
         {% endfor %}
         {% if unassigned %}
-        <button type="button" data-class-tab="unassigned" onclick="showClass('unassigned')"
-          class="class-tab inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100">
-          Other
-          <span class="inline-flex h-4 min-w-[1rem] px-1 items-center justify-center rounded bg-slate-100 text-slate-500 text-[10px]">{{ unassigned|length }}</span>
+        <button type="button" data-grade-tab="unassigned" onclick="showGrade('unassigned')"
+          class="grade-tab col-span-2 sm:col-span-2 lg:col-span-2 flex flex-col items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 min-h-[5.5rem] text-amber-800 hover:bg-amber-100">
+          <span class="text-[10px] font-semibold uppercase tracking-wider text-amber-600">Other</span>
+          <span class="text-sm font-bold mt-1">Unassigned</span>
+          <span class="mt-1.5 inline-flex h-5 min-w-[1.25rem] px-1.5 items-center justify-center rounded-full bg-amber-200 text-[10px] font-semibold">{{ unassigned|length }}</span>
         </button>
         {% endif %}
       </div>
     </div>
+
+    {% for g in grades %}
+    <div data-grade-sections="{{ g }}" class="grade-sections {% if g != default_grade %}hidden{% endif %} mb-4">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-sm font-semibold text-slate-800">{{ ordinal.get(g, g ~ 'th') }} grade · sections A–D</h2>
+          <p class="text-xs text-slate-400">Assigned sections open the class list</p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {% for letter in sections %}
+          {% set rows = class_groups[g].sections[letter] %}
+          {% set filled = rows|length > 0 %}
+          {% set selected = g == default_grade and letter == default_section %}
+          <button type="button" data-section-tab="{{ g }}-{{ letter }}" {% if filled %}onclick="showSection('{{ g }}', '{{ letter }}')"{% endif %}
+            {% if not filled %}disabled{% endif %}
+            class="section-tab flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all
+              {% if selected %}bg-sky-600 border-sky-600 text-white shadow-md shadow-sky-200
+              {% elif filled %}bg-slate-50 border-slate-200 hover:border-sky-300 hover:bg-sky-50
+              {% else %}bg-slate-50 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-70{% endif %}">
+            <span data-section-letter class="h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold shrink-0
+              {% if selected %}bg-white/20 text-white
+              {% elif filled %}bg-white text-sky-700 border border-sky-100
+              {% else %}bg-white text-slate-300 border border-slate-100{% endif %}">{{ letter }}</span>
+            <span>
+              <span class="block text-sm font-semibold">Section {{ letter }}</span>
+              <span data-section-count class="block text-xs {% if selected %}text-sky-100{% elif filled %}text-slate-500{% else %}text-slate-400{% endif %}">
+                {% if filled %}{{ rows|length }} student{{ '' if rows|length == 1 else 's' }}{% else %}Not assigned{% endif %}
+              </span>
+            </span>
+          </button>
+          {% endfor %}
+          {% if class_groups[g].sections['Other'] %}
+          <button type="button" data-section-tab="{{ g }}-Other" onclick="showSection('{{ g }}', 'Other')"
+            class="section-tab flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-left hover:border-sky-300 hover:bg-sky-50">
+            <span data-section-letter class="h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-white text-slate-600 border border-slate-100">–</span>
+            <span>
+              <span class="block text-sm font-semibold">Other</span>
+              <span data-section-count class="block text-xs text-slate-500">{{ class_groups[g].sections['Other']|length }} students</span>
+            </span>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    {% if unassigned %}
+    <div data-grade-sections="unassigned" class="grade-sections hidden mb-4">
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+        <p class="text-sm font-semibold text-amber-900">Unassigned students</p>
+        <p class="text-sm text-amber-800/80 mt-0.5">These records have no grade 1–12 on file. Edit a student to place them in a class.</p>
+      </div>
+    </div>
+    {% endif %}
 
     {% macro student_table(rows) %}
     <div class="overflow-x-auto">
@@ -56,7 +134,7 @@
           <tr class="student-row hover:bg-slate-50/80" data-search="{{ (st.name ~ ' ' ~ st.email)|lower }}">
             <td class="px-5 py-3">
               <div class="flex items-center gap-3">
-                <div class="h-8 w-8 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold shrink-0">{{ st.name[0]|upper }}</div>
+                <div class="h-9 w-9 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-xs font-semibold shrink-0">{{ st.name[0]|upper }}</div>
                 <span class="font-medium text-slate-900">{{ st.name }}</span>
               </div>
             </td>
@@ -79,7 +157,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">No students in this class.</td>
+            <td colspan="6" class="px-5 py-14 text-center text-sm text-slate-400">No students in this section.</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -88,16 +166,34 @@
     {% endmacro %}
 
     {% for g in grades %}
-    <div data-class-panel="{{ g }}" class="class-panel {% if g != default_grade %}hidden{% endif %}">
-      {{ student_table(class_groups[g].rows) }}
-    </div>
+      {% for sec in class_groups[g].assigned %}
+      <div data-section-panel="{{ g }}-{{ sec.id }}" class="section-panel bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden {% if not (g == default_grade and sec.id == default_section) %}hidden{% endif %}">
+        <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+          <p class="text-sm font-semibold text-slate-800">{{ ordinal.get(g, g ~ 'th') }} grade · {{ sec.label }}</p>
+          <p class="text-xs text-slate-400">{{ sec.count }} student{{ '' if sec.count == 1 else 's' }}</p>
+        </div>
+        {{ student_table(sec.rows) }}
+      </div>
+      {% endfor %}
     {% endfor %}
 
     {% if unassigned %}
-    <div data-class-panel="unassigned" class="class-panel hidden">
+    <div data-section-panel="unassigned-all" class="section-panel bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hidden">
+      <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+        <p class="text-sm font-semibold text-slate-800">Unassigned</p>
+        <p class="text-xs text-slate-400">{{ unassigned|length }} student{{ '' if unassigned|length == 1 else 's' }}</p>
+      </div>
       {{ student_table(unassigned) }}
     </div>
     {% endif %}
+  </div>
+
+  <div id="search-view" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+      <p class="text-sm font-semibold text-slate-800">Search results</p>
+      <p id="search-count" class="text-xs text-slate-400"></p>
+    </div>
+    {{ student_table(all_students) }}
   </div>
 </div>
 
@@ -161,34 +257,166 @@
 </div>
 
 <script>
+const GRADE_META = {
+  {% for g in grades %}
+  "{{ g }}": { "count": {{ class_groups[g].count }}, "assigned": {{ class_groups[g].assigned | map(attribute='id') | list | tojson }} }{% if not loop.last %},{% endif %}
+  {% endfor %}
+};
+const DEFAULT_GRADE = {{ default_grade | tojson }};
+const DEFAULT_SECTION = {{ default_section | tojson }};
+let currentGrade = DEFAULT_GRADE;
+let currentSection = DEFAULT_SECTION;
 let deleteId = '';
 
-function showClass(id) {
-  document.querySelectorAll('.class-panel').forEach(function (el) {
-    el.classList.toggle('hidden', el.getAttribute('data-class-panel') !== id);
-  });
-  document.querySelectorAll('.class-tab').forEach(function (btn) {
-    const on = btn.getAttribute('data-class-tab') === id;
-    btn.classList.toggle('bg-sky-600', on);
-    btn.classList.toggle('text-white', on);
-    btn.classList.toggle('text-slate-600', !on);
-    btn.classList.toggle('hover:bg-slate-100', !on);
-    const badge = btn.querySelector('span');
-    if (badge) {
-      badge.classList.toggle('bg-white/20', on);
-      badge.classList.toggle('text-white', on);
-      badge.classList.toggle('bg-slate-100', !on);
-      badge.classList.toggle('text-slate-500', !on);
-    }
-  });
-  filterStudents();
+function ordinalGrade(g) {
+  const map = { '1': '1st', '2': '2nd', '3': '3rd' };
+  return map[g] || (g + 'th');
 }
 
-function filterStudents() {
-  const q = (document.getElementById('student-search').value || '').toLowerCase().trim();
-  document.querySelectorAll('.class-panel:not(.hidden) .student-row').forEach(function (row) {
-    row.classList.toggle('hidden', q && !(row.dataset.search || '').includes(q));
+function setCrumb(grade, section, searching) {
+  const crumbGrade = document.getElementById('crumb-grade');
+  const crumbSlash = document.getElementById('crumb-slash');
+  const crumbSection = document.getElementById('crumb-section');
+  const crumbSearch = document.getElementById('crumb-search');
+  if (searching) {
+    crumbGrade.classList.add('hidden');
+    crumbSlash.classList.add('hidden');
+    crumbSection.classList.add('hidden');
+    crumbSearch.classList.remove('hidden');
+    return;
+  }
+  crumbSearch.classList.add('hidden');
+  crumbGrade.classList.remove('hidden');
+  if (grade === 'unassigned') {
+    crumbGrade.textContent = 'Unassigned';
+    crumbSlash.classList.add('hidden');
+    crumbSection.classList.add('hidden');
+    return;
+  }
+  crumbGrade.textContent = ordinalGrade(grade) + ' grade';
+  if (section) {
+    crumbSection.textContent = section === 'Other' ? 'Other' : 'Section ' + section;
+    crumbSlash.classList.remove('hidden');
+    crumbSection.classList.remove('hidden');
+  } else {
+    crumbSlash.classList.add('hidden');
+    crumbSection.classList.add('hidden');
+  }
+}
+
+function paintGradeTabs(active) {
+  document.querySelectorAll('.grade-tab').forEach(function (btn) {
+    const id = btn.getAttribute('data-grade-tab');
+    const on = id === active;
+    const count = id === 'unassigned' ? 1 : ((GRADE_META[id] && GRADE_META[id].count) || 0);
+    if (id === 'unassigned') {
+      btn.className = 'grade-tab col-span-2 sm:col-span-2 lg:col-span-2 flex flex-col items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 min-h-[5.5rem] text-amber-800 hover:bg-amber-100' + (on ? ' ring-2 ring-amber-400' : '');
+      return;
+    }
+    let cls = 'grade-tab group relative flex flex-col items-center justify-center rounded-2xl border px-2 py-3 min-h-[5.5rem] transition-all ';
+    if (on) cls += 'bg-sky-600 border-sky-600 text-white shadow-md shadow-sky-200';
+    else if (count > 0) cls += 'bg-white border-slate-200 text-slate-800 hover:border-sky-300 hover:bg-sky-50';
+    else cls += 'bg-slate-50 border-dashed border-slate-200 text-slate-400 hover:border-slate-300';
+    btn.className = cls;
+    const label = btn.querySelector('[data-grade-label]');
+    const badge = btn.querySelector('[data-grade-count]');
+    if (label) label.className = 'text-[10px] font-semibold uppercase tracking-wider ' + (on ? 'text-sky-100' : 'text-slate-400');
+    if (badge) {
+      badge.className = 'mt-1.5 inline-flex items-center justify-center h-5 min-w-[1.25rem] px-1.5 rounded-full text-[10px] font-semibold ';
+      if (on) badge.className += 'bg-white/20 text-white';
+      else if (count > 0) badge.className += 'bg-sky-100 text-sky-700';
+      else badge.className += 'bg-slate-100 text-slate-400';
+    }
   });
+}
+
+function paintSectionTabs(grade, section) {
+  document.querySelectorAll('.section-tab').forEach(function (btn) {
+    const on = btn.getAttribute('data-section-tab') === grade + '-' + section;
+    const letter = btn.querySelector('[data-section-letter]');
+    const count = btn.querySelector('[data-section-count]');
+    if (btn.disabled) {
+      btn.className = 'section-tab flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all bg-slate-50 border-dashed border-slate-200 text-slate-400 cursor-not-allowed opacity-70';
+      if (letter) letter.className = 'h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 bg-white text-slate-300 border border-slate-100';
+      if (count) count.className = 'block text-xs text-slate-400';
+      return;
+    }
+    btn.className = 'section-tab flex items-center gap-3 rounded-2xl border px-4 py-3 text-left transition-all ' +
+      (on ? 'bg-sky-600 border-sky-600 text-white shadow-md shadow-sky-200' : 'bg-slate-50 border-slate-200 hover:border-sky-300 hover:bg-sky-50');
+    if (letter) {
+      letter.className = 'h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold shrink-0 ' +
+        (on ? 'bg-white/20 text-white' : 'bg-white text-sky-700 border border-sky-100');
+    }
+    if (count) count.className = 'block text-xs ' + (on ? 'text-sky-100' : 'text-slate-500');
+  });
+}
+
+function showGrade(grade) {
+  currentGrade = grade;
+  document.querySelectorAll('.grade-sections').forEach(function (el) {
+    el.classList.toggle('hidden', el.getAttribute('data-grade-sections') !== grade);
+  });
+  paintGradeTabs(grade);
+  if (grade === 'unassigned') {
+    currentSection = 'all';
+    showSection('unassigned', 'all');
+    return;
+  }
+  const assigned = (GRADE_META[grade] && GRADE_META[grade].assigned) || [];
+  currentSection = assigned.length ? assigned[0].id : '';
+  if (currentSection) {
+    showSection(grade, currentSection);
+  } else {
+    document.querySelectorAll('.section-panel').forEach(function (el) {
+      el.classList.add('hidden');
+    });
+    setCrumb(grade, '', false);
+  }
+}
+
+function showSection(grade, section) {
+  currentGrade = grade;
+  currentSection = section;
+  const key = grade + '-' + section;
+  document.querySelectorAll('.section-panel').forEach(function (el) {
+    el.classList.toggle('hidden', el.getAttribute('data-section-panel') !== key);
+  });
+  paintSectionTabs(grade, section);
+  setCrumb(grade, section === 'all' ? '' : section, false);
+}
+
+function clearSearch() {
+  const input = document.getElementById('student-search');
+  input.value = '';
+  onSearch();
+}
+
+function onSearch() {
+  const q = (document.getElementById('student-search').value || '').toLowerCase().trim();
+  const browse = document.getElementById('browse-view');
+  const searchView = document.getElementById('search-view');
+  if (!q) {
+    browse.classList.remove('hidden');
+    searchView.classList.add('hidden');
+    if (currentGrade === 'unassigned') {
+      showGrade('unassigned');
+    } else if (currentSection) {
+      showGrade(currentGrade);
+    } else {
+      setCrumb(currentGrade, '', false);
+    }
+    return;
+  }
+  browse.classList.add('hidden');
+  searchView.classList.remove('hidden');
+  setCrumb('', '', true);
+  let shown = 0;
+  searchView.querySelectorAll('.student-row').forEach(function (row) {
+    const match = (row.dataset.search || '').includes(q);
+    row.classList.toggle('hidden', !match);
+    if (match) shown += 1;
+  });
+  document.getElementById('search-count').textContent = shown + (shown === 1 ? ' match' : ' matches');
 }
 
 function closeModals() {

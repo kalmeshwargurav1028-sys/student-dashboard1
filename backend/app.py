@@ -6539,21 +6539,36 @@ def admin_student_detail():
         class_groups[grade]['count'] += 1
         bucket = section if section in class_groups[grade]['sections'] else 'Other'
         class_groups[grade]['sections'][bucket].append(row)
+    all_students = []
     for g in grades:
-        flat = []
-        for sec in class_groups[g]['sections']:
-            class_groups[g]['sections'][sec].sort(key=lambda r: (r['name'] or '').lower())
-            flat.extend(class_groups[g]['sections'][sec])
-        class_groups[g]['rows'] = flat
+        assigned = []
+        for sec in ('A', 'B', 'C', 'D', 'Other'):
+            rows = class_groups[g]['sections'][sec]
+            rows.sort(key=lambda r: (r['name'] or '').lower())
+            if rows:
+                assigned.append({
+                    'id': sec,
+                    'label': 'Other' if sec == 'Other' else f'Section {sec}',
+                    'rows': rows,
+                    'count': len(rows),
+                })
+        class_groups[g]['assigned'] = assigned
+        class_groups[g]['rows'] = [row for item in assigned for row in item['rows']]
+        all_students.extend(class_groups[g]['rows'])
     unassigned.sort(key=lambda r: (r['name'] or '').lower())
+    all_students.extend(unassigned)
     default_grade = next((g for g in grades if class_groups[g]['count']), grades[0])
+    default_assigned = class_groups[default_grade]['assigned']
+    default_section = default_assigned[0]['id'] if default_assigned else ''
     return render_template(
         'admin_student_detail.html',
         grades=grades,
         class_groups=class_groups,
         unassigned=unassigned,
+        all_students=all_students,
         default_grade=default_grade,
-        total=sum(class_groups[g]['count'] for g in grades) + len(unassigned),
+        default_section=default_section,
+        total=len(all_students),
         sections=['A', 'B', 'C', 'D'],
     )
 
