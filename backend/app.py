@@ -4073,59 +4073,135 @@ def academic_profile_pdf(student_id):
                           max_marks=max_marks, 
                           subjects_breakdown=subjects_breakdown)
 
+def _letter_grade(total):
+    try:
+        score = float(total or 0)
+    except (TypeError, ValueError):
+        score = 0
+    if score >= 90:
+        return 'A+'
+    if score >= 80:
+        return 'A'
+    if score >= 70:
+        return 'B+'
+    if score >= 60:
+        return 'B'
+    if score >= 50:
+        return 'C+'
+    if score >= 35:
+        return 'C'
+    return 'F'
+
+
+def _number_to_words(value):
+    ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
+            'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen',
+            'Seventeen', 'Eighteen', 'Nineteen']
+    tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety']
+
+    def under_1000(n):
+        n = int(n)
+        if n == 0:
+            return ''
+        if n < 20:
+            return ones[n]
+        if n < 100:
+            return (tens[n // 10] + (' ' + ones[n % 10] if n % 10 else '')).strip()
+        rest = under_1000(n % 100)
+        return (ones[n // 100] + ' Hundred' + ((' and ' + rest) if rest else '')).strip()
+
+    try:
+        number = int(round(float(value or 0)))
+    except (TypeError, ValueError):
+        number = 0
+    if number == 0:
+        return 'Zero Only'
+    if number > 999999:
+        return str(number) + ' Only'
+    words = []
+    if number >= 1000:
+        words.append(under_1000(number // 1000) + ' Thousand')
+        number %= 1000
+    tail = under_1000(number)
+    if tail:
+        words.append(tail)
+    return ' '.join(words).strip() + ' Only'
+
+
+def _certificate_rows(student_id, student):
+    rows = []
+    seen = set()
+    for g in db.grades.find({'student_id': student_id}, {'_id': 0}):
+        subject = (g.get('subject') or '').strip()
+        if not subject:
+            continue
+        ca = float(g.get('ca_mark') or 0)
+        exam = float(g.get('exam_mark') or 0)
+        total = ca + exam
+        rows.append({
+            'subject': subject.title() if subject.islower() else subject,
+            'ca_mark': ca,
+            'exam_mark': exam,
+            'total': total,
+            'grade': _letter_grade(total)
+        })
+        seen.add(subject.lower())
+    for subject, score in (student.get('subjects') or {}).items():
+        name = (subject or '').strip()
+        if not name or name.lower() in seen:
+            continue
+        try:
+            total = float(score)
+        except (TypeError, ValueError):
+            continue
+        exam = min(80.0, round(total * 0.8, 1))
+        ca = max(0.0, min(20.0, round(total - exam, 1)))
+        rows.append({
+            'subject': name.title() if name.islower() else name,
+            'ca_mark': ca,
+            'exam_mark': exam,
+            'total': total,
+            'grade': _letter_grade(total)
+        })
+        seen.add(name.lower())
+    return rows
+
+
 @app.route('/student/<student_id>/promotion_certificate')
 def promotion_certificate(student_id):
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-        
+    if session.get('role') == 'student' and session.get('user_id') != student_id:
+        flash('You can only view your own certificate.')
+        return redirect(url_for('student_home'))
+
     student = db.students.find_one(get_student_query({'id': student_id}), {'_id': 0})
     if not student:
         flash('Student not found.')
         return redirect(url_for('dashboard'))
-        
-    total_marks = 0
-    max_marks = 0
-    
-    if student.get('subjects'):
-        for subj, score in student.get('subjects').items():
-            total_marks += float(score)
-            max_marks += 100
-            
-    grades = list(db.grades.find({'student_id': student_id}, {'_id': 0}))
-    processed_subjects = set(student.get('subjects', {}).keys())
-    
-    grades_display = []
-    
-    for g in grades:
-        subj = g.get('subject')
-        ca = float(g.get('ca_mark') or 0)
-        exam = float(g.get('exam_mark') or 0)
-        total = ca + exam
-        
-        grades_display.append({
-            'subject': subj,
-            'ca_mark': ca,
-            'exam_mark': exam,
-            'total': total
-        })
-        
-        if subj not in processed_subjects:
-            total_marks += total
-            max_marks += 100
-            processed_subjects.add(subj)
 
-    percentage = round((total_marks / max_marks) * 100, 1) if max_marks > 0 else 0
+    grades_display = _certificate_rows(student_id, student)
+    exam_total = sum(float(g.get('exam_mark') or 0) for g in grades_display)
+    ca_total = sum(float(g.get('ca_mark') or 0) for g in grades_display)
+    total_marks = sum(float(g.get('total') or 0) for g in grades_display)
+    max_marks = 100 * len(grades_display)
+    percentage = round((total_marks / max_marks) * 100, 1) if max_marks else 0
+    cert_data = student.get('certificate_data', {}) or {}
 
-    cert_data = student.get('certificate_data', {})
-
-    return render_template('promotion_certificate.html', 
-                          student=student, 
-                          total_marks=total_marks, 
-                          max_marks=max_marks, 
-                          percentage=percentage,
-                          grades_display=grades_display,
-                          cert_data=cert_data,
-                          now=datetime.now())
+    return render_template(
+        'promotion_certificate.html',
+        student=student,
+        school_name=_ay_school_name(),
+        total_marks=total_marks,
+        max_marks=max_marks,
+        exam_total=exam_total,
+        ca_total=ca_total,
+        percentage=percentage,
+        marks_in_words=_number_to_words(total_marks),
+        grades_display=grades_display,
+        cert_data=cert_data,
+        now=datetime.now()
+    )
 
 @app.route('/admin/certificate/edit/<student_id>', methods=['GET', 'POST'])
 def edit_certificate(student_id):

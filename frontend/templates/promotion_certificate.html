@@ -3,331 +3,493 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Marks Statement cum Certificate - {{ student.name }}</title>
+    <title>Marks Statement — {{ student.name }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --ink: #13233d;
+            --navy: #1e3a5f;
+            --gold: #b0892c;
+            --gold-soft: #e8d5a3;
+            --paper: #fbf8f1;
+            --line: #d7c9a4;
+            --muted: #5c6570;
+        }
+        * { box-sizing: border-box; }
         body {
-            background-color: #f0f0f0;
+            margin: 0;
+            min-height: 100vh;
+            background: #e8edf3;
+            color: var(--ink);
+            font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+        }
+        .toolbar {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .toolbar a, .toolbar button {
+            display: inline-flex;
+            align-items: center;
+            height: 36px;
+            padding: 0 14px;
+            border-radius: 10px;
+            font: 600 13px/1 'Source Sans 3', sans-serif;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid #dbe3ee;
+            background: #fff;
+            color: var(--navy);
+        }
+        .toolbar button.primary {
+            background: #1e3a5f;
+            border-color: #1e3a5f;
+            color: #fff;
+        }
+        .sheet-wrap {
+            padding: 28px 16px 48px;
             display: flex;
             justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-            font-family: 'Times New Roman', Times, serif;
         }
-        .cert-container {
-            width: 900px;
-            background-color: #e6f7ff; /* light blue wash */
-            background-image: repeating-linear-gradient(45deg, #f0f8ff 25%, transparent 25%, transparent 75%, #f0f8ff 75%, #f0f8ff), repeating-linear-gradient(45deg, #f0f8ff 25%, #e6f7ff 25%, #e6f7ff 75%, #f0f8ff 75%, #f0f8ff);
-            background-position: 0 0, 10px 10px;
-            background-size: 20px 20px;
-            padding: 20px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.3);
-            border: 2px solid #555;
+        .sheet {
+            width: 210mm;
+            max-width: 100%;
+            background: var(--paper);
+            padding: 14px;
+            box-shadow: 0 18px 50px rgba(19, 35, 61, 0.16);
+        }
+        .frame {
+            border: 2px solid var(--navy);
+            padding: 6px;
+        }
+        .inner {
+            border: 1px solid var(--gold);
+            padding: 22px 24px 20px;
+            min-height: 277mm;
             position: relative;
-        }
-        .cert-inner-border {
-            border: 5px solid #4a86e8;
-            padding: 15px;
-            background-color: rgba(255, 255, 255, 0.85); /* mostly white overlay */
-            height: 100%;
-            box-sizing: border-box;
+            background:
+                linear-gradient(180deg, rgba(255,255,255,0.55), rgba(251,248,241,0.2)),
+                radial-gradient(circle at 50% 18%, rgba(176,137,44,0.07), transparent 42%);
         }
         .header {
+            display: grid;
+            grid-template-columns: 78px 1fr 86px;
+            gap: 16px;
+            align-items: start;
             text-align: center;
-            margin-bottom: 20px;
-            position: relative;
-            min-height: 120px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gold-soft);
+        }
+        .qr img {
+            width: 72px;
+            height: 72px;
+            display: block;
+            background: #fff;
+            padding: 4px;
+            border: 1px solid var(--line);
+        }
+        .brand-mark {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 6px;
+            border-radius: 50%;
+            border: 2px solid var(--gold);
+            color: var(--navy);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cormorant Garamond', serif;
+            font-weight: 700;
+            font-size: 18px;
         }
         .header h1 {
-            color: #0b5394;
-            font-size: 24px;
-            margin: 5px 0;
-            font-weight: bold;
+            margin: 0;
+            font-family: 'Cormorant Garamond', Georgia, serif;
+            font-size: 28px;
+            letter-spacing: 0.04em;
+            color: var(--navy);
+            line-height: 1.15;
         }
-        .header h2 {
-            color: #cc0000;
-            font-size: 18px;
-            margin: 5px 0;
+        .header .doc-title {
+            margin: 6px 0 0;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--gold);
         }
-        .header h3 {
-            font-size: 14px;
-            margin: 5px 0;
-            font-weight: normal;
+        .header .lead {
+            margin: 8px 0 0;
+            font-size: 13px;
+            color: var(--muted);
         }
-        .photo-box {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 100px;
-            height: 120px;
-            border: 2px solid #333;
-            background: #ccc;
+        .photo {
+            width: 86px;
+            height: 108px;
+            border: 1px solid var(--navy);
+            background: #efe8d8;
+            overflow: hidden;
         }
-        .photo-box img {
+        .photo img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center 18%;
         }
-        .qr-code {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 80px;
-            height: 80px;
+        .photo .ph {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #8a8170;
+        }
+        .info {
+            margin: 16px 0 18px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 20px;
+            padding: 12px 14px;
+            background: #fff;
+            border: 1px solid var(--line);
+        }
+        .info .full { grid-column: 1 / -1; }
+        .info .k {
+            display: block;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 2px;
+        }
+        .info .v {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .part {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 0 8px;
+            color: var(--navy);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+        .part:before, .part:after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gold-soft);
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            background: #fff;
+            font-size: 12px;
         }
-        .info-table {
-            margin-bottom: 15px;
-            border: 1px solid #999;
-            background-color: rgba(197, 230, 197, 0.4); /* light green wash */
+        .marks th, .marks td,
+        .co th, .co td {
+            border: 1px solid #e4d8b8;
+            padding: 6px 7px;
         }
-        .info-table td {
-            border: 1px solid #999;
-            padding: 6px 10px;
+        .marks thead th {
+            background: var(--navy);
+            color: #f8f4ea;
+            font-size: 10px;
+            letter-spacing: 0.06em;
+            font-weight: 700;
         }
-        .label {
-            font-weight: bold;
-            color: #333;
-        }
-        .marks-table {
-            background-color: rgba(180, 215, 255, 0.3);
-            margin-bottom: 15px;
-        }
-        .marks-table th, .marks-table td {
-            border: 1px solid #666;
-            padding: 5px;
-            text-align: center;
-        }
-        .marks-table th {
-            font-weight: bold;
-            color: #0b5394;
-            background-color: rgba(180, 215, 255, 0.6);
-        }
-        .subject-col {
-            text-align: left !important;
-            font-weight: bold;
-            width: 25%;
-        }
-        .coscholastic-table {
-            background-color: rgba(200, 230, 200, 0.4);
-            margin-bottom: 15px;
-        }
-        .coscholastic-table th, .coscholastic-table td {
-            border: 1px solid #666;
-            padding: 5px;
+        .marks td.sub {
             text-align: left;
+            font-weight: 700;
+            color: var(--navy);
         }
-        .coscholastic-table th {
+        .marks td { text-align: center; }
+        .marks tbody tr:nth-child(even) { background: #faf6ec; }
+        .marks tfoot td {
+            background: #1e3a5f;
+            color: #fff;
+            font-weight: 700;
+        }
+        .grade {
+            display: inline-block;
+            min-width: 28px;
+            padding: 1px 6px;
+            border-radius: 999px;
+            background: #f3ead2;
+            color: var(--navy);
+            font-weight: 700;
+        }
+        .words {
+            margin: 10px 0 16px;
+            padding: 8px 12px;
+            background: #fff;
+            border: 1px solid var(--line);
+            font-size: 12px;
+        }
+        .words strong { color: var(--navy); }
+        .co thead th {
+            background: #f4efe3;
+            color: var(--navy);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+        }
+        .co td.num { text-align: center; color: var(--muted); width: 36px; }
+        .co td.g { text-align: center; font-weight: 700; }
+        .empty {
+            padding: 28px 12px;
             text-align: center;
-            background-color: rgba(200, 230, 200, 0.7);
+            color: var(--muted);
+            background: #fff;
+            border: 1px dashed var(--line);
+            margin-bottom: 16px;
         }
         .footer {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 30px;
-            font-size: 13px;
-            font-weight: bold;
-        }
-        .signature {
-            text-align: center;
-        }
-        .signature img {
-            height: 40px;
-            margin-bottom: 5px;
+            display: grid;
+            grid-template-columns: 1.3fr 0.9fr;
+            gap: 24px;
+            margin-top: 22px;
+            padding-top: 14px;
+            border-top: 1px solid var(--gold-soft);
         }
         .address {
-            width: 50%;
-            line-height: 1.5;
+            font-size: 11px;
+            line-height: 1.55;
+            color: var(--muted);
         }
-        
+        .address strong { color: var(--ink); display: block; font-size: 12px; }
+        .sign { text-align: center; }
+        .sign-line {
+            height: 42px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 4px;
+            border-bottom: 1px solid var(--navy);
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 22px;
+            color: #3b4d66;
+        }
+        .sign p {
+            margin: 0;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--navy);
+        }
+        .sign span { display: block; font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 0; text-transform: none; }
         @media print {
-            body {
-                background: none;
-                padding: 0;
-            }
-            .cert-container {
-                box-shadow: none;
-                border: none;
-                -webkit-print-color-adjust: exact;
-                color-adjust: exact;
-                margin: 0;
-            }
+            @page { size: A4 portrait; margin: 8mm; }
+            body { background: #fff; }
+            .toolbar { display: none !important; }
+            .sheet-wrap { padding: 0; }
+            .sheet { width: auto; box-shadow: none; padding: 0; }
+            .inner { min-height: auto; }
+            .frame, .sheet, .inner, table, th, td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+        @media (max-width: 820px) {
+            .sheet { width: 100%; }
+            .header { grid-template-columns: 64px 1fr 72px; }
+            .header h1 { font-size: 20px; }
+            .info, .footer { grid-template-columns: 1fr; }
         }
     </style>
 </head>
-<body onload="window.print()">
-    <div class="cert-container">
-        <div class="cert-inner-border">
-            
-            <div class="header">
-                <div class="qr-code">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data={{ student.id }}" alt="QR Code">
-                </div>
-                <h1>INDUS INTERNATIONAL SCHOOL BANGALORE</h1>
-                <h2>Marks Statement cum Certificate</h2>
-                {% if student.get('student_class') == '10th' %}
-                <h3>This is to certify that the below mentioned candidate has passed S.S.L.C. Examination.</h3>
-                {% else %}
-                <h3>This is to certify that the below mentioned candidate has passed Examination.</h3>
-                {% endif %}
-                
-                <div class="photo-box">
-                    {% if student.photo_url %}
-                    <img src="{{ student.photo_url }}" alt="Student Photo">
+<body>
+    <div class="toolbar">
+        <a href="{{ url_for('student_gradebook', student_id=student.id) }}">Back to Progress Report</a>
+        <button type="button" class="primary" onclick="window.print()">Print / Save PDF</button>
+    </div>
+
+    <div class="sheet-wrap">
+        <div class="sheet">
+            <div class="frame">
+                <div class="inner">
+                    <header class="header">
+                        <div class="qr">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data={{ student.id }}" alt="Verification QR">
+                        </div>
+                        <div>
+                            <div class="brand-mark">I</div>
+                            <h1>{{ school_name|upper }}</h1>
+                            <p class="doc-title">Marks Statement cum Certificate</p>
+                            <p class="lead">
+                                {% if student.get('student_class') == '10th' %}
+                                This is to certify that the candidate named below has completed the S.S.L.C. examination.
+                                {% else %}
+                                This is to certify that the candidate named below has completed the school examination.
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="photo">
+                            {% if student.photo_url %}
+                            <img src="{{ student.photo_url }}" alt="">
+                            {% else %}
+                            <div class="ph">Photo</div>
+                            {% endif %}
+                        </div>
+                    </header>
+
+                    <section class="info">
+                        <div>
+                            <span class="k">Register no.</span>
+                            <span class="v">{{ student.id }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Month — Year</span>
+                            <span class="v">{{ cert_data.get('month_year', 'JUNE/JULY-' ~ (student.get('academic_year') or '2026')) }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Medium of instruction</span>
+                            <span class="v">{{ cert_data.get('medium', 'English') }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Candidate type</span>
+                            <span class="v">{{ cert_data.get('candidate_type', 'CCE Regular Fresh') }}</span>
+                        </div>
+                        <div class="full">
+                            <span class="k">Name of the candidate</span>
+                            <span class="v">{{ student.name|upper }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Father's name</span>
+                            <span class="v">{{ (student.get('parent_name') or '—')|upper }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Mother's name</span>
+                            <span class="v">{{ (cert_data.get('mother_name') or '—')|upper }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Date of birth</span>
+                            <span class="v">{{ student.get('dob') or '—' }}</span>
+                        </div>
+                        <div>
+                            <span class="k">Gender</span>
+                            <span class="v">{{ (student.get('gender') or '—')|upper }}</span>
+                        </div>
+                    </section>
+
+                    <div class="part">Part A · Scholastic subjects</div>
+                    {% if grades_display %}
+                    <table class="marks">
+                        <thead>
+                            <tr>
+                                <th rowspan="2" style="text-align:left; width:22%">Subject</th>
+                                <th colspan="3">External examination</th>
+                                <th colspan="2">Internal assessment</th>
+                                <th colspan="3">Total</th>
+                                <th rowspan="2">Grade</th>
+                            </tr>
+                            <tr>
+                                <th>Max</th>
+                                <th>Min</th>
+                                <th>Obtained</th>
+                                <th>Max</th>
+                                <th>Obtained</th>
+                                <th>Max</th>
+                                <th>Min</th>
+                                <th>Marks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for g in grades_display %}
+                            <tr>
+                                <td class="sub">{{ g.subject }}</td>
+                                <td>80</td>
+                                <td>28</td>
+                                <td>{{ g.exam_mark|round|int }}</td>
+                                <td>20</td>
+                                <td>{{ g.ca_mark|round|int }}</td>
+                                <td>100</td>
+                                <td>35</td>
+                                <td>{{ g.total|round|int }}</td>
+                                <td><span class="grade">{{ g.grade }}</span></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td class="sub" style="color:#fff; text-align:right">Total</td>
+                                <td colspan="3">{{ exam_total|round|int }}</td>
+                                <td colspan="2">{{ ca_total|round|int }}</td>
+                                <td>{{ max_marks }}</td>
+                                <td>—</td>
+                                <td>{{ total_marks|round|int }}</td>
+                                <td>{{ percentage|round|int }}%</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <div class="words">
+                        Total marks obtained in words: <strong>{{ marks_in_words|upper }}</strong>
+                    </div>
                     {% else %}
-                    <div style="display:flex; height:100%; align-items:center; justify-content:center; color:#666;">Photo</div>
+                    <div class="empty">Marks will appear on this certificate after assessments are entered.</div>
                     {% endif %}
+
+                    <div class="part">Part B · Co-scholastic subjects</div>
+                    <table class="co">
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Area</th>
+                                <th>Grade</th>
+                                <th>No.</th>
+                                <th>Area</th>
+                                <th>Grade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="num">1</td>
+                                <td>Physical &amp; Health Education</td>
+                                <td class="g">{{ cert_data.get('grade_pe', 'A') }}</td>
+                                <td class="num">2</td>
+                                <td>Attitude &amp; Values</td>
+                                <td class="g">{{ cert_data.get('grade_attitude', 'A') }}</td>
+                            </tr>
+                            <tr>
+                                <td class="num">3</td>
+                                <td>Work Experience</td>
+                                <td class="g">{{ cert_data.get('grade_work', 'A') }}</td>
+                                <td class="num">4</td>
+                                <td>Art Education</td>
+                                <td class="g">{{ cert_data.get('grade_art', 'A') }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <footer class="footer">
+                        <div class="address">
+                            <span class="k" style="display:block;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:4px">School code, name and address</span>
+                            <strong>AS1190 · {{ school_name }}</strong>
+                            Billapura Cross, Sarjapura Hobli, Anekal Taluk,<br>
+                            Bengaluru - 562125
+                            <div style="margin-top:10px">Date of issue: <strong>{{ now.strftime('%d %B %Y') if now else '' }}</strong></div>
+                        </div>
+                        <div class="sign">
+                            <div class="sign-line">Principal</div>
+                            <p>Principal</p>
+                            <span>{{ school_name }}</span>
+                        </div>
+                    </footer>
                 </div>
             </div>
-            
-            <table class="info-table">
-                <tr>
-                    <td width="50%"><span class="label">Register No. :</span> <strong>{{ student.id }}</strong></td>
-                    <td width="50%"><span class="label">Month - Year :</span> <strong>{{ cert_data.get('month_year', 'JUNE/JULY-' ~ student.get('academic_year', '2026')) }}</strong></td>
-                </tr>
-                <tr>
-                    <td><span class="label">Medium of Instruction :</span> <strong>{{ cert_data.get('medium', 'ENGLISH') | upper }}</strong></td>
-                    <td><span class="label">Candidate Type :</span> <strong>{{ cert_data.get('candidate_type', 'CCE REGULAR FRESH') | upper }}</strong></td>
-                </tr>
-                <tr>
-                    <td colspan="2"><span class="label">Name :</span> <strong>{{ student.name | upper }}</strong></td>
-                </tr>
-                <tr>
-                    <td colspan="2"><span class="label">Father's Name :</span> <strong>{{ student.get('parent_name', '---') | upper }}</strong></td>
-                </tr>
-                <tr>
-                    <td colspan="2"><span class="label">Mother's Name :</span> <strong>{{ cert_data.get('mother_name', '---') | upper }}</strong></td>
-                </tr>
-                <tr>
-                    <td><span class="label">Date of Birth :</span> <strong>{{ student.get('dob', '---') }}</strong></td>
-                    <td><span class="label">Gender :</span> <strong>{{ student.get('gender', 'MALE') | upper }}</strong></td>
-                </tr>
-            </table>
-            
-            <div style="text-align: center; font-weight: bold; margin-bottom: 5px; color: #555;">PART - A</div>
-            <table class="marks-table">
-                <tr>
-                    <th rowspan="2" class="subject-col">SCHOLASTIC SUBJECTS</th>
-                    <th colspan="3">EXTERNAL EXAMINATION</th>
-                    <th colspan="2">INTERNAL ASSESSMENT</th>
-                    <th colspan="3">TOTAL MARKS</th>
-                    <th rowspan="2">GRADE</th>
-                </tr>
-                <tr>
-                    <th>MAX. MARKS</th>
-                    <th>MIN. MARKS</th>
-                    <th>MARKS OBTAINED</th>
-                    <th>MAX. MARKS</th>
-                    <th>MARKS OBTAINED</th>
-                    <th>MAX. MARKS</th>
-                    <th>MIN. MARKS</th>
-                    <th>TOTAL MARKS</th>
-                </tr>
-                
-                {% set total_max = 0 %}
-                {% set total_obtained = 0 %}
-                
-                {% if grades_display %}
-                    {% for g in grades_display %}
-                    <tr>
-                        <td class="subject-col">{{ g.subject | upper }}</td>
-                        <td>80</td>
-                        <td>28</td>
-                        <td><strong>{{ g.exam_mark|int }}</strong></td>
-                        <td>20</td>
-                        <td><strong>{{ g.ca_mark|int }}</strong></td>
-                        <td>100</td>
-                        <td>35</td>
-                        <td><strong>{{ g.total|int }}</strong></td>
-                        <td>
-                            {% if g.total >= 90 %}<strong>A+</strong>
-                            {% elif g.total >= 80 %}<strong>A</strong>
-                            {% elif g.total >= 70 %}<strong>B+</strong>
-                            {% elif g.total >= 60 %}<strong>B</strong>
-                            {% elif g.total >= 50 %}<strong>C+</strong>
-                            {% elif g.total >= 35 %}<strong>C</strong>
-                            {% else %}<strong>F</strong>{% endif %}
-                        </td>
-                    </tr>
-                    {% set total_max = total_max + 100 %}
-                    {% set total_obtained = total_obtained + g.total %}
-                    {% endfor %}
-                {% else %}
-                    <!-- Dummy rows if no grades -->
-                    <tr><td class="subject-col">FIRST LANGUAGE : ENGLISH</td><td>100</td><td>35</td><td><strong>64</strong></td><td>25</td><td><strong>25</strong></td><td>125</td><td>44</td><td><strong>89</strong></td><td><strong>A</strong></td></tr>
-                    <tr><td class="subject-col">SECOND LANGUAGE : HINDI</td><td>80</td><td>28</td><td><strong>44</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>64</strong></td><td><strong>B</strong></td></tr>
-                    <tr><td class="subject-col">MATHEMATICS</td><td>80</td><td>28</td><td><strong>46</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>66</strong></td><td><strong>B</strong></td></tr>
-                    <tr><td class="subject-col">SCIENCE</td><td>80</td><td>28</td><td><strong>46</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>66</strong></td><td><strong>B</strong></td></tr>
-                    <tr><td class="subject-col">SOCIAL SCIENCE</td><td>80</td><td>28</td><td><strong>45</strong></td><td>20</td><td><strong>20</strong></td><td>100</td><td>35</td><td><strong>65</strong></td><td><strong>B</strong></td></tr>
-                    {% set total_obtained = 350 %}
-                    {% set total_max = 525 %}
-                {% endif %}
-                
-                <tr style="background-color: rgba(180, 215, 255, 0.6);">
-                    <td class="subject-col" style="text-align: right!important;">TOTAL MARKS :</td>
-                    <td colspan="3" style="text-align: center;"><strong>{{ (total_obtained * 0.8)|int }}</strong></td>
-                    <td colspan="2" style="text-align: center;"><strong>{{ (total_obtained * 0.2)|int }}</strong></td>
-                    <td>{{ total_max }}</td>
-                    <td>-</td>
-                    <td><strong>{{ total_obtained|int }}</strong></td>
-                    <td><strong>{{ percentage|round|int if percentage else 0 }}%</strong></td>
-                </tr>
-            </table>
-            
-            <div style="font-size: 13px; font-weight: bold; background-color: #b4d7ff; padding: 5px 10px; margin-bottom: 15px; border: 1px solid #666;">
-                TOTAL MARKS OBTAINED (IN WORDS) :  &nbsp;&nbsp;&nbsp; <em>System Generated</em>
-            </div>
-            
-            <div style="text-align: center; font-weight: bold; margin-bottom: 5px; color: #555;">PART - B</div>
-            <table class="coscholastic-table">
-                <tr>
-                    <th width="5%">Sl. No.</th>
-                    <th width="40%">CO-SCHOLASTIC SUBJECTS</th>
-                    <th width="10%">GRADE</th>
-                    <th width="5%">Sl. No.</th>
-                    <th width="30%">CO-SCHOLASTIC SUBJECTS</th>
-                    <th width="10%">GRADE</th>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">1.</td>
-                    <td>PHYSICAL & HEALTH EDUCATION</td>
-                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_pe', 'A') }}</strong></td>
-                    <td style="text-align: center;">2.</td>
-                    <td>ATTITUDE & VALUES</td>
-                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_attitude', 'A') }}</strong></td>
-                </tr>
-                <tr>
-                    <td style="text-align: center;">3.</td>
-                    <td>WORK EXPERIENCE</td>
-                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_work', 'A') }}</strong></td>
-                    <td style="text-align: center;">4.</td>
-                    <td>ART EDUCATION</td>
-                    <td style="text-align: center;"><strong>{{ cert_data.get('grade_art', 'A') }}</strong></td>
-                </tr>
-            </table>
-            
-            <div class="footer">
-                <div class="address">
-                    SCHOOL CODE, NAME AND ADDRESS :<br>
-                    <strong>AS1190</strong><br>
-                    <strong>INDUS INTERNATIONAL SCHOOL</strong><br>
-                    BILLAPURA CROSS, SARJAPURA HOBLI, ANEKAL TALUK,<br>
-                    BENGALURU - 562125
-                    <br><br>
-                    DATE : <strong>{{ now.strftime('%d.%m.%Y') if now else '16.06.2026' }}</strong>
-                </div>
-                <div class="signature">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Fake_signature.svg" alt="Signature"><br>
-                    PRINCIPAL<br>
-                    INDUS INTERNATIONAL SCHOOL,<br>
-                    BENGALURU
-                </div>
-            </div>
-            
         </div>
     </div>
 </body>
