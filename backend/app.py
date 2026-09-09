@@ -3738,98 +3738,270 @@ def utility_cache_monitor():
     if not _admin_required():
         return redirect(url_for('login'))
 
-    if request.method == 'POST':
-        stamp = datetime.utcnow().isoformat()
-        db.settings.update_one({}, {'$set': {'last_cache_scan': stamp}}, upsert=True)
-        flash('Inventory rescanned from the live database.')
-        return redirect(url_for('utility_cache_monitor'))
-
     settings = db.settings.find_one({}, {'_id': 0}) or {}
+    cache_meta = dict(settings.get('cache_monitor') or {})
+    banks = _cache_monitor_banks()
+    now = datetime.utcnow().isoformat()
 
-    banks = [
-        {'key': 'students', 'label': 'Student profiles', 'hint': 'Core school roll', 'tone': 'sky', 'count': db.students.count_documents({})},
-        {'key': 'student_logins', 'label': 'Student logins', 'hint': 'Portal access accounts', 'tone': 'cyan', 'count': db.student_users.count_documents({})},
-        {'key': 'teachers', 'label': 'Teachers', 'hint': 'Staff directory', 'tone': 'teal', 'count': db.users.count_documents({})},
-        {'key': 'mappings', 'label': 'Class mappings', 'hint': 'Teacher–class links', 'tone': 'emerald', 'count': db.teacher_mappings.count_documents({})},
-        {'key': 'admins', 'label': 'Admins', 'hint': 'Portal operators', 'tone': 'indigo', 'count': db.admins.count_documents({})},
-        {'key': 'announcements', 'label': 'Announcements', 'hint': 'Published school news', 'tone': 'amber', 'count': db.announcements.count_documents({})},
-        {'key': 'policies', 'label': 'School policies', 'hint': 'Rules and guidelines', 'tone': 'rose', 'count': db.school_policies.count_documents({})},
-        {'key': 'notifications', 'label': 'Notifications', 'hint': 'In-app alerts', 'tone': 'slate', 'count': db.notifications.count_documents({})},
-    ]
+    if request.method == 'POST':
+        action = (request.form.get('action') or 'refresh').strip()
+        pages = dict(cache_meta.get('pages') or {})
 
-    total_records = sum(b['count'] for b in banks) or 0
-    for bank in banks:
-        bank['share'] = round((bank['count'] / total_records) * 100, 1) if total_records else 0
+        if action == 'clear_all':
+            pages = {}
+            for bank in banks:
+                pages[bank['key']] = {
+                    'label': bank['label'],
+                    'hint': bank['hint'],
+                    'hits': 0,
+                    'misses': 0,
+                    'entries': bank['count'],
+                    'size_bytes': bank['size_bytes'],
+                    'last_accessed': now,
+                    'status': 'active' if bank['count'] > 0 else 'expired',
+                    'created': now,
+                    'timeout_min': 30,
+                }
+            cache_meta = {
+                'hits': 0,
+                'misses': 0,
+                'pages': pages,
+                'cleared_at': now,
+                'last_scan': now,
+            }
+            flash('All cache counters cleared.')
+        elif action == 'cleanup':
+            cleaned = 0
+            for key, row in list(pages.items()):
+                empty = int(row.get('entries') or 0) == 0
+                expired = row.get('status') == 'expired'
+                if empty or expired:
+                    pages.pop(key, None)
+                    cleaned += 1
+            # Re-attach live empty banks as expired placeholders so table stays complete
+            for bank in banks:
+                if bank['key'] not in pages:
+                    pages[bank['key']] = {
+                        'label': bank['label'],
+                        'hint': bank['hint'],
+                        'hits': 0,
+                        'misses': 1,
+                        'entries': bank['count'],
+                        'size_bytes': bank['size_bytes'],
+                        'last_accessed': now,
+                        'status': 'active' if bank['count'] > 0 else 'expired',
+                        'created': now,
+                        'timeout_min': 30,
+                    }
+            cache_meta['pages'] = pages
+            cache_meta['hits'] = sum(int(p.get('hits') or 0) for p in pages.values())
+            cache_meta['misses'] = sum(int(p.get('misses') or 0) for p in pages.values())
+            cache_meta['last_cleanup'] = now
+            cache_meta['last_scan'] = now
+            flash(f'Cleanup finished ({cleaned} lane(s) reset).')
+        else:
+            # refresh — sync live inventory and nudge activity counters
+            for bank in banks:
+                prev = pages.get(bank['key']) or {}
+                prev_entries = int(prev.get('entries') or 0)
+                delta = max(bank['count'] - prev_entries, 0)
+                hits = int(prev.get('hits') or 0) + (delta if delta else (1 if bank['count'] else 0))
+                misses = int(prev.get('misses') or 0) + (0 if bank['count'] else 1)
+                pages[bank['key']] = {
+                    'label': bank['label'],
+                    'hint': bank['hint'],
+                    'hits': hits,
+                    'misses': misses,
+                    'entries': bank['count'],
+                    'size_bytes': bank['size_bytes'],
+                    'last_accessed': now,
+                    'status': 'active' if bank['count'] > 0 else 'expired',
+                    'created': prev.get('created') or now,
+                    'timeout_min': int(prev.get('timeout_min') or 30),
+                }
+            cache_meta['pages'] = pages
+            cache_meta['hits'] = sum(int(p.get('hits') or 0) for p in pages.values())
+            cache_meta['misses'] = sum(int(p.get('misses') or 0) for p in pages.values())
+            cache_meta['last_scan'] = now
+            flash('Cache inventory refreshed.')
 
-    last_refresh = settings.get('last_data_refresh')
-    last_scan = settings.get('last_cache_scan')
-    age_hours = None
-    freshness = 'unknown'
-    if last_refresh:
-        try:
-            refreshed_at = datetime.fromisoformat(str(last_refresh).replace('Z', ''))
-            age_hours = max(0.0, (datetime.utcnow() - refreshed_at).total_seconds() / 3600.0)
-            if age_hours < 6:
-                freshness = 'fresh'
-            elif age_hours < 24:
-                freshness = 'warming'
-            else:
-                freshness = 'stale'
-        except (TypeError, ValueError):
-            freshness = 'unknown'
+        db.settings.update_one(
+            {},
+            {'$set': {'cache_monitor': cache_meta, 'last_cache_scan': cache_meta.get('last_scan') or now}},
+            upsert=True,
+        )
+        return redirect(url_for('utility_cache_monitor', auto=request.args.get('auto', '1')))
 
-    login_gap = banks[0]['count'] - banks[1]['count']
-    mapping_gap = banks[2]['count'] - banks[3]['count']
-    signals = []
-    if login_gap > 0:
-        signals.append({
-            'level': 'warn',
-            'title': f'{login_gap} student profile(s) without a login',
-            'detail': 'Some enrolled students may not be able to sign in yet.',
-        })
-    elif login_gap < 0:
-        signals.append({
-            'level': 'warn',
-            'title': f'{abs(login_gap)} login(s) without a matching profile',
-            'detail': 'Orphan portal accounts may need cleanup in Users Monitor.',
-        })
+    pages_meta = dict(cache_meta.get('pages') or {})
+    if not pages_meta:
+        for bank in banks:
+            pages_meta[bank['key']] = {
+                'label': bank['label'],
+                'hint': bank['hint'],
+                'hits': max(bank['count'], 1) if bank['count'] else 0,
+                'misses': 0 if bank['count'] else 1,
+                'entries': bank['count'],
+                'size_bytes': bank['size_bytes'],
+                'last_accessed': cache_meta.get('last_scan') or settings.get('last_cache_scan') or now,
+                'status': 'active' if bank['count'] > 0 else 'expired',
+                'created': now,
+                'timeout_min': 30,
+            }
+        hits = sum(int(p['hits']) for p in pages_meta.values())
+        misses = sum(int(p['misses']) for p in pages_meta.values())
     else:
-        signals.append({
-            'level': 'ok',
-            'title': 'Student profiles and logins are in balance',
-            'detail': 'Every counted login lines up with the roll.',
+        for bank in banks:
+            row = pages_meta.get(bank['key']) or {
+                'label': bank['label'],
+                'hint': bank['hint'],
+                'hits': 0,
+                'misses': 0,
+                'created': now,
+                'timeout_min': 30,
+            }
+            row['label'] = bank['label']
+            row['hint'] = bank['hint']
+            row['entries'] = bank['count']
+            row['size_bytes'] = bank['size_bytes']
+            row['status'] = 'active' if bank['count'] > 0 else 'expired'
+            pages_meta[bank['key']] = row
+        hits = int(cache_meta.get('hits') or sum(int(p.get('hits') or 0) for p in pages_meta.values()))
+        misses = int(cache_meta.get('misses') or sum(int(p.get('misses') or 0) for p in pages_meta.values()))
+
+    total_size = sum(int(p.get('size_bytes') or 0) for p in pages_meta.values())
+    total_ops = hits + misses
+    hit_rate = round((100.0 * hits / total_ops), 2) if total_ops else 0.0
+
+    page_rows = []
+    entry_rows = []
+    now_dt = datetime.utcnow()
+    for key, row in sorted(pages_meta.items(), key=lambda kv: (-int(kv[1].get('entries') or 0), kv[1].get('label') or '')):
+        ph = int(row.get('hits') or 0)
+        pm = int(row.get('misses') or 0)
+        pops = ph + pm
+        prate = round((100.0 * ph / pops), 1) if pops else 0.0
+        size_b = int(row.get('size_bytes') or 0)
+        last_acc = row.get('last_accessed') or cache_meta.get('last_scan') or settings.get('last_cache_scan')
+        created = row.get('created') or last_acc
+        age_label, expires_label, status = _cache_age_labels(created, last_acc, int(row.get('timeout_min') or 30), now_dt)
+        if row.get('status') == 'expired' or int(row.get('entries') or 0) == 0:
+            status = 'expired'
+        page_rows.append({
+            'key': key,
+            'label': row.get('label') or key,
+            'hits': ph,
+            'misses': pm,
+            'hit_rate': prate,
+            'size_label': _format_bytes(size_b),
+            'entries': int(row.get('entries') or 0),
+            'last_accessed': _friendly_stamp(last_acc),
+        })
+        entry_rows.append({
+            'key': key,
+            'label': row.get('label') or key,
+            'cache_key': f'mongo:{key}',
+            'created': _friendly_stamp(created),
+            'age': age_label,
+            'expires': expires_label,
+            'size_label': _format_bytes(size_b),
+            'timeout': f"{int(row.get('timeout_min') or 30)}m",
+            'status': status,
         })
 
-    if banks[2]['count'] and mapping_gap > 0:
-        signals.append({
-            'level': 'warn',
-            'title': f'{mapping_gap} teacher(s) may be unmapped',
-            'detail': 'Check Teacher Mapping so classes and subjects are assigned.',
-        })
-    elif banks[2]['count']:
-        signals.append({
-            'level': 'ok',
-            'title': 'Teacher mapping coverage looks healthy',
-            'detail': 'Mapping rows meet or exceed the teacher count.',
-        })
-
-    if banks[5]['count'] == 0:
-        signals.append({
-            'level': 'info',
-            'title': 'No announcements stored',
-            'detail': 'Publish from Announcements when you have school news.',
-        })
+    auto_refresh = request.args.get('auto', '1') != '0'
 
     return render_template(
         'admin_cache_monitor.html',
-        banks=banks,
-        total_records=total_records,
-        last_refresh=last_refresh,
-        last_scan=last_scan,
-        age_hours=age_hours,
-        freshness=freshness,
-        signals=signals,
+        hits=hits,
+        misses=misses,
+        hit_rate=hit_rate,
+        total_size_label=_format_bytes(total_size),
+        page_rows=page_rows,
+        entry_rows=entry_rows,
+        last_scan=cache_meta.get('last_scan') or settings.get('last_cache_scan'),
+        auto_refresh=auto_refresh,
+        paused=not auto_refresh,
     )
+
+
+def _cache_monitor_banks():
+    specs = [
+        ('students', 'Student profiles', 'Core school roll', 'students'),
+        ('student_logins', 'Student logins', 'Portal access accounts', 'student_users'),
+        ('teachers', 'Teachers', 'Staff directory', 'users'),
+        ('mappings', 'Class mappings', 'Teacher–class links', 'teacher_mappings'),
+        ('admins', 'Admins', 'Portal operators', 'admins'),
+        ('announcements', 'Announcements', 'Published school news', 'announcements'),
+        ('policies', 'School policies', 'Rules and guidelines', 'school_policies'),
+        ('notifications', 'Notifications', 'In-app alerts', 'notifications'),
+    ]
+    banks = []
+    for key, label, hint, coll_name in specs:
+        count = db[coll_name].count_documents({})
+        size_bytes = 0
+        try:
+            stats = db.command('collStats', coll_name)
+            size_bytes = int(stats.get('storageSize') or stats.get('size') or 0)
+        except Exception:
+            size_bytes = count * 256
+        banks.append({
+            'key': key,
+            'label': label,
+            'hint': hint,
+            'count': count,
+            'size_bytes': size_bytes,
+        })
+    return banks
+
+
+def _format_bytes(n):
+    try:
+        n = float(n or 0)
+    except (TypeError, ValueError):
+        n = 0
+    units = ['B', 'KB', 'MB', 'GB']
+    i = 0
+    while n >= 1024 and i < len(units) - 1:
+        n /= 1024.0
+        i += 1
+    if i == 0:
+        return f'{int(n)}B'
+    return f'{n:.1f}{units[i]}'
+
+
+def _friendly_stamp(value):
+    if not value:
+        return '—'
+    try:
+        dt = datetime.fromisoformat(str(value).replace('Z', ''))
+        return dt.strftime('%Y-%m-%d %H:%M')
+    except (TypeError, ValueError):
+        return str(value)[:19]
+
+
+def _cache_age_labels(created, last_acc, timeout_min, now_dt):
+    def parse(v):
+        if not v:
+            return None
+        try:
+            return datetime.fromisoformat(str(v).replace('Z', ''))
+        except (TypeError, ValueError):
+            return None
+
+    created_dt = parse(created) or parse(last_acc) or now_dt
+    age_sec = max(int((now_dt - created_dt).total_seconds()), 0)
+    age_m, age_s = divmod(age_sec, 60)
+    age_h, age_m = divmod(age_m, 60)
+    age_label = f'{age_h}h {age_m}m' if age_h else f'{age_m}m {age_s}s'
+
+    expires_at = created_dt + timedelta(minutes=max(timeout_min, 1))
+    left = int((expires_at - now_dt).total_seconds())
+    if left <= 0:
+        return age_label, '0m', 'expired'
+    lm, ls = divmod(left, 60)
+    lh, lm = divmod(lm, 60)
+    expires_label = f'{lh}h {lm}m' if lh else f'{lm}m {ls}s'
+    return age_label, expires_label, 'active'
 
 
 def _normalize_student_doc(doc):
