@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% block header_title %}Class forums{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
+    <div class="flex items-start gap-3">
+        <a href="{{ home_url }}" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back to tools">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-wider text-indigo-500">Teaching & learning</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Discussion forums</h1>
+            <p class="text-sm text-slate-500 mt-1">Moderated class threads tied to each subject</p>
+        </div>
+    </div>
+
+    <form method="GET" class="flex flex-wrap items-end gap-3 bg-white border border-slate-200 rounded-2xl px-4 py-4 shadow-sm">
+        <label>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Subject</span>
+            <select name="subject" class="mt-1 block border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="">All subjects</option>
+                {% for s in subjects %}
+                <option value="{{ s }}" {% if filters.subject == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Grade</span>
+            <select name="grade" class="mt-1 block border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <option value="">All grades</option>
+                {% for g in grades %}
+                <option value="{{ g }}" {% if filters.grade == g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2.5">Apply</button>
+    </form>
+
+    <div class="grid grid-cols-1 xl:grid-cols-5 gap-4">
+        <div class="xl:col-span-2 space-y-4">
+            <form method="POST" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm space-y-3">
+                <input type="hidden" name="action" value="create">
+                <p class="text-sm font-semibold text-slate-900">Start a discussion</p>
+                <input name="title" required placeholder="Thread title" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <select name="subject" class="border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                        {% for s in subjects %}
+                        <option value="{{ s }}" {% if filters.subject == s %}selected{% endif %}>{{ s }}</option>
+                        {% endfor %}
+                    </select>
+                    <input name="grade" placeholder="Grade" value="{{ filters.grade }}" class="border border-slate-200 rounded-xl px-3 py-2.5 text-sm">
+                </div>
+                <textarea name="body" required rows="3" placeholder="What do you want to discuss?" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none"></textarea>
+                <button type="submit" class="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5">Post thread</button>
+            </form>
+
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <h2 class="text-sm font-semibold text-slate-900">Threads</h2>
+                </div>
+                <div class="divide-y divide-slate-100 max-h-[28rem] overflow-y-auto">
+                    {% for t in threads %}
+                    <a href="{{ url_for('learning_forums', subject=filters.subject, grade=filters.grade, thread=t.id) }}"
+                       class="block px-4 py-3 hover:bg-indigo-50/50 {% if active and active.id == t.id %}bg-indigo-50{% endif %}">
+                        <div class="flex items-start gap-2">
+                            {% if t.pinned %}<span class="text-[10px] font-bold text-amber-600 mt-0.5">PIN</span>{% endif %}
+                            {% if t.locked %}<span class="text-[10px] font-bold text-slate-400 mt-0.5">LOCK</span>{% endif %}
+                            <div class="min-w-0">
+                                <p class="text-sm font-semibold text-slate-900 truncate">{{ t.title }}</p>
+                                <p class="text-[11px] text-slate-400 mt-0.5">{{ t.subject }} · {{ t.grade or 'All' }} · {{ t.replies or 0 }} replies</p>
+                            </div>
+                        </div>
+                    </a>
+                    {% else %}
+                    <p class="px-4 py-10 text-center text-sm text-slate-400">No threads yet for this filter.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="xl:col-span-3 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm min-h-[24rem]">
+            {% if active %}
+            <div class="px-5 py-4 border-b border-slate-100 flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-slate-900">{{ active.title }}</h2>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ active.author_name }} · {{ active.author_role }} · {{ active.created_at }} · {{ active.subject }}</p>
+                </div>
+                {% if can_moderate %}
+                <div class="flex items-center gap-1 shrink-0">
+                    <form method="POST"><input type="hidden" name="action" value="moderate"><input type="hidden" name="thread_id" value="{{ active.id }}"><input type="hidden" name="mod" value="pin"><button class="text-[11px] font-semibold text-amber-700 px-2 py-1 rounded-lg hover:bg-amber-50">Pin</button></form>
+                    <form method="POST"><input type="hidden" name="action" value="moderate"><input type="hidden" name="thread_id" value="{{ active.id }}"><input type="hidden" name="mod" value="lock"><button class="text-[11px] font-semibold text-slate-600 px-2 py-1 rounded-lg hover:bg-slate-50">Lock</button></form>
+                    <form method="POST" onsubmit="return confirm('Delete this thread?')"><input type="hidden" name="action" value="moderate"><input type="hidden" name="thread_id" value="{{ active.id }}"><input type="hidden" name="mod" value="delete"><button class="text-[11px] font-semibold text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50">Delete</button></form>
+                </div>
+                {% endif %}
+            </div>
+            <div class="px-5 py-4 border-b border-slate-50">
+                <p class="text-sm text-slate-700 whitespace-pre-wrap">{{ active.body }}</p>
+            </div>
+            <div class="px-5 py-4 space-y-3 max-h-80 overflow-y-auto">
+                {% for r in replies %}
+                <div class="rounded-xl bg-slate-50 border border-slate-100 px-4 py-3">
+                    <p class="text-[11px] text-slate-400 font-medium">{{ r.author_name }} · {{ r.author_role }} · {{ r.created_at }}</p>
+                    <p class="mt-1 text-sm text-slate-700 whitespace-pre-wrap">{{ r.body }}</p>
+                </div>
+                {% else %}
+                <p class="text-sm text-slate-400 text-center py-6">No replies yet — start the conversation.</p>
+                {% endfor %}
+            </div>
+            {% if not active.locked %}
+            <form method="POST" class="px-5 py-4 border-t border-slate-100 space-y-2">
+                <input type="hidden" name="action" value="reply">
+                <input type="hidden" name="thread_id" value="{{ active.id }}">
+                <textarea name="body" required rows="2" placeholder="Write a reply…" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm resize-none"></textarea>
+                <button type="submit" class="rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-4 py-2">Reply</button>
+            </form>
+            {% else %}
+            <p class="px-5 py-3 text-xs text-slate-400 border-t border-slate-100">This thread is locked by a moderator.</p>
+            {% endif %}
+            {% else %}
+            <div class="h-full flex items-center justify-center px-6 py-20 text-center">
+                <div>
+                    <div class="mx-auto h-12 w-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-3">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a2 2 0 01-2-2v-1"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l4-4h4a2 2 0 002-2z"/></svg>
+                    </div>
+                    <p class="font-semibold text-slate-800">Select a thread</p>
+                    <p class="text-sm text-slate-400 mt-1">Or start a new subject discussion on the left.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

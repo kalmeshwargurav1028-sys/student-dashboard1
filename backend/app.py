@@ -6982,14 +6982,17 @@ def handle_exception(e):
 # ---------------------------------------------------------------------------
 @app.route('/teacher/online_tests')
 def teacher_online_tests():
-    if not session.get('logged_in') or session.get('role') != 'teacher':
+    if not session.get('logged_in') or session.get('role') not in ('teacher', 'admin'):
         return redirect(url_for('login'))
-    tests = list(db.online_tests.find({'teacher_id': session.get('user_id')}).sort('_id', -1))
+    if session.get('role') == 'admin':
+        tests = list(db.online_tests.find({}).sort('_id', -1))
+    else:
+        tests = list(db.online_tests.find({'teacher_id': session.get('user_id')}).sort('_id', -1))
     return render_template('teacher_online_tests.html', tests=tests)
 
 @app.route('/teacher/create_test', methods=['GET', 'POST'])
 def create_online_test():
-    if not session.get('logged_in') or session.get('role') != 'teacher':
+    if not session.get('logged_in') or session.get('role') not in ('teacher', 'admin'):
         return redirect(url_for('login'))
         
     if request.method == 'POST':
@@ -8171,6 +8174,392 @@ You MUST format your entire response as a valid JSON object EXACTLY like this (d
     except Exception as e:
         print(f"AI Auto-Grade Error: {str(e)}")
         return jsonify({'success': False, 'error': f"AI Error: {str(e)}"}), 500
+
+
+# ---------------------------------------------------------------------------
+# Teaching & learning depth — Quizzes, Analytics, Library, Forums
+# ---------------------------------------------------------------------------
+def _learning_home_url():
+    role = session.get('role')
+    if role == 'admin':
+        return url_for('admin_dashboard') + '#your-tools'
+    if role == 'teacher':
+        return url_for('dashboard') + '#your-tools'
+    return url_for('student_home') + '#your-tools'
+
+
+def _learning_require_login():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    return None
+
+
+@app.route('/learning/quizzes')
+def learning_quizzes():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    tests = []
+    create_url = None
+    desk_url = url_for('student_online_tests')
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
+        student_class = student.get('student_class')
+        tests = list(db.online_tests.find({'target_class': student_class, 'status': 'published'}).sort('_id', -1))
+        desk_url = url_for('student_online_tests')
+    elif role == 'teacher':
+        tests = list(db.online_tests.find({'teacher_id': session.get('user_id')}).sort('_id', -1))
+        create_url = url_for('create_online_test')
+        desk_url = url_for('teacher_online_tests')
+    else:
+        tests = list(db.online_tests.find({}).sort('_id', -1))
+        create_url = url_for('create_online_test')
+        desk_url = url_for('teacher_online_tests')
+    for t in tests:
+        t['id'] = str(t.get('_id'))
+        t['submissions_count'] = db.test_submissions.count_documents({'test_id': t.get('_id')})
+    return render_template(
+        'learning_quizzes.html',
+        role=role,
+        tests=tests,
+        create_url=create_url,
+        desk_url=desk_url,
+        home_url=_learning_home_url(),
+        academic_period=session.get('academic_period') or academic_year_short(),
+    )
+
+
+@app.route('/learning/analytics')
+def learning_analytics():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    subjects = []
+    stuck = []
+    recommendations = []
+    kpis = []
+
+    if role == 'student':
+        sid = session.get('user_id')
+        student = db.students.find_one(get_student_query({'id': sid}), {'_id': 0}) or {}
+        grades = list(db.grades.find({'student_id': sid}, {'_id': 0}))
+        for g in grades:
+            ca = float(g.get('ca_mark') or 0)
+            exam = float(g.get('exam_mark') or 0)
+            total = ca + exam
+            mastery = min(round(total, 1), 100)
+            status = 'strong' if mastery >= 80 else ('developing' if mastery >= 60 else 'stuck')
+            subjects.append({
+                'name': g.get('subject') or 'Subject',
+                'mastery': mastery,
+                'status': status,
+                'ca': ca,
+                'exam': exam,
+            })
+        subjects.sort(key=lambda s: s['mastery'])
+        stuck = [s for s in subjects if s['status'] == 'stuck'][:5]
+        for s in stuck[:3]:
+            recommendations.append(f"Practice more in {s['name']} — current mastery {s['mastery']}%.")
+        if not recommendations:
+            recommendations.append('Keep a steady weekly review across all subjects.')
+        avg = round(sum(s['mastery'] for s in subjects) / len(subjects), 1) if subjects else float(student.get('performance') or 0)
+        kpis = [
+            {'label': 'Subjects tracked', 'value': len(subjects), 'tone': 'blue'},
+            {'label': 'Average mastery', 'value': f'{avg}%', 'tone': 'green'},
+            {'label': 'Needs support', 'value': len(stuck), 'tone': 'low'},
+            {'label': 'Strong subjects', 'value': sum(1 for s in subjects if s['status'] == 'strong'), 'tone': 'good'},
+        ]
+        display_name = student.get('name') or session.get('username')
+    elif role == 'teacher':
+        students = list(db.students.find(get_student_query(), {'_id': 0}))
+        grade_docs = list(db.grades.find({}, {'_id': 0}))
+        by_student = {}
+        for g in grade_docs:
+            sid = g.get('student_id')
+            ca = float(g.get('ca_mark') or 0)
+            exam = float(g.get('exam_mark') or 0)
+            by_student.setdefault(sid, []).append(ca + exam)
+        for s in students:
+            scores = by_student.get(s.get('id'), [])
+            avg = round(sum(scores) / len(scores), 1) if scores else float(s.get('performance') or 0)
+            if avg and avg < 60:
+                stuck.append({
+                    'name': s.get('name') or 'Student',
+                    'mastery': avg,
+                    'detail': f"Grade {s.get('student_class') or '—'} · {s.get('division') or ''}".strip(),
+                    'status': 'stuck',
+                })
+        subject_map = {}
+        for g in grade_docs:
+            name = g.get('subject') or 'Subject'
+            score = float(g.get('ca_mark') or 0) + float(g.get('exam_mark') or 0)
+            subject_map.setdefault(name, []).append(score)
+        for name, vals in subject_map.items():
+            avg = round(sum(vals) / len(vals), 1) if vals else 0
+            subjects.append({
+                'name': name,
+                'mastery': avg,
+                'status': 'strong' if avg >= 80 else ('developing' if avg >= 60 else 'stuck'),
+                'ca': '—',
+                'exam': '—',
+            })
+        subjects.sort(key=lambda x: x['mastery'])
+        stuck.sort(key=lambda x: x['mastery'])
+        recommendations = [
+            f"Focus support on {(stuck[0]['name'] if stuck else 'at-risk learners')}.",
+            f"Weakest class subject: {(subjects[0]['name'] if subjects else 'n/a')}.",
+            'Assign targeted practice quizzes for students below 60%.',
+        ]
+        kpis = [
+            {'label': 'Students', 'value': len(students), 'tone': 'blue'},
+            {'label': 'Subjects', 'value': len(subjects), 'tone': 'green'},
+            {'label': 'Stuck learners', 'value': len(stuck), 'tone': 'low'},
+            {'label': 'Class focus', 'value': (subjects[0]['name'] if subjects else '—'), 'tone': 'good'},
+        ]
+        display_name = session.get('username') or 'Teacher'
+    else:
+        students = list(db.students.find({}, {'_id': 0}))
+        grade_docs = list(db.grades.find({}, {'_id': 0}))
+        subject_map = {}
+        for g in grade_docs:
+            name = g.get('subject') or 'Subject'
+            score = float(g.get('ca_mark') or 0) + float(g.get('exam_mark') or 0)
+            subject_map.setdefault(name, []).append(score)
+        for name, vals in subject_map.items():
+            avg = round(sum(vals) / len(vals), 1) if vals else 0
+            subjects.append({
+                'name': name,
+                'mastery': avg,
+                'status': 'strong' if avg >= 80 else ('developing' if avg >= 60 else 'stuck'),
+                'ca': '—',
+                'exam': '—',
+            })
+        subjects.sort(key=lambda x: x['mastery'])
+        low_perf = 0
+        for s in students:
+            try:
+                if float(s.get('performance') or 0) < 60:
+                    low_perf += 1
+                    stuck.append({
+                        'name': s.get('name') or 'Student',
+                        'mastery': float(s.get('performance') or 0),
+                        'detail': f"Grade {s.get('student_class') or '—'}",
+                        'status': 'stuck',
+                    })
+            except (TypeError, ValueError):
+                pass
+        stuck = stuck[:12]
+        recommendations = [
+            'Review lowest-performing subjects school-wide this term.',
+            'Ask teachers to publish practice quizzes for stuck bands.',
+            'Use Content Library to share remediation materials by grade.',
+        ]
+        kpis = [
+            {'label': 'Students', 'value': len(students), 'tone': 'blue'},
+            {'label': 'Subjects', 'value': len(subjects), 'tone': 'green'},
+            {'label': 'At-risk students', 'value': low_perf, 'tone': 'low'},
+            {'label': 'Lowest subject', 'value': (subjects[0]['name'] if subjects else '—'), 'tone': 'good'},
+        ]
+        display_name = session.get('username') or 'Admin'
+
+    return render_template(
+        'learning_analytics.html',
+        role=role,
+        subjects=subjects,
+        stuck=stuck,
+        recommendations=recommendations,
+        kpis=kpis,
+        display_name=display_name,
+        home_url=_learning_home_url(),
+    )
+
+
+@app.route('/learning/library', methods=['GET', 'POST'])
+def learning_library():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    grade = (request.values.get('grade') or '').strip()
+    subject = (request.values.get('subject') or '').strip()
+    year = (request.values.get('year') or session.get('academic_period') or '').strip()
+
+    if request.method == 'POST' and role in ('teacher', 'admin'):
+        title = (request.form.get('title') or '').strip()
+        kind = (request.form.get('kind') or 'pdf').strip()
+        link = (request.form.get('link') or '').strip()
+        g = (request.form.get('grade') or '').strip()
+        sub = (request.form.get('subject') or '').strip()
+        y = (request.form.get('year') or year or '').strip()
+        notes = (request.form.get('notes') or '').strip()
+        if title:
+            db.content_library.insert_one({
+                'title': title,
+                'kind': kind,
+                'link': link,
+                'grade': g,
+                'subject': sub,
+                'year': y,
+                'notes': notes,
+                'created_by': session.get('user_id'),
+                'created_name': session.get('username') or 'Staff',
+                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+            })
+            flash('Content added to the library.')
+            return redirect(url_for('learning_library', grade=g, subject=sub, year=y))
+
+    query = {}
+    if grade:
+        query['grade'] = grade
+    if subject:
+        query['subject'] = subject
+    if year:
+        query['year'] = year
+
+    items = list(db.content_library.find(query).sort('created_at', -1))
+    # Also surface published materials as library entries
+    mat_query = {}
+    if subject:
+        mat_query['subject'] = subject
+    if grade:
+        mat_query['$or'] = [{'student_class': grade}, {'class': grade}, {'grade': grade}]
+    materials = list(db.materials.find(mat_query).sort('uploaded_at', -1).limit(40))
+    for m in materials:
+        items.append({
+            'title': m.get('title') or m.get('filename') or 'Material',
+            'kind': 'pdf',
+            'link': m.get('file_url') or m.get('url') or '',
+            'grade': m.get('student_class') or m.get('grade') or '',
+            'subject': m.get('subject') or '',
+            'year': year,
+            'notes': 'From shared materials',
+            'created_name': m.get('teacher_name') or 'Teacher',
+            'created_at': m.get('uploaded_at') or '',
+            'source': 'materials',
+        })
+
+    grades = sorted({str(s.get('student_class') or '').strip() for s in db.students.find({}, {'student_class': 1}) if s.get('student_class')})
+    subjects = sorted({str(g.get('subject') or '').strip() for g in db.grades.find({}, {'subject': 1}) if g.get('subject')})
+    if not subjects:
+        subjects = ['Mathematics', 'Science', 'English', 'Social Studies', 'Physics', 'Chemistry', 'Biology']
+
+    return render_template(
+        'learning_library.html',
+        role=role,
+        items=items,
+        grades=grades,
+        subjects=subjects,
+        filters={'grade': grade, 'subject': subject, 'year': year},
+        home_url=_learning_home_url(),
+        can_upload=role in ('teacher', 'admin'),
+    )
+
+
+@app.route('/learning/forums', methods=['GET', 'POST'])
+def learning_forums():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    subject = (request.values.get('subject') or '').strip()
+    grade = (request.values.get('grade') or '').strip()
+
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0}) or {}
+        if not grade:
+            grade = str(student.get('student_class') or student.get('grade') or '').strip()
+
+    if request.method == 'POST':
+        action = request.form.get('action') or 'create'
+        if action == 'create':
+            title = (request.form.get('title') or '').strip()
+            body = (request.form.get('body') or '').strip()
+            sub = (request.form.get('subject') or subject or 'General').strip()
+            g = (request.form.get('grade') or grade or '').strip()
+            if title and body:
+                db.forum_threads.insert_one({
+                    'title': title,
+                    'body': body,
+                    'subject': sub,
+                    'grade': g,
+                    'author_id': session.get('user_id'),
+                    'author_name': session.get('username') or 'User',
+                    'author_role': role,
+                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'pinned': False,
+                    'locked': False,
+                    'replies': 0,
+                })
+                flash('Discussion started.')
+                return redirect(url_for('learning_forums', subject=sub, grade=g))
+        elif action == 'reply':
+            thread_id = request.form.get('thread_id')
+            body = (request.form.get('body') or '').strip()
+            if thread_id and body:
+                from bson.objectid import ObjectId
+                db.forum_replies.insert_one({
+                    'thread_id': ObjectId(thread_id),
+                    'body': body,
+                    'author_id': session.get('user_id'),
+                    'author_name': session.get('username') or 'User',
+                    'author_role': role,
+                    'created_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                })
+                db.forum_threads.update_one({'_id': ObjectId(thread_id)}, {'$inc': {'replies': 1}})
+                flash('Reply posted.')
+                return redirect(url_for('learning_forums', subject=subject, grade=grade, thread=thread_id))
+        elif action == 'moderate' and role in ('teacher', 'admin'):
+            from bson.objectid import ObjectId
+            thread_id = request.form.get('thread_id')
+            mod = request.form.get('mod')
+            if thread_id and mod == 'pin':
+                db.forum_threads.update_one({'_id': ObjectId(thread_id)}, {'$set': {'pinned': True}})
+            elif thread_id and mod == 'lock':
+                db.forum_threads.update_one({'_id': ObjectId(thread_id)}, {'$set': {'locked': True}})
+            elif thread_id and mod == 'delete':
+                db.forum_replies.delete_many({'thread_id': ObjectId(thread_id)})
+                db.forum_threads.delete_one({'_id': ObjectId(thread_id)})
+            return redirect(url_for('learning_forums', subject=subject, grade=grade))
+
+    query = {}
+    if subject:
+        query['subject'] = subject
+    if grade:
+        query['grade'] = grade
+    threads = list(db.forum_threads.find(query).sort([('pinned', -1), ('created_at', -1)]))
+    active_id = (request.args.get('thread') or '').strip()
+    active = None
+    replies = []
+    if active_id:
+        from bson.objectid import ObjectId
+        try:
+            active = db.forum_threads.find_one({'_id': ObjectId(active_id)})
+            if active:
+                replies = list(db.forum_replies.find({'thread_id': ObjectId(active_id)}).sort('created_at', 1))
+                active['id'] = str(active['_id'])
+        except Exception:
+            active = None
+    for t in threads:
+        t['id'] = str(t.get('_id'))
+
+    subjects = ['Mathematics', 'Science', 'English', 'Social Studies', 'Physics', 'Chemistry', 'Biology', 'General']
+    grades = sorted({str(s.get('student_class') or '').strip() for s in db.students.find({}, {'student_class': 1}) if s.get('student_class')})
+
+    return render_template(
+        'learning_forums.html',
+        role=role,
+        threads=threads,
+        active=active,
+        replies=replies,
+        subjects=subjects,
+        grades=grades,
+        filters={'subject': subject, 'grade': grade},
+        home_url=_learning_home_url(),
+        can_moderate=role in ('teacher', 'admin'),
+    )
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
