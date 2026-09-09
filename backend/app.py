@@ -3544,6 +3544,26 @@ def utility_users_monitor():
     if not _admin_required():
         return redirect(url_for('login'))
     people = _monitor_people()
+    role_filter = (request.args.get('role') or 'all').strip().lower()
+    q = (request.args.get('q') or '').strip().lower()
+
+    counts = {
+        'all': len(people),
+        'admin': sum(1 for p in people if p.get('kind') == 'admin'),
+        'staff': sum(1 for p in people if p.get('kind') == 'staff'),
+        'student': sum(1 for p in people if p.get('kind') == 'student'),
+    }
+    if role_filter in ('admin', 'staff', 'student'):
+        people = [p for p in people if p.get('kind') == role_filter]
+    if q:
+        people = [
+            p for p in people
+            if q in (p.get('name') or '').lower()
+            or q in (p.get('email') or '').lower()
+            or q in (p.get('role') or '').lower()
+            or q in (p.get('department') or '').lower()
+        ]
+
     per_page = 20
     try:
         page = max(1, int(request.args.get('page', 1)))
@@ -3563,6 +3583,9 @@ def utility_users_monitor():
         total=total,
         start=start + 1 if total else 0,
         end=min(start + per_page, total),
+        role_filter=role_filter if role_filter in ('all', 'admin', 'staff', 'student') else 'all',
+        q=request.args.get('q') or '',
+        counts=counts,
     )
 
 

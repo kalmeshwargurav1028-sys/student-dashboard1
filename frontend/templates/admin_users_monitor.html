@@ -1,56 +1,141 @@
 {% extends 'base.html' %}
-
 {% block header_title %}Users Monitor{% endblock %}
 
 {% block content %}
-<div class="w-full py-6 px-6 sm:px-8 lg:px-10">
-    <div class="mb-6">
-        <h1 class="text-xl font-semibold text-slate-900">Users Monitor</h1>
-        <p class="text-sm text-slate-500 mt-1">Everyone with a portal login.</p>
+{% macro page_url(n) -%}
+{{ url_for('utility_users_monitor', page=n, role=role_filter, q=q) }}
+{%- endmacro %}
+
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 max-w-7xl mx-auto space-y-5">
+
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+        <div class="flex items-start gap-3 min-w-0">
+            <a href="{{ url_for('admin_dashboard') }}#your-tools" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back to tools">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Users Monitor</h1>
+                <p class="text-sm text-slate-500 mt-1">Everyone with a portal login — edit or remove accounts from this table.</p>
+            </div>
+        </div>
+        <a href="{{ url_for('utility_registration') }}" class="inline-flex items-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-4 py-2.5 shadow-sm">
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            Add user
+        </a>
     </div>
 
     {% with messages = get_flashed_messages() %}
     {% if messages %}
-    <div class="mb-4 rounded-lg border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-800">
-        {% for message in messages %}
-        <p>{{ message }}</p>
-        {% endfor %}
+    <div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
     </div>
     {% endif %}
     {% endwith %}
 
-    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    {# Summary strip #}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">All logins</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ counts.all }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Admins</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ counts.admin }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Teachers</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ counts.staff }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Students</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-slate-900">{{ counts.student }}</p>
+        </div>
+    </div>
+
+    {# Filters + table #}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div class="px-4 sm:px-5 py-4 border-b border-slate-200 flex flex-col lg:flex-row lg:items-center gap-3">
+            <div class="flex flex-wrap items-center gap-1.5">
+                {% set tabs = [
+                    ('all', 'All', counts.all),
+                    ('admin', 'Admins', counts.admin),
+                    ('staff', 'Teachers', counts.staff),
+                    ('student', 'Students', counts.student),
+                ] %}
+                {% for key, label, count in tabs %}
+                <a href="{{ url_for('utility_users_monitor', page=1, role=key, q=q) }}"
+                   class="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold border transition-colors
+                   {% if role_filter == key %}bg-sky-600 text-white border-sky-600{% else %}bg-white text-slate-600 border-slate-200 hover:bg-slate-50{% endif %}">
+                    {{ label }}
+                    <span class="tabular-nums {% if role_filter == key %}text-sky-100{% else %}text-slate-400{% endif %}">{{ count }}</span>
+                </a>
+                {% endfor %}
+            </div>
+            <form method="GET" action="{{ url_for('utility_users_monitor') }}" class="lg:ml-auto flex items-center gap-2 w-full lg:w-auto">
+                <input type="hidden" name="role" value="{{ role_filter }}">
+                <input type="hidden" name="page" value="1">
+                <label class="relative flex-1 lg:w-72">
+                    <span class="sr-only">Search users</span>
+                    <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
+                    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email, role…"
+                           class="w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-200 focus:bg-white">
+                </label>
+                <button type="submit" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">Search</button>
+            </form>
+        </div>
+
         <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-slate-100">
-                <thead class="bg-slate-50">
-                    <tr>
-                        <th class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Name</th>
-                        <th class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Email</th>
-                        <th class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Role</th>
-                        <th class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Department</th>
-                        <th class="px-5 py-3 text-left text-xs font-medium text-slate-400 uppercase tracking-wider">Last active</th>
-                        <th class="px-5 py-3 text-right text-xs font-medium text-slate-400 uppercase tracking-wider">Actions</th>
+            <table class="min-w-full border-collapse text-sm">
+                <thead>
+                    <tr class="bg-slate-50 text-left text-[11px] uppercase tracking-wider text-slate-500">
+                        <th class="border-b border-r border-slate-200 px-3 py-3 font-semibold w-12 text-center">#</th>
+                        <th class="border-b border-r border-slate-200 px-4 py-3 font-semibold min-w-[12rem]">Name</th>
+                        <th class="border-b border-r border-slate-200 px-4 py-3 font-semibold min-w-[14rem]">Email</th>
+                        <th class="border-b border-r border-slate-200 px-4 py-3 font-semibold">Role</th>
+                        <th class="border-b border-r border-slate-200 px-4 py-3 font-semibold">Department</th>
+                        <th class="border-b border-r border-slate-200 px-4 py-3 font-semibold whitespace-nowrap">Last active</th>
+                        <th class="border-b border-slate-200 px-4 py-3 font-semibold text-right">Actions</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
+                <tbody>
                     {% for person in people %}
-                    <tr class="hover:bg-slate-50">
-                        <td class="px-5 py-3 text-sm font-medium text-slate-900">{{ person.name }}</td>
-                        <td class="px-5 py-3 text-sm text-slate-600">{{ person.email }}</td>
-                        <td class="px-5 py-3 text-sm text-slate-600">{{ person.role }}</td>
-                        <td class="px-5 py-3 text-sm text-slate-500">{{ person.department or '—' }}</td>
-                        <td class="px-5 py-3 text-sm text-slate-500">{{ person.last_active }}</td>
-                        <td class="px-5 py-3 text-right">
-                            <div class="inline-flex items-center justify-end gap-2">
-                                <a href="{{ url_for('utility_user_edit', kind=person.kind, user_id=person.id, page=page) }}" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 text-slate-500 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-200" title="Edit">
+                    <tr class="hover:bg-sky-50/40">
+                        <td class="border-b border-r border-slate-100 px-3 py-3 text-center text-slate-400 tabular-nums">{{ start + loop.index0 }}</td>
+                        <td class="border-b border-r border-slate-100 px-4 py-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold
+                                    {% if person.kind == 'admin' %}bg-indigo-100 text-indigo-700
+                                    {% elif person.kind == 'staff' %}bg-teal-100 text-teal-700
+                                    {% else %}bg-amber-100 text-amber-800{% endif %}">
+                                    {{ (person.name or '?')[:1]|upper }}
+                                </span>
+                                <span class="font-medium text-slate-900 truncate">{{ person.name or '—' }}</span>
+                            </div>
+                        </td>
+                        <td class="border-b border-r border-slate-100 px-4 py-3 text-slate-600">
+                            <span class="break-all">{{ person.email or '—' }}</span>
+                        </td>
+                        <td class="border-b border-r border-slate-100 px-4 py-3">
+                            <span class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold
+                                {% if person.kind == 'admin' %}bg-indigo-50 text-indigo-700 ring-1 ring-indigo-100
+                                {% elif person.kind == 'staff' %}bg-teal-50 text-teal-700 ring-1 ring-teal-100
+                                {% else %}bg-amber-50 text-amber-800 ring-1 ring-amber-100{% endif %}">
+                                {{ person.role }}
+                            </span>
+                        </td>
+                        <td class="border-b border-r border-slate-100 px-4 py-3 text-slate-600">{{ person.department or '—' }}</td>
+                        <td class="border-b border-r border-slate-100 px-4 py-3 text-slate-500 whitespace-nowrap tabular-nums">{{ person.last_active }}</td>
+                        <td class="border-b border-slate-100 px-4 py-3 text-right">
+                            <div class="inline-flex items-center justify-end gap-1.5">
+                                <a href="{{ url_for('utility_user_edit', kind=person.kind, user_id=person.id, page=page) }}" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-200" title="Edit">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.464V20z"/></svg>
                                 </a>
                                 {% if person.can_delete %}
-                                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete" data-name="{{ person.name }}" data-email="{{ person.email }}" data-role="{{ person.role }}" data-action="{{ url_for('utility_user_delete', kind=person.kind, user_id=person.id) }}" onclick="openDeleteUser(this)">
+                                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete" data-name="{{ person.name }}" data-email="{{ person.email }}" data-role="{{ person.role }}" data-action="{{ url_for('utility_user_delete', kind=person.kind, user_id=person.id) }}" onclick="openDeleteUser(this)">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
                                 </button>
                                 {% else %}
-                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-100 text-slate-300 cursor-not-allowed" title="You cannot delete your own account">
+                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed" title="You cannot delete your own account">
                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
                                 </span>
                                 {% endif %}
@@ -59,23 +144,26 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="6" class="px-5 py-10 text-center text-sm text-slate-400">No users yet.</td>
+                        <td colspan="7" class="px-5 py-14 text-center text-slate-400 border-b border-slate-100">
+                            {% if q or role_filter != 'all' %}No users match this filter.{% else %}No users yet.{% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50">
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-4 sm:px-5 py-3 border-t border-slate-200 bg-slate-50">
             <p class="text-sm text-slate-500">
                 {% if total %}
-                Showing <span class="font-medium text-slate-700">{{ start }}</span> to <span class="font-medium text-slate-700">{{ end }}</span> of <span class="font-medium text-slate-700">{{ total }}</span>
+                Showing <span class="font-semibold text-slate-700 tabular-nums">{{ start }}</span>–<span class="font-semibold text-slate-700 tabular-nums">{{ end }}</span> of <span class="font-semibold text-slate-700 tabular-nums">{{ total }}</span>
                 {% else %}
-                Showing 0 to 0 of 0
+                Showing 0 of 0
                 {% endif %}
             </p>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 flex-wrap">
                 {% if page > 1 %}
-                <a href="{{ url_for('utility_users_monitor', page=page - 1) }}" class="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">Previous</a>
+                <a href="{{ page_url(page - 1) }}" class="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">Previous</a>
                 {% else %}
                 <span class="px-3 py-1.5 text-sm rounded-md border border-slate-100 bg-white text-slate-300">Previous</span>
                 {% endif %}
@@ -83,7 +171,7 @@
                 {% if n == page %}
                 <span class="min-w-[2rem] px-2.5 py-1.5 text-sm text-center rounded-md bg-sky-600 text-white font-medium">{{ n }}</span>
                 {% elif n <= 3 or n > pages - 2 or (n >= page - 1 and n <= page + 1) %}
-                <a href="{{ url_for('utility_users_monitor', page=n) }}" class="min-w-[2rem] px-2.5 py-1.5 text-sm text-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">{{ n }}</a>
+                <a href="{{ page_url(n) }}" class="min-w-[2rem] px-2.5 py-1.5 text-sm text-center rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">{{ n }}</a>
                 {% elif n == 4 and page > 5 %}
                 <span class="px-1 text-slate-400 text-sm">…</span>
                 {% elif n == pages - 2 and page < pages - 4 %}
@@ -91,7 +179,7 @@
                 {% endif %}
                 {% endfor %}
                 {% if page < pages %}
-                <a href="{{ url_for('utility_users_monitor', page=page + 1) }}" class="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">Next</a>
+                <a href="{{ page_url(page + 1) }}" class="px-3 py-1.5 text-sm rounded-md border border-slate-200 bg-white text-slate-600 hover:bg-slate-50">Next</a>
                 {% else %}
                 <span class="px-3 py-1.5 text-sm rounded-md border border-slate-100 bg-white text-slate-300">Next</span>
                 {% endif %}
@@ -103,7 +191,7 @@
 <div id="deleteUserModal" class="hidden fixed inset-0 z-[80]">
     <div class="absolute inset-0 bg-slate-900/40" onclick="closeDeleteUser()"></div>
     <div class="relative min-h-full flex items-center justify-center p-4 pointer-events-none">
-        <div class="relative w-full max-w-md bg-white rounded-lg border border-slate-200 shadow-xl pointer-events-auto">
+        <div class="relative w-full max-w-md bg-white rounded-2xl border border-slate-200 shadow-xl pointer-events-auto overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-100">
                 <h2 class="text-base font-semibold text-slate-900">Remove user</h2>
                 <p class="text-sm text-slate-500 mt-1">This account will lose portal access.</p>
@@ -113,10 +201,10 @@
                 <p id="deleteUserMeta" class="text-sm text-slate-500"></p>
                 <p class="text-sm text-slate-500">This cannot be undone.</p>
             </div>
-            <form id="deleteUserForm" method="POST" class="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-2">
+            <form id="deleteUserForm" method="POST" class="px-5 py-4 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50">
                 <input type="hidden" name="page" value="{{ page }}">
-                <button type="button" onclick="closeDeleteUser()" class="px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Cancel</button>
-                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-md bg-red-600 hover:bg-red-700 text-white">Delete user</button>
+                <button type="button" onclick="closeDeleteUser()" class="px-4 py-2 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Cancel</button>
+                <button type="submit" class="px-4 py-2 text-sm font-medium rounded-xl bg-red-600 hover:bg-red-700 text-white">Delete user</button>
             </form>
         </div>
     </div>
