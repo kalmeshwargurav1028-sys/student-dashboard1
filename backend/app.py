@@ -2035,8 +2035,15 @@ def _academic_year_dashboard():
     subject_filter = (request.args.get('subject') or '').strip()
     grade_filter = (request.args.get('grade') or '').strip()
     student_filter = (request.args.get('student_id') or '').strip()
-    start = (request.args.get('start') or AY_START).strip() or AY_START
-    end = (request.args.get('end') or AY_END).strip() or AY_END
+    period = (request.args.get('period') or '').strip()
+    if period not in AY_PERIODS:
+        settings_preview = db.settings.find_one({}, {'_id': 0}) or {}
+        period = (settings_preview.get('academic_year') or '2026-2027').strip()
+        if period not in AY_PERIODS:
+            period = '2026-2027'
+    period_start, period_end = AY_PERIODS[period]
+    start = (request.args.get('start') or period_start).strip() or period_start
+    end = (request.args.get('end') or period_end).strip() or period_end
 
     school_name = _ay_school_name()
     settings = db.settings.find_one({}, {'_id': 0}) or {}
@@ -2215,8 +2222,8 @@ def _academic_year_dashboard():
         trend = [None] * 11 + [avg_score]
 
     return {
-        'academic_year_key': ACADEMIC_YEAR_KEY,
-        'academic_period': '2026-2027',
+        'academic_year_key': period,
+        'academic_period': period,
         'school_name': school_name,
         'role': role,
         'display_name': display_name,
@@ -2238,6 +2245,7 @@ def _academic_year_dashboard():
             'student_id': student_filter,
             'start': start,
             'end': end,
+            'period': period,
         },
         'logo_url': settings.get('logo_url') or url_for('static', filename='images/logo.png'),
     }

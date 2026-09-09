@@ -162,9 +162,21 @@
     </p>
 </div>
 {% else %}
-<div class="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-5">
+{% set home_url = url_for('dashboard') if role == 'teacher' else url_for('student_home') %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 max-w-6xl mx-auto space-y-5">
+
+    <div class="flex items-start gap-3">
+        <a href="{{ home_url }}#your-tools" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back to tools">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Academic Year {{ academic_period }}</h1>
+            <p class="text-sm text-slate-500 mt-1">{% if role == 'teacher' %}Class progress for the selected year{% else %}Your progress for the selected year{% endif %} · use the header year menu to switch periods</p>
+        </div>
+    </div>
 
     <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-5">
+        <input type="hidden" name="period" value="{{ academic_period }}">
         <div class="flex flex-col xl:flex-row xl:items-center gap-4">
             <div class="flex items-center gap-3 min-w-0">
                 {% if photo_url %}
@@ -174,7 +186,7 @@
                 {% endif %}
                 <div class="min-w-0">
                     <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
-                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800">{{ badge }}</span>
+                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">{{ badge }}</span>
                 </div>
             </div>
 
@@ -189,14 +201,6 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
-                {% if role == 'admin' and grade_choices %}
-                <select name="grade" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                    <option value="">All grades</option>
-                    {% for g in grade_choices %}
-                    <option value="{{ g }}" {% if filters.grade == g %}selected{% endif %}>{{ g }}</option>
-                    {% endfor %}
-                </select>
-                {% endif %}
                 {% if role == 'teacher' and student_choices %}
                 <select name="student_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
                     <option value="">All students</option>
@@ -211,9 +215,9 @@
                     <option value="{{ s }}" {% if filters.subject == s %}selected{% endif %}>{{ s }}</option>
                     {% endfor %}
                 </select>
-                <input type="date" name="start" value="{{ filters.start }}" min="2026-06-01" max="2027-05-31" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                <input type="date" name="end" value="{{ filters.end }}" min="2026-06-01" max="2027-05-31" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                <button type="submit" class="inline-flex items-center gap-1.5 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
+                <input type="date" name="start" value="{{ filters.start }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                <input type="date" name="end" value="{{ filters.end }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+                <button type="submit" class="inline-flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
                     Apply
                 </button>
@@ -259,7 +263,7 @@
             <div class="mt-4 space-y-3">
                 {% for item in insights %}
                 <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
-                    <div class="h-9 w-9 rounded-lg bg-violet-100 text-violet-700 flex items-center justify-center shrink-0">
+                    <div class="h-9 w-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
                         {% if item.icon == 'bulb' %}
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                         {% elif item.icon == 'chart' %}
@@ -290,7 +294,7 @@
                 <canvas id="ayTrend"></canvas>
             </div>
             <div class="flex flex-wrap gap-4 mt-3 text-xs text-slate-500">
-                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-violet-500"></span> PG Score</span>
+                <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-sky-500"></span> PG Score</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-rose-400"></span> Below 60</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> 60–79</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> 80+</span>
@@ -378,8 +382,8 @@
             datasets: [{
                 label: 'PG Score',
                 data: values,
-                borderColor: '#7c3aed',
-                backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                borderColor: '#0284c7',
+                backgroundColor: 'rgba(2, 132, 199, 0.08)',
                 tension: 0.35,
                 spanGaps: true,
                 pointRadius: 4,

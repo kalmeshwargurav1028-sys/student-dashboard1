@@ -26,18 +26,16 @@
                 {% endif %}
             </div>
         </div>
-        {% if tools_role == 'admin' %}
         <label class="relative w-full sm:w-64 shrink-0">
             <span class="sr-only">Search tools</span>
             <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M11 18a7 7 0 100-14 7 7 0 000 14z"/></svg>
             <input type="search" id="tools-search" placeholder="Find a tool…" autocomplete="off"
                    class="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-400 focus:border-sky-300">
         </label>
-        {% endif %}
     </div>
 
     {% if tools_role == 'admin' %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="admin-tools-grid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="tools-grid">
         {% call tool_card(url_for('admin_student_detail'), 'bg-emerald-500', 'Student Detail', 'Browse grades 1–12 and sections A–D') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         {% endcall %}
@@ -69,29 +67,8 @@
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18M7 7v10M12 7v10M17 7v10"/></svg>
         {% endcall %}
     </div>
-    <p id="tools-empty" class="hidden text-sm text-slate-500 text-center py-6">No tools match that search.</p>
-    <script>
-    (function () {
-        var input = document.getElementById('tools-search');
-        if (!input) return;
-        var empty = document.getElementById('tools-empty');
-        input.addEventListener('input', function () {
-            var q = (input.value || '').trim().toLowerCase();
-            var visible = 0;
-            document.querySelectorAll('#admin-tools-grid [data-tool-card]').forEach(function (card) {
-                var name = card.getAttribute('data-tool-name') || '';
-                var desc = (card.textContent || '').toLowerCase();
-                var show = !q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
-                card.classList.toggle('hidden', !show);
-                if (show) visible += 1;
-            });
-            if (empty) empty.classList.toggle('hidden', visible > 0);
-        });
-    })();
-    </script>
-
     {% else %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="tools-grid">
 
     {% if tools_role == 'teacher' %}
         {% call tool_card(url_for('resources_assignments'), 'bg-violet-500', 'Assignments and resources', 'Set work and share class materials') %}
@@ -115,7 +92,7 @@
         {% call tool_card(url_for('school_policies'), 'bg-teal-500', 'School Policies', 'Rules and classroom guidelines') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
         {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Terms, events and year calendar') %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Your year progress and assessment view') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
 
@@ -141,11 +118,31 @@
         {% call tool_card(url_for('student_attendance'), 'bg-orange-600', 'Attendance', 'Check your attendance') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
         {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Terms, events and year calendar') %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Your year progress and assessment view') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
     {% endif %}
 
     </div>
     {% endif %}
+    <p id="tools-empty" class="hidden text-sm text-slate-500 text-center py-6">No tools match that search.</p>
+    <script>
+    (function () {
+        var input = document.getElementById('tools-search');
+        if (!input) return;
+        var empty = document.getElementById('tools-empty');
+        input.addEventListener('input', function () {
+            var q = (input.value || '').trim().toLowerCase();
+            var visible = 0;
+            document.querySelectorAll('#tools-grid [data-tool-card]').forEach(function (card) {
+                var name = card.getAttribute('data-tool-name') || '';
+                var desc = (card.textContent || '').toLowerCase();
+                var show = !q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
+                card.classList.toggle('hidden', !show);
+                if (show) visible += 1;
+            });
+            if (empty) empty.classList.toggle('hidden', visible > 0);
+        });
+    })();
+    </script>
 </section>
