@@ -3651,22 +3651,102 @@ def utility_refresh_data():
     return render_template('admin_refresh_data.html', last_refresh=settings.get('last_data_refresh'))
 
 
-@app.route('/admin/utility/cache')
+@app.route('/admin/utility/cache', methods=['GET', 'POST'])
 def utility_cache_monitor():
     if not _admin_required():
         return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        stamp = datetime.utcnow().isoformat()
+        db.settings.update_one({}, {'$set': {'last_cache_scan': stamp}}, upsert=True)
+        flash('Inventory rescanned from the live database.')
+        return redirect(url_for('utility_cache_monitor'))
+
     settings = db.settings.find_one({}, {'_id': 0}) or {}
-    stats = {
-        'admins': db.admins.count_documents({}),
-        'teachers': db.users.count_documents({}),
-        'students': db.students.count_documents({}),
-        'student_logins': db.student_users.count_documents({}),
-        'announcements': db.announcements.count_documents({}),
-    }
+
+    banks = [
+        {'key': 'students', 'label': 'Student profiles', 'hint': 'Core school roll', 'tone': 'sky', 'count': db.students.count_documents({})},
+        {'key': 'student_logins', 'label': 'Student logins', 'hint': 'Portal access accounts', 'tone': 'cyan', 'count': db.student_users.count_documents({})},
+        {'key': 'teachers', 'label': 'Teachers', 'hint': 'Staff directory', 'tone': 'teal', 'count': db.users.count_documents({})},
+        {'key': 'mappings', 'label': 'Class mappings', 'hint': 'Teacher–class links', 'tone': 'emerald', 'count': db.teacher_mappings.count_documents({})},
+        {'key': 'admins', 'label': 'Admins', 'hint': 'Portal operators', 'tone': 'indigo', 'count': db.admins.count_documents({})},
+        {'key': 'announcements', 'label': 'Announcements', 'hint': 'Published school news', 'tone': 'amber', 'count': db.announcements.count_documents({})},
+        {'key': 'policies', 'label': 'School policies', 'hint': 'Rules and guidelines', 'tone': 'rose', 'count': db.school_policies.count_documents({})},
+        {'key': 'notifications', 'label': 'Notifications', 'hint': 'In-app alerts', 'tone': 'slate', 'count': db.notifications.count_documents({})},
+    ]
+
+    total_records = sum(b['count'] for b in banks) or 0
+    for bank in banks:
+        bank['share'] = round((bank['count'] / total_records) * 100, 1) if total_records else 0
+
+    last_refresh = settings.get('last_data_refresh')
+    last_scan = settings.get('last_cache_scan')
+    age_hours = None
+    freshness = 'unknown'
+    if last_refresh:
+        try:
+            refreshed_at = datetime.fromisoformat(str(last_refresh).replace('Z', ''))
+            age_hours = max(0.0, (datetime.utcnow() - refreshed_at).total_seconds() / 3600.0)
+            if age_hours < 6:
+                freshness = 'fresh'
+            elif age_hours < 24:
+                freshness = 'warming'
+            else:
+                freshness = 'stale'
+        except (TypeError, ValueError):
+            freshness = 'unknown'
+
+    login_gap = banks[0]['count'] - banks[1]['count']
+    mapping_gap = banks[2]['count'] - banks[3]['count']
+    signals = []
+    if login_gap > 0:
+        signals.append({
+            'level': 'warn',
+            'title': f'{login_gap} student profile(s) without a login',
+            'detail': 'Some enrolled students may not be able to sign in yet.',
+        })
+    elif login_gap < 0:
+        signals.append({
+            'level': 'warn',
+            'title': f'{abs(login_gap)} login(s) without a matching profile',
+            'detail': 'Orphan portal accounts may need cleanup in Users Monitor.',
+        })
+    else:
+        signals.append({
+            'level': 'ok',
+            'title': 'Student profiles and logins are in balance',
+            'detail': 'Every counted login lines up with the roll.',
+        })
+
+    if banks[2]['count'] and mapping_gap > 0:
+        signals.append({
+            'level': 'warn',
+            'title': f'{mapping_gap} teacher(s) may be unmapped',
+            'detail': 'Check Teacher Mapping so classes and subjects are assigned.',
+        })
+    elif banks[2]['count']:
+        signals.append({
+            'level': 'ok',
+            'title': 'Teacher mapping coverage looks healthy',
+            'detail': 'Mapping rows meet or exceed the teacher count.',
+        })
+
+    if banks[5]['count'] == 0:
+        signals.append({
+            'level': 'info',
+            'title': 'No announcements stored',
+            'detail': 'Publish from Announcements when you have school news.',
+        })
+
     return render_template(
         'admin_cache_monitor.html',
-        stats=stats,
-        last_refresh=settings.get('last_data_refresh'),
+        banks=banks,
+        total_records=total_records,
+        last_refresh=last_refresh,
+        last_scan=last_scan,
+        age_hours=age_hours,
+        freshness=freshness,
+        signals=signals,
     )
 
 @app.route('/admin/delete_report/<report_id>', methods=['POST'])
