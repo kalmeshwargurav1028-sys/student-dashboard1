@@ -65,6 +65,9 @@
         {% call tool_card(url_for('utility_cache_monitor'), 'bg-slate-600', 'Cache Monitor', 'Live inventory and data freshness map') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
         {% endcall %}
+        {% call tool_card(url_for('utility_data_store'), 'bg-cyan-600', 'Data Store', 'Student, teacher and admin MongoDB records') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18M7 7v10M12 7v10M17 7v10"/></svg>
+        {% endcall %}
     </div>
     <p id="tools-empty" class="hidden text-sm text-slate-500 text-center py-6">No tools match that search.</p>
     <script>

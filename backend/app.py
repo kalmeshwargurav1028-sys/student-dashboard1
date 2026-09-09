@@ -3144,10 +3144,14 @@ def _register_portal_user(role, email, schools, grades, department, first_name='
             'email': email,
             'password': hashed,
             'name': name,
+            'first_name': first_name or name.split(' ')[0],
+            'last_name': last_name or ' '.join(name.split(' ')[1:]),
+            'role': 'admin',
             'schools': schools,
             'grades': grades,
             'department': department,
             'created_at': now,
+            'status': 'active',
         })
     elif role == 'teacher':
         db.users.insert_one({
@@ -3163,6 +3167,7 @@ def _register_portal_user(role, email, schools, grades, department, first_name='
             'password': hashed,
             'verified': True,
             'created_at': now,
+            'status': 'active',
         })
     else:
         student_id = _next_student_id()
@@ -3172,6 +3177,8 @@ def _register_portal_user(role, email, schools, grades, department, first_name='
             'email': email,
             'student_class': _grade_to_class(grades[0]),
             'division': 'A',
+            'class': _grade_to_class(grades[0]),
+            'section': 'A',
             'board': 'CBSE',
             'academic_year': str(datetime.utcnow().year),
             'schools': schools,
@@ -3186,6 +3193,8 @@ def _register_portal_user(role, email, schools, grades, department, first_name='
             'student_id': student_id,
             'email': email,
             'password': hashed,
+            'role': 'student',
+            'created_at': now,
         })
 
     log_notification(
@@ -3713,6 +3722,173 @@ def utility_cache_monitor():
         freshness=freshness,
         signals=signals,
     )
+
+
+def _normalize_student_doc(doc):
+    """Keep Mongo student docs consistent: id, class, section (+ legacy aliases)."""
+    class_val = (
+        doc.get('class')
+        or doc.get('student_class')
+        or (doc.get('grades') or [None])[0]
+        or ''
+    )
+    section_val = (
+        doc.get('section')
+        or doc.get('division')
+        or 'A'
+    )
+    class_val = str(class_val).strip()
+    section_val = str(section_val).strip().upper() or 'A'
+    student_id = str(doc.get('id') or '').strip()
+    updates = {
+        'id': student_id,
+        'class': class_val,
+        'section': section_val,
+        'student_class': class_val,
+        'division': section_val,
+        'name': (doc.get('name') or '').strip(),
+        'email': (doc.get('email') or '').strip().lower(),
+        'role': 'student',
+    }
+    return {k: v for k, v in updates.items() if v or k in ('class', 'section', 'student_class', 'division', 'id', 'role')}
+
+
+def _arrange_mongo_role_data():
+    """Normalize student / teacher / admin collections for consistent storage."""
+    fixed = {'students': 0, 'teachers': 0, 'admins': 0, 'indexes': True}
+
+    # Indexes for clean lookups
+    try:
+        db.students.create_index('id', unique=True, sparse=True)
+        db.students.create_index([('class', 1), ('section', 1)])
+        db.students.create_index([('student_class', 1), ('division', 1)])
+        db.student_users.create_index('student_id', unique=True, sparse=True)
+        db.student_users.create_index('email', unique=True, sparse=True)
+        db.users.create_index('email', unique=True, sparse=True)
+        db.admins.create_index('email', unique=True, sparse=True)
+    except Exception:
+        fixed['indexes'] = False
+
+    for doc in db.students.find({}):
+        updates = _normalize_student_doc(doc)
+        # Only write when something differs
+        need = False
+        for key, val in updates.items():
+            if doc.get(key) != val:
+                need = True
+                break
+        if need:
+            db.students.update_one({'_id': doc['_id']}, {'$set': updates})
+            fixed['students'] += 1
+
+    for doc in db.users.find({}):
+        role = (doc.get('role') or 'teacher').strip().lower()
+        updates = {
+            'role': 'teacher' if role != 'admin' else role,
+            'name': (doc.get('name') or f"{doc.get('first_name', '')} {doc.get('last_name', '')}").strip(),
+            'email': (doc.get('email') or '').strip().lower(),
+            'status': doc.get('status') or 'active',
+            'assigned_class': doc.get('assigned_class') or ((doc.get('grades') or ['all'])[0] if doc.get('grades') else 'all'),
+        }
+        if any(doc.get(k) != v for k, v in updates.items()):
+            db.users.update_one({'_id': doc['_id']}, {'$set': updates})
+            fixed['teachers'] += 1
+
+    for doc in db.admins.find({}):
+        updates = {
+            'role': 'admin',
+            'name': (doc.get('name') or '').strip() or (doc.get('email') or '').split('@')[0],
+            'email': (doc.get('email') or '').strip().lower(),
+            'status': doc.get('status') or 'active',
+        }
+        if any(doc.get(k) != v for k, v in updates.items()):
+            db.admins.update_one({'_id': doc['_id']}, {'$set': updates})
+            fixed['admins'] += 1
+
+    for doc in db.student_users.find({}):
+        updates = {
+            'role': 'student',
+            'email': (doc.get('email') or '').strip().lower(),
+            'student_id': str(doc.get('student_id') or '').strip(),
+        }
+        if any(doc.get(k) != v for k, v in updates.items() if v):
+            db.student_users.update_one({'_id': doc['_id']}, {'$set': {k: v for k, v in updates.items() if v}})
+
+    db.settings.update_one(
+        {},
+        {'$set': {'last_data_arrange': datetime.utcnow().isoformat()}},
+        upsert=True,
+    )
+    return fixed
+
+
+@app.route('/admin/utility/data-store', methods=['GET', 'POST'])
+def utility_data_store():
+    if not _admin_required():
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        result = _arrange_mongo_role_data()
+        flash(
+            f"Database arranged. Updated {result['students']} students, "
+            f"{result['teachers']} teachers, {result['admins']} admins."
+        )
+        return redirect(url_for('utility_data_store', tab=request.form.get('tab') or 'students'))
+
+    tab = (request.args.get('tab') or 'students').strip().lower()
+    if tab not in ('students', 'teachers', 'admins'):
+        tab = 'students'
+
+    students = []
+    for doc in db.students.find({}, {'password': 0}).sort('id', 1):
+        class_val = doc.get('class') or doc.get('student_class') or ''
+        section_val = doc.get('section') or doc.get('division') or ''
+        login = db.student_users.find_one({'student_id': doc.get('id')}, {'email': 1}) or {}
+        students.append({
+            'id': doc.get('id') or '',
+            'name': doc.get('name') or '',
+            'email': doc.get('email') or login.get('email') or '',
+            'class': class_val,
+            'section': section_val,
+            'has_login': bool(login),
+        })
+
+    teachers = []
+    for doc in db.users.find({'role': {'$ne': 'admin'}}, {'password': 0}).sort('name', 1):
+        teachers.append({
+            'id': str(doc.get('_id')),
+            'name': doc.get('name') or f"{doc.get('first_name', '')} {doc.get('last_name', '')}".strip(),
+            'email': doc.get('email') or '',
+            'assigned_class': doc.get('assigned_class') or '',
+            'department': doc.get('department') or '',
+            'status': doc.get('status') or 'active',
+        })
+
+    admins = []
+    for doc in db.admins.find({}, {'password': 0}).sort('name', 1):
+        admins.append({
+            'id': str(doc.get('_id')),
+            'name': doc.get('name') or '',
+            'email': doc.get('email') or '',
+            'department': doc.get('department') or '',
+            'status': doc.get('status') or 'active',
+        })
+
+    settings = db.settings.find_one({}, {'_id': 0}) or {}
+    return render_template(
+        'admin_data_store.html',
+        tab=tab,
+        students=students,
+        teachers=teachers,
+        admins=admins,
+        counts={
+            'students': len(students),
+            'teachers': len(teachers),
+            'admins': len(admins),
+        },
+        last_arrange=settings.get('last_data_arrange'),
+    )
+
 
 @app.route('/admin/delete_report/<report_id>', methods=['POST'])
 def admin_delete_report(report_id):

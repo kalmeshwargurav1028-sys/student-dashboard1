@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block header_title %}Data Store{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-6 sm:px-8 lg:px-10">
+
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+        <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">MongoDB</p>
+            <h1 class="mt-1 text-2xl font-semibold text-slate-900 tracking-tight">Data Store</h1>
+            <p class="mt-1 text-sm text-slate-500 max-w-2xl">
+                Separate collections for students, teachers, and admins.
+                Students use <span class="font-medium text-slate-700">id</span>,
+                <span class="font-medium text-slate-700">class</span>, and
+                <span class="font-medium text-slate-700">section</span>.
+            </p>
+        </div>
+        <form method="POST" class="flex flex-wrap items-center gap-2">
+            <input type="hidden" name="tab" value="{{ tab }}">
+            <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-sky-700">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/></svg>
+                Arrange database
+            </button>
+            <a href="{{ url_for('utility_registration') }}" class="inline-flex items-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50">Add user</a>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-3 gap-3 mb-6">
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-slate-400">Students</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900 tabular-nums">{{ counts.students }}</p>
+            <p class="text-xs text-slate-500">Collection: students</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-slate-400">Teachers</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900 tabular-nums">{{ counts.teachers }}</p>
+            <p class="text-xs text-slate-500">Collection: users</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <p class="text-[11px] uppercase tracking-wider text-slate-400">Admins</p>
+            <p class="mt-1 text-2xl font-semibold text-slate-900 tabular-nums">{{ counts.admins }}</p>
+            <p class="text-xs text-slate-500">Collection: admins</p>
+        </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+        <div class="px-4 sm:px-5 py-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 self-start" role="tablist">
+                <a href="{{ url_for('utility_data_store', tab='students') }}"
+                   class="px-3.5 py-1.5 text-xs font-semibold rounded-md {% if tab == 'students' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+                    Student data
+                </a>
+                <a href="{{ url_for('utility_data_store', tab='teachers') }}"
+                   class="px-3.5 py-1.5 text-xs font-semibold rounded-md {% if tab == 'teachers' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+                    Teacher data
+                </a>
+                <a href="{{ url_for('utility_data_store', tab='admins') }}"
+                   class="px-3.5 py-1.5 text-xs font-semibold rounded-md {% if tab == 'admins' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-500 hover:text-slate-700{% endif %}">
+                    Admin data
+                </a>
+            </div>
+            {% if last_arrange %}
+            <p class="text-xs text-slate-400">Last arrange: {{ last_arrange }}</p>
+            {% endif %}
+        </div>
+
+        <div class="overflow-x-auto">
+            {% if tab == 'students' %}
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                    <tr>
+                        <th class="px-5 py-3">ID</th>
+                        <th class="px-3 py-3">Name</th>
+                        <th class="px-3 py-3">Class</th>
+                        <th class="px-3 py-3">Section</th>
+                        <th class="px-3 py-3">Email</th>
+                        <th class="px-5 py-3">Login</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in students %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-3 font-semibold text-slate-900 tabular-nums">{{ row.id or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-800">{{ row.name or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-700">{{ row.class or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-700">{{ row.section or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-500">{{ row.email or '—' }}</td>
+                        <td class="px-5 py-3">
+                            {% if row.has_login %}
+                            <span class="inline-flex rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2 py-0.5">Linked</span>
+                            {% else %}
+                            <span class="inline-flex rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold px-2 py-0.5">Missing</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">No student records yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% elif tab == 'teachers' %}
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                    <tr>
+                        <th class="px-5 py-3">ID</th>
+                        <th class="px-3 py-3">Name</th>
+                        <th class="px-3 py-3">Email</th>
+                        <th class="px-3 py-3">Assigned class</th>
+                        <th class="px-3 py-3">Department</th>
+                        <th class="px-5 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in teachers %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ row.id[:8] }}…</td>
+                        <td class="px-3 py-3 font-medium text-slate-900">{{ row.name or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ row.email or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-700">{{ row.assigned_class or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-700">{{ row.department or '—' }}</td>
+                        <td class="px-5 py-3 capitalize text-slate-600">{{ row.status }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="px-5 py-10 text-center text-slate-400">No teacher records yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <table class="min-w-full text-sm">
+                <thead class="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
+                    <tr>
+                        <th class="px-5 py-3">ID</th>
+                        <th class="px-3 py-3">Name</th>
+                        <th class="px-3 py-3">Email</th>
+                        <th class="px-3 py-3">Department</th>
+                        <th class="px-5 py-3">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for row in admins %}
+                    <tr class="hover:bg-slate-50/70">
+                        <td class="px-5 py-3 font-mono text-xs text-slate-500">{{ row.id[:8] }}…</td>
+                        <td class="px-3 py-3 font-medium text-slate-900">{{ row.name or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-600">{{ row.email or '—' }}</td>
+                        <td class="px-3 py-3 text-slate-700">{{ row.department or '—' }}</td>
+                        <td class="px-5 py-3 capitalize text-slate-600">{{ row.status }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">No admin records yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-5 py-4 text-sm text-slate-600">
+        <p class="font-semibold text-slate-800 mb-1">How data is stored</p>
+        <ul class="list-disc pl-5 space-y-1 text-slate-500">
+            <li><span class="text-slate-700">students</span> — profile with <code class="text-xs bg-white px-1 rounded border">id</code>, <code class="text-xs bg-white px-1 rounded border">class</code>, <code class="text-xs bg-white px-1 rounded border">section</code></li>
+            <li><span class="text-slate-700">student_users</span> — login linked by <code class="text-xs bg-white px-1 rounded border">student_id</code></li>
+            <li><span class="text-slate-700">users</span> — teacher accounts (<code class="text-xs bg-white px-1 rounded border">role: teacher</code>)</li>
+            <li><span class="text-slate-700">admins</span> — admin accounts (<code class="text-xs bg-white px-1 rounded border">role: admin</code>)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
