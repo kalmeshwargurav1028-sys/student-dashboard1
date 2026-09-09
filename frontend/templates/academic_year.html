@@ -1,173 +1,166 @@
 {% extends "base.html" %}
-{% block header_title %}Academic Year {{ academic_year_key }}{% endblock %}
+{% block header_title %}Academic Year {{ academic_period }}{% endblock %}
 
 {% block content %}
 {% if role == 'admin' %}
-<div class="w-full py-6 px-6 sm:px-8 lg:px-10">
-    <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 mb-6">
-        <div class="flex flex-col xl:flex-row xl:items-center gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-                {% if photo_url %}
-                <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
-                {% else %}
-                <div class="h-12 w-12 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
-                {% endif %}
-                <div class="min-w-0">
-                    <p class="text-[11px] uppercase tracking-wide text-slate-400">Profile</p>
-                    <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
-                    <p class="text-xs text-slate-500">{{ badge }}</p>
-                </div>
-            </div>
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-6">
 
-            <div class="flex items-center gap-2 min-w-0 xl:px-4 xl:border-l xl:border-slate-100">
-                <img src="{{ logo_url }}" alt="" class="h-9 w-9 object-contain">
-                <div class="min-w-0">
-                    <p class="text-[11px] uppercase tracking-wide text-slate-400">School</p>
-                    <p class="text-sm font-medium text-slate-800 truncate">{{ school_name }}</p>
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-end gap-3 xl:ml-auto">
-                <label class="block">
-                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">Academic period</span>
-                    <select name="period" id="ayPeriod" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white min-w-[8.5rem]">
-                        {% for p in period_choices %}
-                        <option value="{{ p }}" {% if filters.period == p %}selected{% endif %}>{{ p }}</option>
-                        {% endfor %}
-                    </select>
-                </label>
-                <label class="block">
-                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">From</span>
-                    <input type="date" name="start" id="ayStart" value="{{ filters.start }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                </label>
-                <label class="block">
-                    <span class="block text-[11px] uppercase tracking-wide text-slate-400 mb-1">To</span>
-                    <input type="date" name="end" id="ayEnd" value="{{ filters.end }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                </label>
-                <button type="submit" class="inline-flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-4 py-2 rounded-lg">
-                    Apply filter
-                </button>
+    {# Identity strip #}
+    <div class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-center gap-3 min-w-0">
+            {% if photo_url %}
+            <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
+            {% else %}
+            <div class="h-12 w-12 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
+            {% endif %}
+            <div class="min-w-0">
+                <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
+                <p class="text-xs text-slate-500">{{ badge }} · {{ school_name }}</p>
             </div>
         </div>
-        <p class="text-xs text-slate-400 mt-3">Academic year data for {{ academic_period }} ({{ filters.start }} → {{ filters.end }}).</p>
-    </form>
-
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Students</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.students }}</p>
-            <p class="mt-1 text-sm text-slate-500">{{ admin.logins }} with portal login</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Teachers</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.teachers }}</p>
-            <p class="mt-1 text-sm text-slate-500">{{ admin.mappings }} class mappings</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Classes</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.classes }}</p>
-            <p class="mt-1 text-sm text-slate-500">Class + section groups</p>
-        </div>
-        <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Period</p>
-            <p class="mt-2 text-xl font-semibold text-slate-900">{{ academic_period }}</p>
-            <p class="mt-1 text-sm text-slate-500">Selected academic year</p>
+        <div class="sm:ml-auto flex items-center gap-2 text-sm text-slate-600">
+            <img src="{{ logo_url }}" alt="" class="h-8 w-8 object-contain">
+            <span>Use the header year menu to switch periods</span>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-100">
-                <h2 class="text-sm font-semibold text-slate-900">Enrollment by class</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Students grouped by class and section</p>
-            </div>
-            <div class="divide-y divide-slate-100 max-h-[22rem] overflow-y-auto">
-                {% for row in admin.class_rows %}
-                <div class="px-5 py-3 flex items-center gap-4">
-                    <div class="w-28 shrink-0">
-                        <p class="text-sm font-medium text-slate-800">{{ row.class }}</p>
-                        <p class="text-xs text-slate-400">Section {{ row.section }}</p>
-                    </div>
-                    <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div class="h-full bg-sky-500 rounded-full" style="width: {{ row.pct }}%"></div>
-                    </div>
-                    <p class="w-10 text-right text-sm text-slate-600 tabular-nums">{{ row.count }}</p>
+    {# Year hero #}
+    <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-5 py-6 sm:px-8 sm:py-8">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-6">
+            <div class="min-w-0 flex-1">
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin academic year</p>
+                <h1 class="mt-1 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{{ academic_period }}</h1>
+                <p class="mt-2 text-sm text-slate-600">
+                    {{ filters.start }} → {{ filters.end }}
+                </p>
+                <div class="mt-4 flex flex-wrap items-center gap-2">
+                    {% if admin.is_active %}
+                    <span class="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1">Active on portal</span>
+                    {% else %}
+                    <span class="inline-flex items-center rounded-full bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1">Not the active year</span>
+                    <span class="text-xs text-slate-500">Portal uses {{ admin.active_year }}</span>
+                    {% endif %}
+                    {% if admin.status == 'in_progress' %}
+                    <span class="inline-flex items-center rounded-full bg-sky-100 text-sky-800 text-xs font-semibold px-2.5 py-1">In progress · {{ admin.days_left }} days left</span>
+                    {% elif admin.status == 'upcoming' %}
+                    <span class="inline-flex items-center rounded-full bg-violet-100 text-violet-800 text-xs font-semibold px-2.5 py-1">Upcoming</span>
+                    {% elif admin.status == 'closed' %}
+                    <span class="inline-flex items-center rounded-full bg-slate-200 text-slate-700 text-xs font-semibold px-2.5 py-1">Closed</span>
+                    {% endif %}
                 </div>
+            </div>
+            <div class="shrink-0">
+                {% if not admin.is_active %}
+                <form method="POST" action="{{ url_for('school_calendar') }}">
+                    <input type="hidden" name="action" value="set_active_year">
+                    <input type="hidden" name="period" value="{{ academic_period }}">
+                    <button type="submit" class="inline-flex items-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-5 py-2.5 shadow-sm">
+                        Set {{ academic_period }} as active
+                    </button>
+                </form>
                 {% else %}
-                <p class="px-5 py-8 text-sm text-slate-400 text-center">No class enrollment yet.</p>
-                {% endfor %}
+                <p class="text-sm text-emerald-700 font-medium bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-2.5">
+                    This year drives dates across the portal
+                </p>
+                {% endif %}
             </div>
         </div>
 
-        <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div class="mt-6">
+            <div class="flex justify-between text-xs text-slate-500 mb-1.5">
+                <span>Year progress</span>
+                <span class="tabular-nums">{{ admin.progress_pct }}%</span>
+            </div>
+            <div class="h-2 rounded-full bg-slate-200/80 overflow-hidden">
+                <div class="h-full rounded-full bg-sky-500 transition-all" style="width: {{ admin.progress_pct }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    {# Ops metrics — admin only #}
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Admins</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900 tabular-nums">{{ admin.admins }}</p>
+            <p class="mt-1 text-sm text-slate-500">Portal operators</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Policies</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900 tabular-nums">{{ admin.policies }}</p>
+            <p class="mt-1 text-sm text-slate-500">Published for school</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Announcements</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900 tabular-nums">{{ admin.announcements }}</p>
+            <p class="mt-1 text-sm text-slate-500">School-wide posts</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl px-5 py-4">
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Active year</p>
+            <p class="mt-2 text-xl font-semibold text-slate-900">{{ admin.active_year }}</p>
+            <p class="mt-1 text-sm text-slate-500">Stored in settings</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {# Year readiness #}
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-100">
-                <h2 class="text-sm font-semibold text-slate-900">Teachers this year</h2>
-                <p class="text-xs text-slate-400 mt-0.5">Staff on the portal for {{ academic_period }}</p>
+                <h2 class="text-sm font-semibold text-slate-900">Year readiness</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Admin setup checklist for {{ academic_period }}</p>
+            </div>
+            <ul class="divide-y divide-slate-100">
+                {% for item in admin.checklist %}
+                <li class="px-5 py-3.5 flex items-start gap-3">
+                    {% if item.done %}
+                    <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    </span>
+                    {% else %}
+                    <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    </span>
+                    {% endif %}
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium text-slate-800">{{ item.title }}</p>
+                        <p class="text-xs text-slate-400 mt-0.5">{{ item.detail }}</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% if admin.last_refresh or admin.last_arrange %}
+            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 space-y-0.5">
+                {% if admin.last_refresh %}<p>Last data refresh: {{ admin.last_refresh }}</p>{% endif %}
+                {% if admin.last_arrange %}<p>Last data arrange: {{ admin.last_arrange }}</p>{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# Admin operators #}
+        <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-100">
+                <h2 class="text-sm font-semibold text-slate-900">Admin operators</h2>
+                <p class="text-xs text-slate-400 mt-0.5">People who manage this academic year</p>
             </div>
             <div class="divide-y divide-slate-100 max-h-[22rem] overflow-y-auto">
-                {% for row in admin.teacher_rows %}
+                {% for row in admin.admin_rows %}
                 <div class="px-5 py-3 flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <p class="text-sm font-medium text-slate-800 truncate">{{ row.name or '—' }}</p>
                         <p class="text-xs text-slate-400 mt-0.5 truncate">{{ row.email or '—' }}{% if row.department %} · {{ row.department }}{% endif %}</p>
                     </div>
-                    <p class="text-xs text-slate-500 whitespace-nowrap">{{ row.assigned_class or '—' }}</p>
+                    <span class="text-[11px] font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap">{{ row.status }}</span>
                 </div>
                 {% else %}
-                <p class="px-5 py-8 text-sm text-slate-400 text-center">No teachers registered yet.</p>
+                <p class="px-5 py-8 text-sm text-slate-400 text-center">No admin accounts yet.</p>
                 {% endfor %}
             </div>
         </div>
     </div>
 
-    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-6">
-        <div class="px-5 py-4 border-b border-slate-100">
-            <h2 class="text-sm font-semibold text-slate-900">Student roll</h2>
-            <p class="text-xs text-slate-400 mt-0.5">id · class · section for {{ academic_period }}</p>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full text-sm">
-                <thead class="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-400">
-                    <tr>
-                        <th class="px-5 py-3">ID</th>
-                        <th class="px-3 py-3">Name</th>
-                        <th class="px-3 py-3">Class</th>
-                        <th class="px-3 py-3">Section</th>
-                        <th class="px-5 py-3">Email</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
-                    {% for row in admin.student_rows %}
-                    <tr class="hover:bg-slate-50/70">
-                        <td class="px-5 py-3 font-semibold text-slate-900 tabular-nums">{{ row.id or '—' }}</td>
-                        <td class="px-3 py-3 text-slate-800">{{ row.name or '—' }}</td>
-                        <td class="px-3 py-3 text-slate-700">{{ row.class or '—' }}</td>
-                        <td class="px-3 py-3 text-slate-700">{{ row.section or '—' }}</td>
-                        <td class="px-5 py-3 text-slate-500">{{ row.email or '—' }}</td>
-                    </tr>
-                    {% else %}
-                    <tr><td colspan="5" class="px-5 py-10 text-center text-slate-400">No students enrolled for this academic year.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <p class="text-xs text-slate-400 text-center pb-2">
+        Student and teacher rolls live in Data Store — this page is for year control only.
+    </p>
 </div>
-<script>
-(function () {
-    var ranges = {{ period_ranges|tojson }};
-    var period = document.getElementById('ayPeriod');
-    var start = document.getElementById('ayStart');
-    var end = document.getElementById('ayEnd');
-    if (!period || !start || !end) return;
-    period.addEventListener('change', function () {
-        var next = ranges[period.value];
-        if (!next) return;
-        start.value = next[0];
-        end.value = next[1];
-    });
-})();
-</script>
 {% else %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-8 space-y-5">
 

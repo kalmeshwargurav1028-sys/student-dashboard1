@@ -1918,64 +1918,79 @@ AY_PERIODS = {
 
 def _admin_academic_year():
     settings = db.settings.find_one({}, {'_id': 0}) or {}
-    period = (request.args.get('period') or '2026-2027').strip()
+    period = (request.args.get('period') or settings.get('academic_year') or '2026-2027').strip()
+    # Normalize short forms like 2026-27 → 2026-2027
     if period not in AY_PERIODS:
-        period = '2026-2027'
+        years = re.findall(r'\d{4}|\d{2}', period)
+        if len(years) >= 2:
+            y1 = years[0] if len(years[0]) == 4 else f'20{years[0]}'
+            y2 = years[1] if len(years[1]) == 4 else f'20{years[1]}'
+            candidate = f'{y1}-{y2}'
+            if candidate in AY_PERIODS:
+                period = candidate
+        if period not in AY_PERIODS:
+            period = '2026-2027'
     period_start, period_end = AY_PERIODS[period]
-    start = (request.args.get('start') or period_start).strip() or period_start
-    end = (request.args.get('end') or period_end).strip() or period_end
+    start = period_start
+    end = period_end
+    active_year = (settings.get('academic_year') or '2026-2027').strip()
+    if active_year not in AY_PERIODS:
+        active_year = '2026-2027'
+    is_active = active_year == period
 
-    students = list(db.students.find({}, {'password': 0}))
-    teachers = list(db.users.find({'role': {'$ne': 'admin'}}, {'password': 0}))
-    mappings = list(db.teacher_mappings.find({}, {'_id': 0}))
-    logins = db.student_users.count_documents({})
+    today = datetime.utcnow().date()
+    try:
+        start_d = datetime.strptime(start, '%Y-%m-%d').date()
+        end_d = datetime.strptime(end, '%Y-%m-%d').date()
+        total_days = max((end_d - start_d).days, 1)
+        elapsed = min(max((today - start_d).days, 0), total_days)
+        progress_pct = round(100.0 * elapsed / total_days, 1)
+        if today < start_d:
+            status = 'upcoming'
+        elif today > end_d:
+            status = 'closed'
+        else:
+            status = 'in_progress'
+        days_left = max((end_d - today).days, 0) if status == 'in_progress' else 0
+    except ValueError:
+        progress_pct = 0
+        status = 'unknown'
+        days_left = 0
 
-    class_rows = {}
-    for s in students:
-        grade = str(s.get('class') or s.get('student_class') or 'Unassigned').strip() or 'Unassigned'
-        section = str(s.get('section') or s.get('division') or '').strip().upper()
-        key = f'{grade} {section}'.strip()
-        row = class_rows.setdefault(key, {
-            'name': key,
-            'class': grade,
-            'section': section or '—',
-            'count': 0,
-            'students': [],
+    admin_rows = []
+    for a in db.admins.find({}, {'password': 0}).sort('name', 1):
+        admin_rows.append({
+            'name': a.get('name') or '',
+            'email': a.get('email') or '',
+            'department': a.get('department') or '',
+            'status': a.get('status') or 'active',
         })
-        row['count'] += 1
-        row['students'].append({
-            'id': s.get('id') or '',
-            'name': s.get('name') or '',
-            'email': s.get('email') or '',
-        })
-    class_list = sorted(class_rows.values(), key=lambda r: (str(r['class']), str(r['section'])))
-    class_max = max((r['count'] for r in class_list), default=1) or 1
-    for row in class_list:
-        row['pct'] = round(100.0 * row['count'] / class_max, 1)
 
-    student_rows = []
-    for s in students:
-        student_rows.append({
-            'id': s.get('id') or '',
-            'name': s.get('name') or '',
-            'class': s.get('class') or s.get('student_class') or '',
-            'section': s.get('section') or s.get('division') or '',
-            'email': s.get('email') or '',
-        })
-    student_rows.sort(key=lambda r: (str(r['class']), str(r['section']), str(r['id'])))
-
-    teacher_rows = []
-    for t in teachers:
-        teacher_rows.append({
-            'name': t.get('name') or f"{t.get('first_name', '')} {t.get('last_name', '')}".strip(),
-            'email': t.get('email') or '',
-            'assigned_class': t.get('assigned_class') or '',
-            'department': t.get('department') or '',
-        })
-    teacher_rows.sort(key=lambda r: str(r['name']).lower())
+    checklist = [
+        {
+            'title': 'Active year set',
+            'done': bool(settings.get('academic_year')),
+            'detail': f'Portal active year is {active_year}',
+        },
+        {
+            'title': 'School policies published',
+            'done': db.school_policies.count_documents({}) > 0,
+            'detail': f'{db.school_policies.count_documents({})} policies on file',
+        },
+        {
+            'title': 'Announcements ready',
+            'done': db.announcements.count_documents({}) > 0,
+            'detail': f'{db.announcements.count_documents({})} announcements',
+        },
+        {
+            'title': 'Data store arranged',
+            'done': bool(settings.get('last_data_arrange')),
+            'detail': settings.get('last_data_arrange') or 'Not arranged yet',
+        },
+    ]
 
     return {
-        'academic_year_key': ACADEMIC_YEAR_KEY,
+        'academic_year_key': period,
         'academic_period': period,
         'period_choices': list(AY_PERIODS.keys()),
         'period_ranges': AY_PERIODS,
@@ -1985,14 +2000,18 @@ def _admin_academic_year():
         'photo_url': session.get('photo_url') or '',
         'logo_url': settings.get('logo_url') or url_for('static', filename='images/logo.png'),
         'admin': {
-            'students': len(students),
-            'teachers': len(teachers),
-            'classes': len(class_list),
-            'logins': logins,
-            'mappings': len(mappings),
-            'class_rows': class_list,
-            'student_rows': student_rows,
-            'teacher_rows': teacher_rows,
+            'admins': len(admin_rows),
+            'admin_rows': admin_rows,
+            'is_active': is_active,
+            'active_year': active_year,
+            'status': status,
+            'progress_pct': progress_pct,
+            'days_left': days_left,
+            'checklist': checklist,
+            'policies': db.school_policies.count_documents({}),
+            'announcements': db.announcements.count_documents({}),
+            'last_refresh': settings.get('last_data_refresh'),
+            'last_arrange': settings.get('last_data_arrange'),
         },
         'kpis': [],
         'insights': [],
@@ -2229,7 +2248,22 @@ def school_calendar():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     if request.method == 'POST':
-        return redirect(url_for('school_calendar', **request.args))
+        if session.get('role') == 'admin' and request.form.get('action') == 'set_active_year':
+            period = (request.form.get('period') or '').strip()
+            if period in AY_PERIODS:
+                start, end = AY_PERIODS[period]
+                db.settings.update_one(
+                    {},
+                    {'$set': {
+                        'academic_year': period,
+                        'academic_year_start': start,
+                        'academic_year_end': end,
+                    }},
+                    upsert=True,
+                )
+                flash(f'{period} is now the active academic year.')
+                return redirect(url_for('school_calendar', period=period))
+        return redirect(url_for('school_calendar', **request.args.to_dict()))
     return render_template('academic_year.html', **_academic_year_dashboard())
 
 
@@ -2249,11 +2283,17 @@ def school_updates():
 DEFAULT_SCHOOL_POLICIES = [
     {'title': 'Attendance', 'body': 'Students should attend regularly. Absences must be informed to the class teacher. Teachers mark attendance in the portal every school day.', 'order': 1},
     {'title': 'Assignments & assessments', 'body': 'Work should be posted with a due date. Late work is recorded. Tests and assignments stay linked to the mapped classroom and subject.', 'order': 2},
-    {'title': 'Communication', 'body': 'Use portal messaging for parent contact. School announcements go to the assigned audience only. Keep messages professional and brief.', 'order': 3},
-    {'title': 'Resources', 'body': 'Share study materials through Resource Hub. Do not upload copyrighted files you do not have permission to use.', 'order': 4},
 ]
 
+# Legacy seed titles removed from the product; purge leftover DB docs on load.
+_REMOVED_POLICY_TITLES = ('Communication', 'Resources')
+
+
 def _get_school_policies():
+    for title in _REMOVED_POLICY_TITLES:
+        for doc in db.school_policies.find({'title': title}):
+            _delete_gridfs_file(doc.get('pdf_file_id'))
+            db.school_policies.delete_one({'_id': doc['_id']})
     policies = list(db.school_policies.find().sort('order', 1))
     if not policies:
         db.school_policies.insert_many([dict(p) for p in DEFAULT_SCHOOL_POLICIES])
