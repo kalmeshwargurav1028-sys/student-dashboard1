@@ -5,30 +5,20 @@
 {% if role == 'admin' %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-6">
 
-    {# Identity strip #}
-    <div class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 flex flex-col sm:flex-row sm:items-center gap-4">
-        <div class="flex items-center gap-3 min-w-0">
-            {% if photo_url %}
-            <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
-            {% else %}
-            <div class="h-12 w-12 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
-            {% endif %}
-            <div class="min-w-0">
-                <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
-                <p class="text-xs text-slate-500">{{ badge }} · {{ school_name }}</p>
-            </div>
+    {# Horizontal year switcher — same pattern as home banner (no profile) #}
+    <div class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="min-w-0">
+            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Academic year</p>
+            <p class="text-sm text-slate-600 mt-0.5">Choose a year to load its data · {{ school_name }}</p>
         </div>
-        <div class="sm:ml-auto flex flex-col sm:items-end gap-2">
-            <div class="inline-flex items-stretch rounded-xl bg-slate-100 border border-slate-200 p-1 gap-1">
-                {% for period in period_choices %}
-                <a href="{{ url_for('select_academic_year', period=period) }}"
-                   class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors
-                   {% if academic_period == period %}bg-white text-sky-700 shadow-sm{% else %}text-slate-600 hover:bg-white/70{% endif %}">
-                    {{ period }}
-                </a>
-                {% endfor %}
-            </div>
-            <p class="text-xs text-slate-400">Click a year to load its data</p>
+        <div class="inline-flex items-stretch rounded-xl bg-slate-100 border border-slate-200 p-1 gap-1 shrink-0">
+            {% for period in period_choices %}
+            <a href="{{ url_for('select_academic_year', period=period) }}"
+               class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors
+               {% if academic_period == period %}bg-white text-sky-700 shadow-sm{% else %}text-slate-600 hover:bg-white/70{% endif %}">
+                {{ period }}
+            </a>
+            {% endfor %}
         </div>
     </div>
 
@@ -186,27 +176,18 @@
     <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-5">
         <input type="hidden" name="period" value="{{ academic_period }}">
         <div class="flex flex-col xl:flex-row xl:items-center gap-4">
-            <div class="flex items-center gap-3 min-w-0">
-                {% if photo_url %}
-                <img src="{{ photo_url }}" alt="" class="h-12 w-12 rounded-full object-cover border border-slate-200">
-                {% else %}
-                <div class="h-12 w-12 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-semibold">{{ display_name[:1]|upper }}</div>
-                {% endif %}
-                <div class="min-w-0">
-                    <p class="font-semibold text-slate-900 truncate">{{ display_name }}</p>
-                    <span class="inline-flex mt-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-sky-100 text-sky-800">{{ badge }}</span>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-2 min-w-0 xl:px-4 xl:border-l xl:border-slate-100">
+            <div class="flex items-center gap-2 min-w-0">
                 <img src="{{ logo_url }}" alt="" class="h-9 w-9 object-contain">
-                <p class="text-sm font-medium text-slate-700 truncate">{{ school_name }}</p>
+                <div class="min-w-0">
+                    <p class="text-sm font-medium text-slate-700 truncate">{{ school_name }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">{{ subtitle }}</p>
+                </div>
             </div>
 
             <div class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
                 <span class="text-slate-400 text-xs uppercase tracking-wide">Period</span>
                 <div class="inline-flex items-stretch rounded-lg bg-white border border-slate-200 p-0.5 gap-0.5">
-                    {% for period in ['2025-2026', '2026-2027'] %}
+                    {% for period in ay_period_choices %}
                     <a href="{{ url_for('select_academic_year', period=period) }}"
                        class="px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap
                        {% if academic_period == period %}bg-sky-600 text-white{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
@@ -239,7 +220,6 @@
                 </button>
             </div>
         </div>
-        <p class="text-xs text-slate-400 mt-3">{{ subtitle }}</p>
     </form>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

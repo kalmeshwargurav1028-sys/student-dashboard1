@@ -21,7 +21,9 @@
                 <h2 class="text-xl font-bold text-slate-900 leading-tight">Your tools</h2>
                 {% if tools_role == 'teacher' %}
                 <p class="text-sm text-slate-500 mt-0.5">Everything you need to run your classroom</p>
-                {% elif tools_role != 'admin' %}
+                {% elif tools_role == 'admin' %}
+                <p class="text-sm text-slate-500 mt-0.5">Everything you need to run the school portal</p>
+                {% else %}
                 <p class="text-sm text-slate-500 mt-0.5">Everything you need for class, in one place</p>
                 {% endif %}
             </div>
@@ -62,6 +64,9 @@
         {% endcall %}
         {% call tool_card(url_for('utility_data_store'), 'bg-cyan-600', 'Data Store', 'Student, teacher and admin MongoDB records') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18M7 7v10M12 7v10M17 7v10"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Set active year and review year control') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
     </div>
     {% else %}

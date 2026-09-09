@@ -1,0 +1,8 @@
+{# Shared home blue banner — same for student, teacher, admin. #}
+<div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-4 sm:px-6 sm:py-5 shadow-md text-white mb-6 w-full">
+    <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl"></div>
+    </div>
+    {% include 'includes/banner_academic_year.html' %}
+</div>
