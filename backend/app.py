@@ -497,17 +497,25 @@ def academic_year_label():
     return f'{year} - {year + 1}'
 
 
+def format_ay_display(period):
+    """Normalize any period key/label to short UI form, e.g. 2026-2027 → 2026-27."""
+    years = re.findall(r'\d{4}', str(period or ''))
+    if len(years) >= 2:
+        return f'{years[0]}-{years[1][-2:]}'
+    if len(years) == 1:
+        y = int(years[0])
+        return f'{y}-{str(y + 1)[-2:]}'
+    return ''
+
+
 def academic_year_short():
     """Sidebar label, e.g. 2026-27. Prefers Settings, else June–May school year."""
     try:
         config = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
         raw = (config.get('academic_year') or '').strip()
-        years = re.findall(r'\d{4}', raw)
-        if len(years) >= 2:
-            return f'{years[0]}-{years[1][-2:]}'
-        if len(years) == 1:
-            y = int(years[0])
-            return f'{y}-{str(y + 1)[-2:]}'
+        short = format_ay_display(raw)
+        if short:
+            return short
     except Exception:
         pass
     year = datetime.now().year
@@ -550,6 +558,8 @@ def _resolve_academic_period(preferred=None):
 
 @app.context_processor
 def inject_global_context():
+    selected_period = _resolve_academic_period()
+    ay_keys = ['2025-2026', '2026-2027']
     context = {
         'active_announcements': [], 
         'role_permissions': {},
@@ -558,8 +568,9 @@ def inject_global_context():
         'teacher_created_courses': [],
         'academic_year_label': academic_year_label(),
         'academic_year_short': academic_year_short(),
-        'ay_period_choices': ['2025-2026', '2026-2027'],
-        'selected_academic_period': _resolve_academic_period(),
+        'ay_period_choices': [{'key': k, 'label': format_ay_display(k)} for k in ay_keys],
+        'selected_academic_period': selected_period,
+        'selected_academic_period_short': format_ay_display(selected_period) or academic_year_short(),
     }
     if not session.get('logged_in'):
         return context
@@ -816,47 +827,79 @@ def delete_announcement(ann_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
-def log_notification(title, message, type='info', role_target='admin', target_user_id=None):
+def log_notification(title, message, type='info', role_target='admin', target_user_id=None, emit_realtime=True):
     if target_user_id:
         target_user_id = str(target_user_id)
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     try:
-        db.notifications.insert_one({
+        result = db.notifications.insert_one({
             'title': title,
             'message': message,
             'type': type,
-            'role_target': role_target,
+            'role_target': role_target or 'all',
             'target_user_id': target_user_id,
             'read_by': [],
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'timestamp': timestamp
         })
     except Exception as e:
         print(f"Failed to log notification: {e}")
+        return None
+
+    if emit_realtime:
+        try:
+            payload = {
+                '_id': str(result.inserted_id),
+                'title': title,
+                'message': message,
+                'type': type,
+                'role_target': role_target or 'all',
+                'target_user_id': target_user_id,
+                'timestamp': timestamp,
+            }
+            if target_user_id:
+                socketio.emit('new_notification', payload, room=target_user_id)
+                if role_target and role_target != 'all':
+                    socketio.emit('new_notification', payload, room=role_target)
+            else:
+                room = role_target or 'all'
+                socketio.emit('new_notification', payload, room=room)
+                if room not in ('all', 'admin'):
+                    socketio.emit('new_notification', payload, room='admin')
+        except Exception as e:
+            print(f"Failed to emit notification: {e}")
+    return result.inserted_id
 
 @app.route('/api/notifications')
 def get_notifications():
     if not session.get('logged_in'):
         return jsonify([])
     role = session.get('role', 'student')
-    user_id = str(session.get('user_id'))
-    
+    raw_uid = session.get('user_id')
+    user_id = str(raw_uid) if raw_uid is not None else ''
+
     target_roles = [role, 'all']
     if role == 'admin':
         target_roles.extend(['teacher', 'student'])
-        
+
+    role_clause = [{'role_target': {'$in': target_roles}}]
+    if user_id:
+        role_clause.append({'target_user_id': user_id})
+
     notifs = list(db.notifications.find({
-        '$or': [
-            {'role_target': {'$in': target_roles}},
-            {'target_user_id': user_id}
-        ],
-        'read_by': {'$ne': user_id}
-    }).sort('timestamp', -1).limit(20))
-    
-    # Fallback to hide old notifications that were globally marked 'read': True
-    notifs = [n for n in notifs if not n.get('read', False)]
-    
+        '$or': role_clause,
+        'read': {'$ne': True},
+    }).sort('timestamp', -1).limit(40))
+
+    out = []
     for n in notifs:
+        read_by = n.get('read_by') or []
+        if user_id and user_id in [str(x) for x in read_by]:
+            continue
         n['_id'] = str(n['_id'])
-    return jsonify(notifs)
+        out.append(n)
+        if len(out) >= 20:
+            break
+    return jsonify(out)
 
 @app.route('/api/notifications/read/<notif_id>', methods=['POST'])
 def mark_notification_read(notif_id):
@@ -864,7 +907,9 @@ def mark_notification_read(notif_id):
         return jsonify({'success': False}), 401
     try:
         from bson.objectid import ObjectId
-        user_id = str(session.get('user_id'))
+        user_id = str(session.get('user_id') or '')
+        if not user_id:
+            return jsonify({'success': False}), 400
         db.notifications.update_one(
             {'_id': ObjectId(notif_id)},
             {'$addToSet': {'read_by': user_id}}
@@ -878,23 +923,22 @@ def clear_all_notifications():
     if not session.get('logged_in'):
         return jsonify({'success': False}), 401
     try:
-        user_id = str(session.get('user_id'))
+        user_id = str(session.get('user_id') or '')
+        if not user_id:
+            return jsonify({'success': False}), 400
         role = session.get('role', 'student')
-        
+
         target_roles = [role, 'all']
         if role == 'admin':
             target_roles.extend(['teacher', 'student'])
-            
-        # Find all unread notifications for this user
+
         query = {
             '$or': [
                 {'role_target': {'$in': target_roles}},
                 {'target_user_id': user_id}
             ],
-            'read_by': {'$ne': user_id}
         }
-        
-        # Add the user_id to read_by array for all matching documents
+
         db.notifications.update_many(
             query,
             {'$addToSet': {'read_by': user_id}}
@@ -1016,18 +1060,7 @@ def broadcast_notification(title, message, notif_type='info', role_target='all')
     in the target room via SocketIO.
     role_target: 'all', 'admin', 'teacher', 'student'
     """
-    log_notification(title, message, type=notif_type, role_target=role_target)
-    payload = {
-        'title': title,
-        'message': message,
-        'type': notif_type,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-    socketio.emit('new_notification', payload, room=role_target)
-    if role_target != 'all':
-        # Also push to 'all' room watchers (admins see everything)
-        socketio.emit('new_notification', payload, room='admin')
-
+    log_notification(title, message, type=notif_type, role_target=role_target, emit_realtime=True)
 
 def recalculate_students_attendance():
     students = list(db.students.find(get_student_query()))
@@ -2049,6 +2082,7 @@ def _admin_academic_year():
     return {
         'academic_year_key': period,
         'academic_period': period,
+        'academic_period_short': format_ay_display(period),
         'period_choices': list(AY_PERIODS.keys()),
         'period_ranges': AY_PERIODS,
         'school_name': _ay_school_name(),
@@ -2061,6 +2095,7 @@ def _admin_academic_year():
             'admin_rows': admin_rows,
             'is_active': is_active,
             'active_year': active_year,
+            'active_year_short': format_ay_display(active_year),
             'status': status,
             'progress_pct': progress_pct,
             'days_left': days_left,
@@ -2288,6 +2323,7 @@ def _academic_year_dashboard():
     return {
         'academic_year_key': period,
         'academic_period': period,
+        'academic_period_short': format_ay_display(period),
         'school_name': school_name,
         'role': role,
         'display_name': display_name,

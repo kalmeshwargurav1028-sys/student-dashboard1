@@ -96,13 +96,13 @@
                         <svg class="h-4 w-4 text-sky-600 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
-                        <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ selected_academic_period }}</span>
+                        <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ selected_academic_period_short }}</span>
                         <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                     </button>
                     <div data-ay-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-1 border border-gray-100 dark:border-gray-700 z-50">
                         <p class="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Select year</p>
                         {% for period in ay_period_choices %}
-                        <a href="{{ url_for('select_academic_year', period=period) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 hover:text-sky-700 {% if selected_academic_period == period %}bg-sky-50 text-sky-700 font-semibold{% endif %}">{{ period }}</a>
+                        <a href="{{ url_for('select_academic_year', period=period.key) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 hover:text-sky-700 {% if selected_academic_period == period.key %}bg-sky-50 text-sky-700 font-semibold{% endif %}">{{ period.label }}</a>
                         {% endfor %}
                     </div>
                 </div>
@@ -138,6 +138,7 @@
 
     <!-- Sidebar Script -->
 
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <script>
 
         // Sidebar functionality
@@ -168,25 +169,81 @@
         });
 
         // ===========================================================================
-        // FALLBACK POLLING — Vercel Serverless Optimization
-        // Socket.IO removed because it exhausts Vercel connections via long-polling.
+        // Real-time notifications: Socket.IO when available + fast visibility polling
         // ===========================================================================
         {% if session.get('logged_in') %}
         (function() {
-            // Poll for notifications every 30 seconds instead of holding open a serverless function
-            setInterval(fetchNotifications, 30000);
+            let pollTimer = null;
+            const POLL_VISIBLE_MS = 5000;
+            const POLL_HIDDEN_MS = 30000;
+
+            function schedulePoll() {
+                if (pollTimer) clearInterval(pollTimer);
+                const ms = document.hidden ? POLL_HIDDEN_MS : POLL_VISIBLE_MS;
+                pollTimer = setInterval(function() {
+                    if (typeof fetchNotifications === 'function') fetchNotifications();
+                }, ms);
+            }
+
+            schedulePoll();
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden && typeof fetchNotifications === 'function') {
+                    fetchNotifications();
+                }
+                schedulePoll();
+            });
+            window.addEventListener('focus', function() {
+                if (typeof fetchNotifications === 'function') fetchNotifications();
+            });
+
+            function wireSocket() {
+                if (typeof io !== 'function') return;
+                try {
+                    const socket = io({
+                        transports: ['websocket', 'polling'],
+                        withCredentials: true,
+                        reconnection: true,
+                        reconnectionAttempts: 8,
+                        reconnectionDelay: 1500,
+                    });
+                    socket.on('connect', function() {
+                        // Refresh once on connect so badge matches server state
+                        if (typeof fetchNotifications === 'function') fetchNotifications();
+                    });
+                    socket.on('new_notification', function(payload) {
+                        if (typeof fetchNotifications === 'function') fetchNotifications();
+                        if (typeof showToast === 'function' && payload && payload.title) {
+                            const kind = payload.type === 'error' ? 'error' : 'success';
+                            const msg = payload.message
+                                ? (payload.title + ' — ' + payload.message)
+                                : payload.title;
+                            showToast(msg, kind);
+                        }
+                    });
+                    window.__notifSocket = socket;
+                } catch (err) {
+                    console.warn('Realtime notifications unavailable; using polling.', err);
+                }
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', wireSocket);
+            } else {
+                wireSocket();
+            }
         })();
         {% endif %}
         
         // Notifications Logic
         let notifDropdownOpen = false;
         let profileDropdownOpen = false;
+        let lastNotifFingerprint = '';
         
         function toggleNotifs() {
             const dropdown = document.getElementById('notifDropdown');
             notifDropdownOpen = !notifDropdownOpen;
             if(notifDropdownOpen) {
                 dropdown.classList.remove('hidden');
+                if (typeof fetchNotifications === 'function') fetchNotifications();
             } else {
                 dropdown.classList.add('hidden');
             }
@@ -261,44 +318,65 @@
         
         async function fetchNotifications() {
             try {
-                const res = await fetch('/api/notifications');
+                const res = await fetch('/api/notifications', {
+                    credentials: 'same-origin',
+                    headers: { 'Accept': 'application/json' },
+                    cache: 'no-store',
+                });
+                if (!res.ok) return;
                 const data = await res.json();
+                if (!Array.isArray(data)) return;
                 
                 const badge = document.getElementById('notifBadge');
                 const list = document.getElementById('notifList');
                 
                 if(!badge || !list) return;
+
+                const fingerprint = data.map(function(n) { return n._id; }).join('|') + '#' + data.length;
+                if (fingerprint === lastNotifFingerprint) return;
+                lastNotifFingerprint = fingerprint;
                 
                 if(data.length > 0) {
                     badge.classList.remove('hidden');
-                    badge.innerText = data.length > 9 ? '9+' : data.length;
+                    badge.innerText = data.length > 9 ? '9+' : String(data.length);
                     
                     list.innerHTML = '';
                     data.forEach(n => {
-                        let colorClass = 'bg-blue-100 text-blue-600';
-                        let icon = 'fa-circle-info';
-                        if(n.type === 'error') { colorClass = 'bg-red-100 text-red-600'; icon = 'fa-triangle-exclamation'; }
-                        if(n.type === 'success') { colorClass = 'bg-blue-100 text-blue-600'; icon = 'fa-circle-check'; }
+                        let colorClass = 'bg-sky-100 text-sky-700';
+                        let iconPath = 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z';
+                        if(n.type === 'error') {
+                            colorClass = 'bg-red-100 text-red-600';
+                            iconPath = 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z';
+                        }
+                        if(n.type === 'success') {
+                            colorClass = 'bg-emerald-100 text-emerald-700';
+                            iconPath = 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z';
+                        }
+                        const safeTitle = (typeof escapeHtml === 'function' ? escapeHtml(n.title || '') : String(n.title || ''));
+                        const safeMsg = (typeof escapeHtml === 'function' ? escapeHtml(n.message || '') : String(n.message || ''));
+                        const safeTs = (typeof escapeHtml === 'function' ? escapeHtml(n.timestamp || '') : String(n.timestamp || ''));
+                        const safeId = String(n._id || '').replace(/[^a-fA-F0-9]/g, '');
                         
                         list.innerHTML += `
-                            <div class="px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors flex items-start gap-3 relative pr-8">
+                            <div class="px-4 py-3 border-b border-gray-50 dark:border-gray-700 hover:bg-gray-50 transition-colors flex items-start gap-3 relative pr-8">
                                 <div class="mt-1 w-8 h-8 rounded-full ${colorClass} flex items-center justify-center shrink-0">
-                                    <i class="fa-solid ${icon} text-xs"></i>
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="${iconPath}"/></svg>
                                 </div>
-                                <div>
-                                    <h4 class="text-xs font-bold text-gray-800 dark:text-gray-200">${n.title}</h4>
-                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">${n.message}</p>
-                                    <span class="text-[9px] text-gray-400 mt-1 block">${n.timestamp}</span>
+                                <div class="min-w-0">
+                                    <h4 class="text-xs font-bold text-gray-800 dark:text-gray-200">${safeTitle}</h4>
+                                    <p class="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 line-clamp-2">${safeMsg}</p>
+                                    <span class="text-[9px] text-gray-400 mt-1 block">${safeTs}</span>
                                 </div>
-                                <button onclick="markRead('${n._id}')" class="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-red-500 transition-colors" title="Dismiss notification">
-                                    <i class="fa-solid fa-xmark"></i>
+                                <button onclick="markRead('${safeId}')" class="absolute top-1/2 -translate-y-1/2 right-3 text-gray-400 hover:text-red-500 transition-colors" title="Dismiss notification">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                                 </button>
                             </div>
                         `;
                     });
                 } else {
                     badge.classList.add('hidden');
-                    list.innerHTML = '<div class="p-6 text-xs text-gray-500 text-center flex flex-col items-center"><i class="fa-regular fa-bell-slash text-2xl mb-2 text-gray-300"></i> No new notifications</div>';
+                    badge.innerText = '0';
+                    list.innerHTML = '<div class="p-6 text-xs text-gray-500 text-center">No new notifications</div>';
                 }
             } catch(e) {
                 console.error("Error fetching notifications", e);
@@ -307,8 +385,12 @@
         
         async function markRead(id) {
             try {
-                await fetch(`/api/notifications/read/${id}`, { method: 'POST' });
-                fetchNotifications(); // Refresh list immediately
+                await fetch(`/api/notifications/read/${id}`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                });
+                lastNotifFingerprint = '';
+                fetchNotifications();
             } catch(e) {
                 console.error("Error marking notification read", e);
             }
@@ -316,9 +398,13 @@
         
         async function clearAllNotifications() {
             try {
-                await fetch('/api/notifications/clear_all', { method: 'POST' });
-                fetchNotifications(); // Refresh list immediately
-                toggleNotifs(); // Close dropdown if empty
+                await fetch('/api/notifications/clear_all', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                });
+                lastNotifFingerprint = '';
+                fetchNotifications();
+                toggleNotifs();
             } catch(e) {
                 console.error("Error clearing notifications", e);
             }
