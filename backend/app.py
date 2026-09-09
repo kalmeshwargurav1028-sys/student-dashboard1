@@ -2704,41 +2704,83 @@ def student_attendance():
     if not student:
         flash('Student not found.')
         return redirect(url_for('student_home'))
-    cards = []
-    for teacher in _student_mapped_teachers(student):
-        summary = _teacher_attendance_summary(student.get('id'), teacher['teacher_id'])
-        cards.append({**teacher, **summary})
-    overall_p = sum(c['present'] for c in cards)
-    overall_t = sum(c['total'] for c in cards)
-    if overall_t == 0:
-        # Older school-wide register (no teacher_id) as a single fallback
-        present = 0.0
-        total = 0
-        for doc in db.attendance.find({'$or': [{'teacher_id': {'$exists': False}}, {'teacher_id': ''}, {'teacher_id': None}]}):
-            records = doc.get('records') or {}
-            if student.get('id') not in records:
-                continue
-            total += 1
-            present += _attendance_score(records.get(student.get('id')))
-        if total:
-            cards.append({
-                'teacher_id': '',
-                'name': 'Class register',
-                'subjects_label': 'School attendance before teacher-wise marking',
-                'subject': 'Class',
-                'present': present,
-                'total': total,
-                'pct': round((present / total) * 100, 1),
-                'last_status': None,
-                'last_date': None,
-            })
-            overall_p, overall_t = present, total
-    overall_pct = round((overall_p / overall_t) * 100, 1) if overall_t else float(student.get('attendance') or 0)
+
+    student_id = student.get('id')
+    grade = (
+        student.get('class')
+        or student.get('student_class')
+        or student.get('grade')
+        or ''
+    )
+    section = (student.get('section') or student.get('division') or '').strip().upper()
+    grade_label = f'{grade} {section}'.strip() or 'Your class'
+
+    teacher_names = {
+        t['teacher_id']: t.get('name') or 'Teacher'
+        for t in _student_mapped_teachers(student)
+    }
+
+    month_filter = (request.args.get('month') or '').strip()  # YYYY-MM
+    days = []
+    month_choices = set()
+    present = 0.0
+    total = 0
+
+    for doc in db.attendance.find({}).sort('date', -1):
+        records = doc.get('records') or {}
+        if student_id not in records:
+            continue
+        date = (doc.get('date') or '').strip()
+        if not date:
+            continue
+        month_key = date[:7] if len(date) >= 7 else ''
+        if month_key:
+            month_choices.add(month_key)
+        if month_filter and month_key != month_filter:
+            continue
+        status = records.get(student_id) or 'Absent'
+        score = _attendance_score(status)
+        present += score
+        total += 1
+        teacher_id = str(doc.get('teacher_id') or '')
+        teacher_name = (
+            doc.get('teacher_name')
+            or teacher_names.get(teacher_id)
+            or ('Class register' if not teacher_id else 'Teacher')
+        )
+        subject = doc.get('subject') or ('Homeroom' if doc.get('mode') == 'homeroom' else 'Class')
+        weekday = ''
+        try:
+            weekday = datetime.strptime(date, '%Y-%m-%d').strftime('%a')
+        except ValueError:
+            weekday = ''
+        days.append({
+            'date': date,
+            'weekday': weekday,
+            'status': status,
+            'subject': subject,
+            'teacher': teacher_name,
+            'score': score,
+        })
+
+    overall_pct = round((present / total) * 100, 1) if total else float(student.get('attendance') or 0)
+    present_count = sum(1 for d in days if d['status'] == 'Present')
+    late_count = sum(1 for d in days if d['status'] == 'Late')
+    absent_count = sum(1 for d in days if d['status'] == 'Absent')
+    months = sorted(month_choices, reverse=True)
+
     return render_template(
         'student_attendance.html',
         student=student,
-        teacher_cards=cards,
+        grade_label=grade_label,
+        days=days,
         overall_pct=overall_pct,
+        present_count=present_count,
+        late_count=late_count,
+        absent_count=absent_count,
+        total_days=total,
+        months=months,
+        month_filter=month_filter,
     )
 
 
