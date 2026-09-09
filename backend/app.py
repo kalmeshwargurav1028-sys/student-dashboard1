@@ -508,20 +508,17 @@ def format_ay_display(period):
     return ''
 
 
-def academic_year_short():
-    """Sidebar label, e.g. 2026-27. Prefers Settings, else June–May school year."""
-    try:
-        config = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
-        raw = (config.get('academic_year') or '').strip()
-        short = format_ay_display(raw)
-        if short:
-            return short
-    except Exception:
-        pass
+def _current_school_period():
+    """Calendar-based school year key (June–May), e.g. Sep 2026 → 2026-2027."""
     year = datetime.now().year
     if datetime.now().month < 6:
         year -= 1
-    return f'{year}-{str(year + 1)[-2:]}'
+    return f'{year}-{year + 1}'
+
+
+def academic_year_short():
+    """Header/banner label, e.g. 2026-27 — always tracks the resolved selected period."""
+    return format_ay_display(_resolve_academic_period()) or format_ay_display(_current_school_period()) or '2026-27'
 
 
 def _resolve_academic_period(preferred=None):
@@ -530,20 +527,17 @@ def _resolve_academic_period(preferred=None):
         '2025-2026': ('2025-06-01', '2026-05-31'),
         '2026-2027': ('2026-06-01', '2027-05-31'),
     }
-    candidates = [
-        preferred,
-        request.args.get('period') if request else None,
-        session.get('academic_period') if session else None,
-    ]
+    period_keys = list(periods.keys())
+    settings = {}
     try:
         settings = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
-        candidates.append(settings.get('academic_year'))
     except Exception:
-        pass
-    for raw in candidates:
+        settings = {}
+
+    def _normalize(raw):
         period = (raw or '').strip()
         if not period:
-            continue
+            return None
         if period in periods:
             return period
         years = re.findall(r'\d{4}|\d{2}', period)
@@ -553,13 +547,90 @@ def _resolve_academic_period(preferred=None):
             candidate = f'{y1}-{y2}'
             if candidate in periods:
                 return candidate
-    return '2026-2027'
+            if len(years[1]) == 2:
+                candidate = f'{y1}-20{years[1]}'
+                if candidate in periods:
+                    return candidate
+        return None
+
+    current = _normalize(_current_school_period()) or '2026-2027'
+
+    def _is_behind(p):
+        if not p or p not in period_keys or current not in period_keys:
+            return False
+        return period_keys.index(p) < period_keys.index(current)
+
+    # 1) Explicit choice from URL / caller
+    explicit = _normalize(preferred) or _normalize(request.args.get('period') if request else None)
+    if explicit:
+        return explicit
+
+    # 2) In-session choice — ignore outdated past years stuck in the browser session
+    sess = _normalize(session.get('academic_period') if session else None)
+    if sess and not _is_behind(sess):
+        return sess
+
+    # 3) Portal settings — skip if outdated vs current school year
+    stored = _normalize(settings.get('academic_year'))
+    if stored and not _is_behind(stored):
+        return stored
+
+    return current if current in periods else '2026-2027'
 
 
 @app.context_processor
 def inject_global_context():
     selected_period = _resolve_academic_period()
-    ay_keys = ['2025-2026', '2026-2027']
+    periods_map = AY_PERIODS if 'AY_PERIODS' in globals() else {
+        '2025-2026': ('2025-06-01', '2026-05-31'),
+        '2026-2027': ('2026-06-01', '2027-05-31'),
+    }
+    try:
+        if session.get('logged_in'):
+            # Drop a stale past-year session so the header shows the current year
+            current = _current_school_period()
+            sess = session.get('academic_period')
+            period_keys = list(periods_map.keys())
+            if (
+                sess in period_keys
+                and current in period_keys
+                and period_keys.index(sess) < period_keys.index(current)
+                and not request.args.get('period')
+            ):
+                session['academic_period'] = current
+                selected_period = current
+            elif not sess:
+                session['academic_period'] = selected_period
+
+        if db is not None:
+            settings_doc = db.settings.find_one({}, {'_id': 1, 'academic_year': 1}) or {}
+            stored = (settings_doc.get('academic_year') or '').strip()
+            current = _current_school_period()
+            period_keys = list(periods_map.keys())
+            # Promote outdated portal settings to the current school year
+            if (
+                current in period_keys
+                and (not stored or stored not in period_keys or period_keys.index(stored) < period_keys.index(current))
+            ):
+                start_end = periods_map.get(current) or (None, None)
+                db.settings.update_one(
+                    {},
+                    {'$set': {
+                        'academic_year': current,
+                        'academic_year_start': start_end[0],
+                        'academic_year_end': start_end[1],
+                    }},
+                    upsert=True,
+                )
+                if not request.args.get('period'):
+                    selected_period = current
+                    if session.get('logged_in'):
+                        session['academic_period'] = current
+    except Exception:
+        pass
+
+    ay_keys = ['2026-2027', '2025-2026']
+    short = format_ay_display(selected_period) or '2026-27'
     context = {
         'active_announcements': [], 
         'role_permissions': {},
@@ -567,10 +638,10 @@ def inject_global_context():
         'teacher_subjects': [],
         'teacher_created_courses': [],
         'academic_year_label': academic_year_label(),
-        'academic_year_short': academic_year_short(),
+        'academic_year_short': short,
         'ay_period_choices': [{'key': k, 'label': format_ay_display(k)} for k in ay_keys],
         'selected_academic_period': selected_period,
-        'selected_academic_period_short': format_ay_display(selected_period) or academic_year_short(),
+        'selected_academic_period_short': short,
     }
     if not session.get('logged_in'):
         return context
