@@ -57,7 +57,34 @@ except Exception as e:
 
 
 # Helper Functions for Notifications
+def normalize_phone_e164(phone, default_region='91'):
+    """Normalize a phone number to E.164. Defaults to India (+91) for 10-digit locals."""
+    if phone is None:
+        return None
+    raw = str(phone).strip()
+    if not raw:
+        return None
+    digits = re.sub(r'\D', '', raw)
+    if not digits:
+        return None
+    if digits.startswith('00'):
+        digits = digits[2:]
+    if len(digits) == 10:
+        digits = default_region + digits
+    elif len(digits) == 11 and digits.startswith('0') and len(default_region) == 2:
+        digits = default_region + digits[1:]
+    if not digits.startswith('+'):
+        return '+' + digits
+    return '+' + digits.lstrip('+')
+
+
 def send_twilio_sms(phone, message):
+    """Send SMS via Twilio. Returns True only when the provider accepts the message."""
+    phone = normalize_phone_e164(phone)
+    if not phone:
+        print('[SMS] No valid phone number provided')
+        return False
+
     try:
         config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
     except Exception as e:
@@ -69,7 +96,7 @@ def send_twilio_sms(phone, message):
     from_phone = config_data.get('TWILIO_PHONE_NUMBER') or os.environ.get('TWILIO_PHONE_NUMBER')
     
     if not (account_sid and auth_token and from_phone):
-        print(f"[MOCK SMS] To: {phone} - Message: {message}")
+        print(f"[SMS SKIP] Twilio not configured. Would send to {phone}: {message[:80]}...")
         return False
 
     try:
@@ -79,13 +106,16 @@ def send_twilio_sms(phone, message):
             from_=from_phone,
             to=phone
         )
-        print(f"SMS sent successfully: {sms_msg.sid}")
+        print(f"SMS sent successfully: {sms_msg.sid} → {phone}")
         return True
     except Exception as e:
         print(f"Failed to send SMS to {phone}: {e}")
         return False
 
 def send_sendgrid_email(email, subject, message_body):
+    """Send email via SendGrid when configured. Returns True only on provider success."""
+    if not email:
+        return False
     try:
         config_data = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
     except Exception as e:
@@ -96,7 +126,7 @@ def send_sendgrid_email(email, subject, message_body):
     from_email = config_data.get('SENDGRID_FROM_EMAIL') or os.environ.get('SENDGRID_FROM_EMAIL')
     
     if not (api_key and from_email):
-        print(f"[MOCK EMAIL] To: {email} - Subject: {subject} - Body: {message_body}")
+        print(f"[SENDGRID SKIP] Not configured for {email}")
         return False
 
     try:
@@ -108,11 +138,59 @@ def send_sendgrid_email(email, subject, message_body):
             plain_text_content=message_body
         )
         response = sg.send(message)
-        print(f"Email sent successfully: {response.status_code}")
+        print(f"Email sent successfully via SendGrid: {response.status_code}")
         return True
     except Exception as e:
         print(f"Failed to send email via SendGrid: {str(e)}")
         return False
+
+
+def send_parent_email(email, subject, message_body):
+    """Deliver parent email: SendGrid if configured, otherwise SMTP (.env / settings)."""
+    if not email or not str(email).strip():
+        return False, 'No email address'
+    email = str(email).strip()
+    if send_sendgrid_email(email, subject, message_body):
+        return True, 'Email'
+    try:
+        send_generic_email(email, subject, message_body)
+        return True, 'Email (SMTP)'
+    except Exception as e:
+        print(f"[PARENT EMAIL] Failed for {email}: {e}")
+        return False, str(e)
+
+
+def deliver_parent_alert(phone, email, subject, message_body, require_any=True):
+    """
+    Send absence/parent alert on all available channels.
+    Returns (sent_via:list, errors:list).
+    """
+    sent_via = []
+    errors = []
+
+    phone_norm = normalize_phone_e164(phone) if phone else None
+    if phone_norm:
+        if send_twilio_sms(phone_norm, message_body):
+            sent_via.append('SMS')
+        else:
+            errors.append('SMS failed or Twilio not configured')
+    elif phone:
+        errors.append('Invalid parent phone number')
+    else:
+        errors.append('No parent phone on file')
+
+    if email:
+        ok, detail = send_parent_email(email, subject, message_body)
+        if ok:
+            sent_via.append(detail)
+        else:
+            errors.append(f'Email failed: {detail}')
+    else:
+        errors.append('No parent email on file')
+
+    if require_any and not sent_via:
+        return [], errors
+    return sent_via, errors
 
 def send_error_email(error_details):
     # PERMANENTLY DISABLED - Do not send any error alert emails
@@ -1052,13 +1130,14 @@ def send_generic_email(email, subject, body, html=None):
     print(f'\n[EMAIL] Sending to {email} via {smtp_server}:{smtp_port} as {smtp_user}\n')
 
     try:
+        from email.header import Header
         if html:
             msg = MIMEMultipart('alternative')
             msg.attach(MIMEText(body, 'plain', 'utf-8'))
             msg.attach(MIMEText(html, 'html', 'utf-8'))
         else:
             msg = MIMEText(body, 'plain', 'utf-8')
-        msg['Subject'] = subject
+        msg['Subject'] = Header(str(subject), 'utf-8')
         msg['From']    = smtp_user
         msg['To']      = email
 
@@ -1067,7 +1146,8 @@ def send_generic_email(email, subject, body, html=None):
         server.starttls()
         server.ehlo()
         server.login(smtp_user, smtp_pass)
-        server.sendmail(smtp_user, email, msg.as_string())
+        # as_bytes keeps UTF-8 bodies intact (em dashes, names, etc.)
+        server.sendmail(smtp_user, email, msg.as_bytes())
         server.quit()
         print(f'[EMAIL] ✓ Delivered to {email}')
         return True
@@ -5451,60 +5531,44 @@ def attendance():
             school_name = (db.settings.find_one({}, {'school_name': 1}) or {}).get('school_name', 'School')
 
             # Compose message
+            parent_name = (s.get('parent_name') or 'Parent').strip() or 'Parent'
+            phone = s.get('parent_phone') or s.get('phone')
+            email_addr = s.get('parent_email') or s.get('email')
             if att_percentage < 75:
                 msg = (
-                    f"Dear Parent, {name} was ABSENT today ({selected_date}). "
+                    f"Hi {parent_name}, your child {name} was ABSENT today ({selected_date}). "
                     f"Current attendance: {att_percentage}% (below the 75% minimum). "
                     f"Please ensure regular attendance. — {school_name}"
                 )
                 subject = f"Absence Alert — {name} | {school_name}"
             else:
                 msg = (
-                    f"Dear Parent, {name} was marked ABSENT today ({selected_date}). "
+                    f"Hi {parent_name}, your child {name} was marked ABSENT today ({selected_date}). "
                     f"Current attendance: {att_percentage}%. "
                     f"Please inform the school if this is unexpected. — {school_name}"
                 )
                 subject = f"Absence Notice — {name} | {school_name}"
 
-            phone = s.get('parent_phone') or s.get('phone')
-            email_addr = s.get('parent_email') or s.get('email')
-
-            sent = False
-            if phone:
-                try:
-                    send_twilio_sms(phone, msg)
-                    sent = True
-                except Exception:
-                    pass
-            if not sent and email_addr:
-                try:
-                    send_sendgrid_email(email_addr, subject, msg)
-                    sent = True
-                except Exception:
-                    try:
-                        refresh_mail_config()
-                        flask_msg = Message(subject,
-                                            sender=app.config.get('MAIL_USERNAME'),
-                                            recipients=[email_addr])
-                        flask_msg.body = msg
-                        mail.send(flask_msg)
-                        sent = True
-                    except Exception as e:
-                        print(f"SMTP fallback failed in attendance: {e}")
-            if sent:
+            sent_via, errors = deliver_parent_alert(phone, email_addr, subject, msg)
+            if sent_via:
                 alerts_sent += 1
-                # Log to parent_alerts collection for the Message Parents page
                 db.parent_alerts.insert_one({
                     'student_id': s.get('id'),
                     'student_name': name,
-                    'parent_phone': phone,
+                    'parent_name': parent_name,
+                    'parent_phone': normalize_phone_e164(phone) or phone,
                     'parent_email': email_addr,
                     'message': msg,
                     'date': selected_date,
+                    'alert_type': 'absent',
                     'sent_by': session.get('username', 'System'),
+                    'sent_via': sent_via,
                     'status': 'sent',
-                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                    'delivery_notes': errors or [],
                 })
+            elif errors:
+                print(f"[ABSENT ALERT] {name}: {'; '.join(errors)}")
 
         if alerts_sent:
             flash(f'Attendance saved. {alerts_sent} parent alert(s) sent for absent students.')
@@ -6633,6 +6697,7 @@ def send_attendance_alert():
     """
     Manually send a parent alert for a specific student.
     POST JSON: { student_id, message (optional), alert_type: 'absent'|'custom' }
+    Sends SMS (Twilio) + email (SendGrid or SMTP) to the parent contact on file.
     """
     if not session.get('logged_in') or session.get('role') == 'student':
         return jsonify({'success': False, 'error': 'Unauthorized'}), 403
@@ -6654,30 +6719,34 @@ def send_attendance_alert():
         return jsonify({'success': False, 'error': 'Student not found'}), 404
 
     name = student.get('name', 'Student')
-    att = float(student.get('attendance', 100))
+    parent_name = override_name or (student.get('parent_name') or 'Parent').strip() or 'Parent'
+    try:
+        att = float(student.get('attendance', 100))
+    except (TypeError, ValueError):
+        att = 100.0
     school_name = (db.settings.find_one({}, {'school_name': 1}) or {}).get('school_name', 'School')
     today = datetime.now().strftime('%Y-%m-%d')
+    today_long = datetime.now().strftime('%B %d, %Y')
 
     if custom_message:
         msg = custom_message
         subject = f"Message from {school_name} regarding {name}"
     elif alert_type == 'present':
         msg = (
-            f"Dear Parent, {name} is marked PRESENT today ({today}). "
-            f"Current attendance: {att}%. "
-            f"— {school_name}"
+            f"Hi {parent_name}, your child {name} is marked PRESENT today ({today_long}). "
+            f"Current attendance: {att}%. — {school_name}"
         )
         subject = f"Attendance Notice — {name}"
     elif alert_type == 'absent':
         msg = (
-            f"Dear Parent, {name} was marked ABSENT today ({today}). "
+            f"Hi {parent_name}, your child {name} will be absent / was marked ABSENT today ({today_long}). "
             f"Current attendance: {att}%. "
             f"Please contact the school if you have any concerns. — {school_name}"
         )
         subject = f"Absence Notice — {name}"
     elif alert_type == 'homework':
         msg = (
-            f"Dear Parent, please remind {name} to complete their pending homework/assignment. "
+            f"Hi {parent_name}, please remind {name} to complete their pending homework/assignment. "
             f"Regular completion of assignments is important for academic progress. — {school_name}"
         )
         subject = f"Homework Reminder — {name}"
@@ -6686,16 +6755,16 @@ def send_attendance_alert():
         graded = []
         missing = db.assignments.count_documents({'submissions.student_id': {'$ne': student_id}, 'class_name': student.get('student_class')})
         for a in assignments:
-            sub = next((s for s in a.get('submissions', []) if s['student_id'] == student_id), None)
+            sub = next((s for s in a.get('submissions', []) if s.get('student_id') == student_id), None)
             if sub and sub.get('grade'):
-                graded.append(f"{a['subject']}: {sub['grade']}")
+                graded.append(f"{a.get('subject')}: {sub['grade']}")
                 
         grades_str = ", ".join(graded[:3]) if graded else "N/A"
         if len(graded) > 3:
             grades_str += "..."
             
         msg = (
-            f"Performance Update for {name}:\n"
+            f"Hi {parent_name}, performance update for {name}:\n"
             f"Attendance: {att}%\n"
             f"Recent Marks: {grades_str}\n"
             f"Missing Assignments: {missing}\n"
@@ -6703,48 +6772,38 @@ def send_attendance_alert():
         )
         subject = f"Performance Update — {name}"
     else:
-        msg = f"Dear Parent, this is an update regarding {name} from {school_name}."
+        msg = f"Hi {parent_name}, this is an update regarding {name} from {school_name}."
         subject = f"School Notice — {name}"
 
     phone = override_phone if override_phone else (student.get('parent_phone') or student.get('phone'))
     email_addr = override_email if override_email else (student.get('parent_email') or student.get('email'))
 
-    sent_via = []
-    if phone:
-        try:
-            send_twilio_sms(phone, msg)
-            sent_via.append('SMS')
-        except Exception as e:
-            print(f"SMS failed: {e}")
-    if email_addr:
-        try:
-            send_sendgrid_email(email_addr, subject, msg)
-            sent_via.append('Email')
-        except Exception as e:
-            print(f"Email failed: {e}")
+    if not phone and not email_addr:
+        return jsonify({
+            'success': False,
+            'error': "No phone or email on record for this student's parent."
+        }), 400
 
-    # Also try SMTP as fallback if no SendGrid key
-    if 'Email' not in sent_via and email_addr:
-        try:
-            refresh_mail_config()
-            flask_msg = Message(subject,
-                                sender=app.config.get('MAIL_USERNAME'),
-                                recipients=[email_addr])
-            flask_msg.body = msg
-            mail.send(flask_msg)
-            sent_via.append('Email (SMTP)')
-        except Exception as e:
-            print(f"SMTP fallback failed: {e}")
+    sent_via, errors = deliver_parent_alert(phone, email_addr, subject, msg)
 
     if not sent_via:
-        return jsonify({'success': False, 'error': 'No phone or email on record for this student\'s parent.'}), 400
+        hint = (
+            ' Configure Twilio in Settings for SMS, and MAIL_* / SMTP for email.'
+            if any('Twilio' in e or 'Email failed' in e or 'SMTP' in e for e in errors)
+            else ''
+        )
+        return jsonify({
+            'success': False,
+            'error': ('; '.join(errors) or 'Failed to deliver alert.') + hint,
+            'delivery_errors': errors,
+        }), 502
 
-    # Log it
+    phone_norm = normalize_phone_e164(phone) if phone else phone
     db.parent_alerts.insert_one({
         'student_id': student_id,
         'student_name': name,
-        'parent_name': override_name or student.get('parent_name', ''),
-        'parent_phone': phone,
+        'parent_name': parent_name,
+        'parent_phone': phone_norm or phone,
         'parent_email': email_addr,
         'message': msg,
         'date': today,
@@ -6752,7 +6811,8 @@ def send_attendance_alert():
         'sent_by': session.get('username', 'Teacher'),
         'sent_via': sent_via,
         'status': 'sent',
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'delivery_notes': errors or [],
     })
 
     log_notification(
@@ -6761,7 +6821,21 @@ def send_attendance_alert():
         type='success', role_target='admin'
     )
 
-    return jsonify({'success': True, 'sent_via': sent_via, 'student_name': name})
+    warning = None
+    if phone and 'SMS' not in sent_via:
+        warning = 'Email sent, but SMS was not delivered (configure Twilio Account SID, Auth Token, and Phone Number in Settings).'
+    elif email_addr and not any(v.startswith('Email') for v in sent_via):
+        warning = 'SMS sent, but email was not delivered (check SMTP / SendGrid settings).'
+
+    return jsonify({
+        'success': True,
+        'sent_via': sent_via,
+        'student_name': name,
+        'parent_phone': phone_norm or phone,
+        'parent_email': email_addr,
+        'warning': warning,
+        'delivery_notes': errors or [],
+    })
 
 @app.route('/api/alerts/delete/<alert_id>', methods=['POST'])
 def delete_alert(alert_id):
@@ -7792,24 +7866,45 @@ def send_direct_message():
         try:
             subject = f"Message from {session.get('username')} regarding {student.get('name')}"
             body = f"{message}\n\n[This is an automated message from the Teacher Dashboard.]"
-            send_generic_email(parent_email, subject, body)
+            ok, detail = send_parent_email(parent_email, subject, body)
+            if not ok:
+                return jsonify({'success': False, 'error': f'Failed to send email: {detail}'}), 500
+            sent_via = [detail]
         except Exception as e:
             print(f"Direct Email Failed: {str(e)}")
             return jsonify({'success': False, 'error': 'Failed to send email. Ensure SMTP is configured.'}), 500
+    elif msg_type in ('sms', 'whatsapp'):
+        body = message
+        if msg_type == 'whatsapp':
+            # WhatsApp via Twilio uses the same SMS API when a WhatsApp-enabled number is configured.
+            body = message
+        if not send_twilio_sms(parent_phone, body):
+            return jsonify({
+                'success': False,
+                'error': 'Failed to send SMS. Configure Twilio Account SID, Auth Token, and Phone Number in Settings.'
+            }), 502
+        sent_via = ['SMS' if msg_type == 'sms' else 'WhatsApp']
+    else:
+        sent_via = []
         
-    # Log the simulated/actual send
+    # Log the actual send
     db.parent_alerts.insert_one({
         'student_id': student_id,
+        'student_name': student.get('name', ''),
         'parent_name': student.get('parent_name', 'Parent'),
+        'parent_phone': normalize_phone_e164(parent_phone) if parent_phone else parent_phone,
+        'parent_email': parent_email,
         'parent_contact': parent_email if msg_type == 'email' else parent_phone,
-        'alert_type': f"Direct {msg_type.upper()}",
+        'alert_type': f"Direct {msg_type}",
         'message': message,
         'attachment': attachment_name,
-        'timestamp': datetime.now().isoformat(),
-        'sent_by': session.get('username')
+        'sent_via': sent_via,
+        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'sent_by': session.get('username'),
+        'status': 'sent',
     })
     
-    return jsonify({'success': True, 'message': 'Message processed successfully'})
+    return jsonify({'success': True, 'message': 'Message processed successfully', 'sent_via': sent_via})
 
 # -- API: Messaging --
 @app.route('/api/messages/<other_user_id>', methods=['GET'])

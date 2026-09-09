@@ -27,7 +27,7 @@
                     <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                     Quick Absent Alert
                 </h2>
-                <p class="text-xs text-gray-500 mb-4">One click sends an absence SMS + email to the student's parent contact.</p>
+                <p class="text-xs text-gray-500 mb-4">One click sends an absence <strong>SMS</strong> (Twilio) + <strong>email</strong> (SMTP) to the student's parent contact on file.</p>
 
                 <!-- Search filter -->
                 <input type="text" id="studentSearchAlert" placeholder="Search student…"
@@ -283,26 +283,33 @@ async function sendQuickAlert(studentId, alertType, btn) {
         });
         const data = await res.json();
         if (data.success) {
+            const via = (data.sent_via || []).join(', ');
             btn.textContent = '✓ Sent';
-            btn.className = btn.className.replace(/bg-\w+-100 text-\w+-700 hover:bg-\w+-600/, 'bg-blue-500 text-white');
-            setTimeout(() => {
-                btn.textContent = original;
-                btn.disabled = false;
-                btn.className = alertType === 'absent'
-                    ? 'px-2.5 py-1 text-[11px] font-bold bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded-lg transition-colors'
-                    : alertType === 'present'
-                    ? 'px-2.5 py-1 text-[11px] font-bold bg-blue-50 text-blue-600 hover:bg-blue-500 hover:text-white rounded-lg transition-colors'
-                    : alertType === 'homework'
-                    ? 'px-2.5 py-1 text-[11px] font-bold bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-lg transition-colors'
-                    : 'px-2.5 py-1 text-[11px] font-bold bg-blue-100 text-blue-700 hover:bg-blue-600 hover:text-white rounded-lg transition-colors';
-            }, 3000);
+            btn.className = btn.className.replace(/bg-\w+-100 text-\w+-700 hover:bg-\w+-600|bg-\w+-50 text-\w+-600 hover:bg-\w+-500/, 'bg-emerald-500 text-white');
+            if (typeof showToast === 'function') {
+                showToast(
+                    data.warning
+                        ? `Sent via ${via}. ${data.warning}`
+                        : `Absence alert sent to ${data.student_name}'s parent via ${via}.`,
+                    data.warning ? 'error' : 'success'
+                );
+            }
+            setTimeout(() => window.location.reload(), 1200);
         } else {
-            showToast('Failed: ' + data.error, 'error');
+            if (typeof showToast === 'function') {
+                showToast('Failed: ' + (data.error || 'Could not send alert'), 'error');
+            } else {
+                alert('Failed: ' + (data.error || 'Could not send alert'));
+            }
             btn.textContent = original;
             btn.disabled = false;
         }
     } catch(e) {
-        showToast('Network error. Please try again.', 'error');
+        if (typeof showToast === 'function') {
+            showToast('Network error. Please try again.', 'error');
+        } else {
+            alert('Network error. Please try again.');
+        }
         btn.textContent = original;
         btn.disabled = false;
     }
@@ -350,7 +357,10 @@ async function sendComposedMessage() {
         });
         const data = await res.json();
         if (data.success) {
-            okDiv.textContent = `✓ Message sent to ${data.student_name}'s parent via ${data.sent_via.join(', ')}.`;
+            const via = (data.sent_via || []).join(', ');
+            okDiv.textContent = data.warning
+                ? `✓ Sent via ${via}. Note: ${data.warning}`
+                : `✓ Message sent to ${data.student_name}'s parent via ${via}.`;
             okDiv.classList.remove('hidden');
             document.getElementById('composeMessage').value = '';
             document.getElementById('composeStudent').value = '';
