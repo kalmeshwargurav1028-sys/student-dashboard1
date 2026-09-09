@@ -90,6 +90,23 @@
                         </div>
                     </div>
                 </div>
+                {% if session.get('logged_in') %}
+                <div class="relative" data-ay-menu>
+                    <button type="button" id="calBtn" onclick="event.stopPropagation(); toggleAyMenu(this)" class="flex items-center gap-2 h-9 pl-2.5 pr-2.5 rounded-lg border border-sky-200 bg-white hover:bg-sky-50 text-slate-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none {% if request.path.startswith('/school-calendar') %}border-sky-400 bg-sky-50{% endif %}" title="Choose academic year">
+                        <svg class="h-4 w-4 text-sky-600 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ selected_academic_period }}</span>
+                        <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div data-ay-dropdown class="hidden absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-1 border border-gray-100 dark:border-gray-700 z-50">
+                        <p class="px-3 py-1.5 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Select year</p>
+                        {% for period in ay_period_choices %}
+                        <a href="{{ url_for('select_academic_year', period=period) }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 hover:text-sky-700 {% if selected_academic_period == period %}bg-sky-50 text-sky-700 font-semibold{% endif %}">{{ period }}</a>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
                 <div class="relative">
                     <button type="button" onclick="toggleProfileDropdown()" class="flex items-center gap-3 focus:outline-none rounded-full">
                         {% if session.get('photo_url') %}

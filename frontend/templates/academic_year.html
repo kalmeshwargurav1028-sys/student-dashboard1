@@ -1,36 +1,16 @@
 {% extends "base.html" %}
-{% block header_title %}Academic Year {{ academic_period }}{% endblock %}
+{% block header_title %}Academic Year{% endblock %}
 
 {% block content %}
 {% if role == 'admin' %}
 <div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-6">
 
-    {# Horizontal year switcher — same pattern as home banner (no profile) #}
-    <div class="bg-white border border-slate-200 rounded-xl px-4 py-4 sm:px-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Academic year</p>
-            <p class="text-sm text-slate-600 mt-0.5">Choose a year to load its data · {{ school_name }}</p>
-        </div>
-        <div class="inline-flex items-stretch rounded-xl bg-slate-100 border border-slate-200 p-1 gap-1 shrink-0">
-            {% for period in period_choices %}
-            <a href="{{ url_for('select_academic_year', period=period) }}"
-               class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors
-               {% if academic_period == period %}bg-white text-sky-700 shadow-sm{% else %}text-slate-600 hover:bg-white/70{% endif %}">
-                {{ period }}
-            </a>
-            {% endfor %}
-        </div>
-    </div>
-
-    {# Year hero #}
     <div class="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-sky-50 px-5 py-6 sm:px-8 sm:py-8">
         <div class="flex flex-col lg:flex-row lg:items-end gap-6">
             <div class="min-w-0 flex-1">
                 <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Admin academic year</p>
                 <h1 class="mt-1 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">{{ academic_period }}</h1>
-                <p class="mt-2 text-sm text-slate-600">
-                    {{ filters.start }} → {{ filters.end }}
-                </p>
+                <p class="mt-2 text-sm text-slate-600">{{ filters.start }} → {{ filters.end }} · switch years from the header menu</p>
                 <div class="mt-4 flex flex-wrap items-center gap-2">
                     {% if admin.is_active %}
                     <span class="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 text-xs font-semibold px-2.5 py-1">Active on portal</span>
@@ -75,7 +55,6 @@
         </div>
     </div>
 
-    {# Ops metrics — admin only #}
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white border border-slate-200 rounded-xl px-5 py-4">
             <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Admins</p>
@@ -100,7 +79,6 @@
     </div>
 
     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {# Year readiness #}
         <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-100">
                 <h2 class="text-sm font-semibold text-slate-900">Year readiness</h2>
@@ -125,15 +103,8 @@
                 </li>
                 {% endfor %}
             </ul>
-            {% if admin.last_refresh or admin.last_arrange %}
-            <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 space-y-0.5">
-                {% if admin.last_refresh %}<p>Last data refresh: {{ admin.last_refresh }}</p>{% endif %}
-                {% if admin.last_arrange %}<p>Last data arrange: {{ admin.last_arrange }}</p>{% endif %}
-            </div>
-            {% endif %}
         </div>
 
-        {# Admin operators #}
         <div class="bg-white border border-slate-200 rounded-xl overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-100">
                 <h2 class="text-sm font-semibold text-slate-900">Admin operators</h2>
@@ -154,29 +125,26 @@
             </div>
         </div>
     </div>
-
-    <p class="text-xs text-slate-400 text-center pb-2">
-        Student and teacher rolls live in Data Store — this page is for year control only.
-    </p>
 </div>
 {% else %}
 {% set home_url = url_for('dashboard') if role == 'teacher' else url_for('student_home') %}
-<div class="w-full py-6 px-4 sm:px-6 lg:px-10 max-w-6xl mx-auto space-y-5">
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
 
     <div class="flex items-start gap-3">
         <a href="{{ home_url }}#your-tools" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back to tools">
             <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
         </a>
         <div>
-            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Academic Year {{ academic_period }}</h1>
-            <p class="text-sm text-slate-500 mt-1">{% if role == 'teacher' %}Class progress for the selected year{% else %}Your progress for the selected year{% endif %} · switch years from the home banner</p>
+            <p class="text-xs sm:text-sm text-slate-500 font-medium">Welcome back</p>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ display_name | title }}</h1>
+            <p class="text-sm text-slate-500 mt-1">{{ academic_period }} · {% if role == 'teacher' %}class performance for the selected year{% else %}your progress for the selected year{% endif %}</p>
         </div>
     </div>
 
-    <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-5">
+    <form method="GET" action="{{ url_for('school_calendar') }}" class="bg-white rounded-2xl border border-slate-200 shadow-sm px-4 py-4 sm:px-6">
         <input type="hidden" name="period" value="{{ academic_period }}">
-        <div class="flex flex-col xl:flex-row xl:items-center gap-4">
-            <div class="flex items-center gap-2 min-w-0">
+        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
+            <div class="flex items-center gap-2 min-w-0 lg:mr-auto">
                 <img src="{{ logo_url }}" alt="" class="h-9 w-9 object-contain">
                 <div class="min-w-0">
                     <p class="text-sm font-medium text-slate-700 truncate">{{ school_name }}</p>
@@ -184,45 +152,46 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                <span class="text-slate-400 text-xs uppercase tracking-wide">Period</span>
-                <div class="inline-flex items-stretch rounded-lg bg-white border border-slate-200 p-0.5 gap-0.5">
-                    {% for period in ay_period_choices %}
-                    <a href="{{ url_for('select_academic_year', period=period) }}"
-                       class="px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap
-                       {% if academic_period == period %}bg-sky-600 text-white{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
-                        {{ period }}
-                    </a>
-                    {% endfor %}
-                </div>
-            </div>
-
-            <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
-                {% if role == 'teacher' and student_choices %}
-                <select name="student_id" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+            {% if role == 'teacher' and student_choices %}
+            <label class="block">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Student</span>
+                <select name="student_id" class="mt-1 block border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white min-w-[10rem]">
                     <option value="">All students</option>
                     {% for s in student_choices %}
                     <option value="{{ s.id }}" {% if filters.student_id == s.id %}selected{% endif %}>{{ s.name }}</option>
                     {% endfor %}
                 </select>
-                {% endif %}
-                <select name="subject" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+            </label>
+            {% endif %}
+
+            <label class="block">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Subject</span>
+                <select name="subject" class="mt-1 block border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white min-w-[10rem]">
                     <option value="">All Subjects</option>
                     {% for s in subject_choices %}
                     <option value="{{ s }}" {% if filters.subject == s %}selected{% endif %}>{{ s }}</option>
                     {% endfor %}
                 </select>
-                <input type="date" name="start" value="{{ filters.start }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                <input type="date" name="end" value="{{ filters.end }}" class="border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
-                <button type="submit" class="inline-flex items-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-3 py-2 rounded-lg">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-                    Apply
-                </button>
+            </label>
+
+            <div class="block min-w-0 flex-1 max-w-xl">
+                <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Date range</span>
+                <div class="mt-1 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5">
+                    <svg class="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <input type="date" name="start" value="{{ filters.start }}" class="flex-1 min-w-0 border-0 bg-transparent py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-0">
+                    <span class="text-slate-400 text-sm shrink-0">to</span>
+                    <input type="date" name="end" value="{{ filters.end }}" class="flex-1 min-w-0 border-0 bg-transparent py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-0">
+                </div>
             </div>
+
+            <button type="submit" class="inline-flex items-center justify-center gap-1.5 bg-sky-600 hover:bg-sky-700 text-white text-sm font-medium px-5 py-2.5 rounded-xl shrink-0">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Apply
+            </button>
         </div>
     </form>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
         {% for card in kpis %}
         <div class="bg-white rounded-2xl border border-slate-200 shadow-sm px-5 py-4 flex items-start justify-between {% if card.tone == 'good' %}bg-emerald-50/70 border-emerald-100{% elif card.tone == 'low' %}bg-rose-50/70 border-rose-100{% endif %}">
             <div>
@@ -248,63 +217,33 @@
         {% endfor %}
     </div>
 
-    <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <h2 class="text-base font-semibold text-slate-900">Performance Insights</h2>
-            <p class="text-xs text-slate-400 mt-0.5">
-                {% if role == 'student' %}AI-powered analysis and personalized tips
-                {% elif role == 'teacher' %}Class-level analysis for your mapped students
-                {% else %}School-wide analysis for the academic year{% endif %}
-            </p>
-            <div class="mt-4 space-y-3">
-                {% for item in insights %}
-                <div class="flex gap-3 rounded-xl border border-slate-100 bg-slate-50/70 px-3 py-3">
-                    <div class="h-9 w-9 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
-                        {% if item.icon == 'bulb' %}
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
-                        {% elif item.icon == 'chart' %}
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                        {% elif item.icon == 'target' %}
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        {% else %}
-                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <p class="text-sm font-semibold text-slate-800">{{ item.title }}</p>
-                        <p class="text-sm text-slate-500 mt-0.5">{{ item.text }}</p>
-                    </div>
-                </div>
-                {% endfor %}
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+        <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 mb-4">
+            <div>
+                <h2 class="text-base font-semibold text-slate-900">PG Score Trends</h2>
+                <p class="text-xs text-slate-400 mt-0.5">
+                    {% if role == 'student' %}Performance growth over the academic year
+                    {% else %}Class performance growth across the year{% endif %}
+                </p>
             </div>
-        </div>
-
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5">
-            <h2 class="text-base font-semibold text-slate-900">PG Score Trends</h2>
-            <p class="text-xs text-slate-400 mt-0.5">
-                {% if role == 'student' %}Performance growth over the academic year
-                {% elif role == 'teacher' %}Class performance growth across the year
-                {% else %}School performance growth across the year{% endif %}
-            </p>
-            <div class="mt-4 h-64">
-                <canvas id="ayTrend"></canvas>
-            </div>
-            <div class="flex flex-wrap gap-4 mt-3 text-xs text-slate-500">
+            <div class="flex flex-wrap gap-4 text-xs text-slate-500">
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-sky-500"></span> PG Score</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-rose-400"></span> Below 60</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-amber-400"></span> 60–79</span>
                 <span class="inline-flex items-center gap-1"><span class="h-2 w-2 rounded-full bg-emerald-500"></span> 80+</span>
             </div>
         </div>
+        <div class="h-72 sm:h-80 w-full">
+            <canvas id="ayTrend"></canvas>
+        </div>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-5 pt-5 pb-3">
+        <div class="px-5 pt-5 pb-3 sm:px-6">
             <h2 class="text-base font-semibold text-slate-900">Assessment Performance Matrix</h2>
             <p class="text-xs text-slate-400 mt-0.5">
-                {% if role == 'student' %}Your performance across different assessment types
-                {% elif role == 'teacher' %}Class averages across different assessment types
-                {% else %}School averages across different assessment types{% endif %}
+                {% if role == 'student' %}Your scores across assessment types for {{ academic_period }}
+                {% else %}Class averages across assessment types for {{ academic_period }}{% endif %}
             </p>
             <div class="mt-3 rounded-lg bg-sky-50 text-sky-800 text-sm px-3 py-2 flex items-start gap-2">
                 <svg class="h-4 w-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"/></svg>
@@ -355,7 +294,7 @@
                     </tr>
                     {% else %}
                     <tr>
-                        <td colspan="8" class="px-5 py-10 text-center text-slate-400">No academic-year assessment data yet.</td>
+                        <td colspan="8" class="px-5 py-10 text-center text-slate-400">No academic-year assessment data yet for this date range.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -380,9 +319,11 @@
                 data: values,
                 borderColor: '#0284c7',
                 backgroundColor: 'rgba(2, 132, 199, 0.08)',
+                fill: true,
                 tension: 0.35,
                 spanGaps: true,
-                pointRadius: 4,
+                pointRadius: 5,
+                pointHoverRadius: 7,
                 pointBackgroundColor: values.map(function (v) {
                     if (v == null) return '#cbd5e1';
                     if (v >= 80) return '#10b981';

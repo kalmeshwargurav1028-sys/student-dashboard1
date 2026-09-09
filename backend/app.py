@@ -1860,21 +1860,36 @@ def _ay_apply_gradebook(row, grade):
         row['pg'] = total if row['pg'] is None else round((row['pg'] + total) / 2, 1)
 
 
-def _ay_trend_from_assignments(assignments, student_ids=None):
+def _ay_trend_from_assignments(assignments, student_ids=None, grades=None):
     months = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May']
     buckets = {m: [] for m in months}
     month_ix = {'06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov',
                 '12': 'Dec', '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May'}
+
+    def _bucket(date_str, score):
+        day = str(date_str or '')[:10]
+        key = month_ix.get(day[5:7] if len(day) >= 7 else '')
+        if key and score is not None:
+            buckets[key].append(float(score))
+
     for a in assignments:
-        due = str(a.get('due_date') or '')[:10]
-        key = month_ix.get(due[5:7] if len(due) >= 7 else '')
-        if not key:
-            continue
+        due = a.get('due_date') or a.get('created_at') or ''
         for sub in a.get('submissions') or []:
             if student_ids is not None and sub.get('student_id') not in student_ids:
                 continue
             if sub.get('grade') not in (None, ''):
-                buckets[key].append(_ay_float(sub.get('grade')))
+                _bucket(due, _ay_float(sub.get('grade')))
+
+    for g in grades or []:
+        if student_ids is not None and g.get('student_id') not in student_ids:
+            continue
+        ca = g.get('ca_mark')
+        exam = g.get('exam_mark')
+        if ca in (None, '') and exam in (None, ''):
+            continue
+        score = _ay_float(ca) + _ay_float(exam)
+        _bucket(g.get('date') or g.get('updated_at') or g.get('created_at'), score)
+
     values = []
     for m in months:
         values.append(round(sum(buckets[m]) / len(buckets[m]), 1) if buckets[m] else None)
@@ -2170,9 +2185,21 @@ def _academic_year_dashboard():
             {'title': 'Coverage', 'icon': 'clock', 'text': f"{total_assessments} assessments recorded from {start} to {end}."},
         ]
 
-    months, trend = _ay_trend_from_assignments(assignments, student_ids if role == 'student' else (student_ids or None))
+    months, trend = _ay_trend_from_assignments(
+        assignments,
+        student_ids if role == 'student' else (student_ids or None),
+        grades=grades,
+    )
     if all(v is None for v in trend) and pg_vals:
-        trend = [None] * 11 + [avg_score]
+        # Spread known subject PG scores across the year so the chart shows data flow
+        n = len(months)
+        trend = [None] * n
+        step = max(n // max(len(pg_vals), 1), 1)
+        for i, val in enumerate(pg_vals):
+            ix = min(i * step, n - 1)
+            trend[ix] = val
+        if trend[-1] is None:
+            trend[-1] = avg_score
 
     return {
         'academic_year_key': period,
