@@ -1,4 +1,4 @@
-{# Shared home banner — animated background + living avatar for every role. #}
+{# Shared home banner — animated background + role-specific cartoon for every role. #}
 {% if session.get('role') == 'student' and student is defined and student.get('name') %}
   {% set welcome_name = student.name %}
 {% elif session.get('username') %}
@@ -10,14 +10,17 @@
   {% set welcome_role = 'Super Admin' %}
   {% set welcome_tagline = 'ready to lead something new?' %}
   {% set banner_tone = 'admin' %}
+  {% set banner_cartoon = 'images/cartoon-admin.png' %}
 {% elif session.get('role') == 'teacher' %}
   {% set welcome_role = 'Teacher' %}
   {% set welcome_tagline = 'ready to teach something new?' %}
   {% set banner_tone = 'teacher' %}
+  {% set banner_cartoon = 'images/cartoon-teacher.png' %}
 {% else %}
   {% set welcome_role = 'Student' %}
   {% set welcome_tagline = 'ready to learn something new?' %}
   {% set banner_tone = 'student' %}
+  {% set banner_cartoon = 'images/cartoon-student.png' %}
 {% endif %}
 
 <style>
@@ -50,14 +53,6 @@
   0%, 100% { box-shadow: 0 10px 28px rgba(15,23,42,.18), 0 0 0 0 rgba(255,255,255,.15); }
   50% { box-shadow: 0 16px 36px rgba(15,23,42,.22), 0 0 0 10px rgba(255,255,255,.08); }
 }
-@keyframes svg-wave {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
-}
-@keyframes svg-blink {
-  0%, 92%, 100% { transform: scaleY(1); }
-  96% { transform: scaleY(.1); }
-}
 .home-banner {
   background-size: 200% 200%;
   animation: banner-shine 14s ease infinite;
@@ -78,11 +73,9 @@
 .home-banner-avatar {
   animation: avatar-bob 4.8s ease-in-out infinite, avatar-glow 4.8s ease-in-out infinite;
 }
-.home-banner-svg-wave { animation: svg-wave 2.8s ease-in-out infinite; transform-origin: center; }
-.home-banner-svg-blink { animation: svg-blink 4.5s infinite; transform-origin: center; }
 @media (prefers-reduced-motion: reduce) {
   .home-banner, .home-banner-orb, .home-banner-orb-alt, .home-banner-spark,
-  .home-banner-float, .home-banner-avatar, .home-banner-svg-wave, .home-banner-svg-blink {
+  .home-banner-float, .home-banner-avatar {
     animation: none !important;
   }
 }
@@ -100,42 +93,13 @@
     </div>
 
     <div class="relative z-10 flex items-center gap-4 sm:gap-5 min-w-0">
-        <div class="home-banner-avatar shrink-0 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-2xl bg-white/95 p-2 ring-1 ring-white/50 flex items-center justify-center overflow-hidden">
-            {% if banner_tone == 'admin' %}
-            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                <rect width="120" height="120" rx="18" fill="#EEF2FF"/>
-                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#C7D2FE"/>
-                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#312E81"/>
-                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#312E81" style="animation-delay:.15s"/>
-                <path d="M48 52c3 3 8 4 12 4s9-1 12-4" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
-                <path d="M34 98c4-22 16-34 26-34s22 12 26 34" fill="#4F46E5"/>
-                <path d="M44 72h32v8H44z" fill="#312E81"/>
-                <circle class="home-banner-svg-wave" cx="88" cy="28" r="6" fill="#A5B4FC" style="animation-delay:.4s"/>
-            </svg>
-            {% elif banner_tone == 'teacher' %}
-            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                <rect width="120" height="120" rx="18" fill="#ECFEFF"/>
-                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#A5F3FC"/>
-                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#155E75"/>
-                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#155E75" style="animation-delay:.12s"/>
-                <path d="M50 53c2.5 2.5 6.5 3.5 10 3.5s7.5-1 10-3.5" stroke="#0E7490" stroke-width="2" stroke-linecap="round"/>
-                <path d="M32 98c5-22 17-34 28-34s23 12 28 34" fill="#0891B2"/>
-                <rect x="42" y="70" width="36" height="8" rx="2" fill="#164E63"/>
-                <path class="home-banner-svg-wave" d="M78 34l14-8 2 4-14 8-2-4z" fill="#22D3EE" style="animation-delay:.5s"/>
-            </svg>
-            {% else %}
-            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-                <rect width="120" height="120" rx="18" fill="#EFF6FF"/>
-                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#BFDBFE"/>
-                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#1E3A8A"/>
-                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#1E3A8A" style="animation-delay:.18s"/>
-                <path d="M50 53c2.5 2.8 7 4 10 4" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
-                <path d="M33 98c5-22 16-34 27-34s22 12 27 34" fill="#2563EB"/>
-                <rect x="70" y="62" width="22" height="28" rx="4" fill="#93C5FD"/>
-                <rect x="74" y="68" width="14" height="16" rx="2" fill="#DBEAFE"/>
-                <circle class="home-banner-svg-wave" cx="30" cy="30" r="5" fill="#60A5FA" style="animation-delay:.6s"/>
-            </svg>
-            {% endif %}
+        <div class="home-banner-avatar shrink-0 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-2xl overflow-visible">
+            <img src="{{ url_for('static', filename=banner_cartoon) }}"
+                 alt="{{ welcome_role }} cartoon"
+                 class="h-full w-full object-contain object-center select-none drop-shadow-lg"
+                 draggable="false"
+                 loading="eager"
+                 decoding="async">
         </div>
         <div class="min-w-0 flex-1">
             <p class="text-sm text-blue-100/95 font-medium">Welcome back</p>
