@@ -1924,13 +1924,55 @@ def _admin_academic_year():
     start = (request.args.get('start') or period_start).strip() or period_start
     end = (request.args.get('end') or period_end).strip() or period_end
 
-    events = [e for e in _get_school_calendar_events() if _ay_in_range(e.get('date'), start, end)]
-    event_counts = {
-        'holiday': sum(1 for e in events if e.get('kind') == 'holiday'),
-        'term': sum(1 for e in events if e.get('kind') == 'term'),
-        'exam': sum(1 for e in events if e.get('kind') == 'exam'),
-        'event': sum(1 for e in events if e.get('kind') == 'event'),
-    }
+    students = list(db.students.find({}, {'password': 0}))
+    teachers = list(db.users.find({'role': {'$ne': 'admin'}}, {'password': 0}))
+    mappings = list(db.teacher_mappings.find({}, {'_id': 0}))
+    logins = db.student_users.count_documents({})
+
+    class_rows = {}
+    for s in students:
+        grade = str(s.get('class') or s.get('student_class') or 'Unassigned').strip() or 'Unassigned'
+        section = str(s.get('section') or s.get('division') or '').strip().upper()
+        key = f'{grade} {section}'.strip()
+        row = class_rows.setdefault(key, {
+            'name': key,
+            'class': grade,
+            'section': section or '—',
+            'count': 0,
+            'students': [],
+        })
+        row['count'] += 1
+        row['students'].append({
+            'id': s.get('id') or '',
+            'name': s.get('name') or '',
+            'email': s.get('email') or '',
+        })
+    class_list = sorted(class_rows.values(), key=lambda r: (str(r['class']), str(r['section'])))
+    class_max = max((r['count'] for r in class_list), default=1) or 1
+    for row in class_list:
+        row['pct'] = round(100.0 * row['count'] / class_max, 1)
+
+    student_rows = []
+    for s in students:
+        student_rows.append({
+            'id': s.get('id') or '',
+            'name': s.get('name') or '',
+            'class': s.get('class') or s.get('student_class') or '',
+            'section': s.get('section') or s.get('division') or '',
+            'email': s.get('email') or '',
+        })
+    student_rows.sort(key=lambda r: (str(r['class']), str(r['section']), str(r['id'])))
+
+    teacher_rows = []
+    for t in teachers:
+        teacher_rows.append({
+            'name': t.get('name') or f"{t.get('first_name', '')} {t.get('last_name', '')}".strip(),
+            'email': t.get('email') or '',
+            'assigned_class': t.get('assigned_class') or '',
+            'department': t.get('department') or '',
+        })
+    teacher_rows.sort(key=lambda r: str(r['name']).lower())
+
     return {
         'academic_year_key': ACADEMIC_YEAR_KEY,
         'academic_period': period,
@@ -1942,9 +1984,14 @@ def _admin_academic_year():
         'photo_url': session.get('photo_url') or '',
         'logo_url': settings.get('logo_url') or url_for('static', filename='images/logo.png'),
         'admin': {
-            'admins': db.admins.count_documents({}),
-            'events': events,
-            'event_counts': event_counts,
+            'students': len(students),
+            'teachers': len(teachers),
+            'classes': len(class_list),
+            'logins': logins,
+            'mappings': len(mappings),
+            'class_rows': class_list,
+            'student_rows': student_rows,
+            'teacher_rows': teacher_rows,
         },
         'kpis': [],
         'insights': [],
