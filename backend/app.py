@@ -448,6 +448,7 @@ def inject_global_context():
         'teacher_created_courses': [],
         'academic_year_label': academic_year_label(),
         'academic_year_short': academic_year_short(),
+        'ay_period_choices': ['2025-2026', '2026-2027'],
     }
     if not session.get('logged_in'):
         return context
@@ -3880,16 +3881,23 @@ def utility_data_store():
             f"Database arranged. Updated {result['students']} students, "
             f"{result['teachers']} teachers, {result['admins']} admins."
         )
-        return redirect(url_for('utility_data_store', tab=request.form.get('tab') or 'students'))
+        return redirect(url_for(
+            'utility_data_store',
+            tab=request.form.get('tab') or 'students',
+            grade=request.form.get('grade') or None,
+            section=request.form.get('section') or None,
+        ))
 
     tab = (request.args.get('tab') or 'students').strip().lower()
     if tab not in ('students', 'teachers', 'admins'):
         tab = 'students'
+    selected_grade = (request.args.get('grade') or '').strip()
+    selected_section = (request.args.get('section') or '').strip().upper()
 
     students = []
     for doc in db.students.find({}, {'password': 0}).sort('id', 1):
-        class_val = doc.get('class') or doc.get('student_class') or ''
-        section_val = doc.get('section') or doc.get('division') or ''
+        class_val = str(doc.get('class') or doc.get('student_class') or '').strip()
+        section_val = str(doc.get('section') or doc.get('division') or '').strip().upper()
         login = db.student_users.find_one({'student_id': doc.get('id')}, {'email': 1}) or {}
         students.append({
             'id': doc.get('id') or '',
@@ -3899,6 +3907,46 @@ def utility_data_store():
             'section': section_val,
             'has_login': bool(login),
         })
+
+    # Grade → section drill-down for students
+    grade_order = [f'{n}th' if n not in (1, 2, 3) else {1: '1st', 2: '2nd', 3: '3rd'}[n] for n in range(1, 13)]
+    grade_map = {}
+    for row in students:
+        g = row['class'] or 'Unassigned'
+        s = row['section'] or 'A'
+        grade_map.setdefault(g, {})
+        grade_map[g].setdefault(s, []).append(row)
+
+    def _grade_sort_key(label):
+        m = re.search(r'(\d+)', str(label))
+        return (int(m.group(1)) if m else 999, str(label))
+
+    grade_cards = []
+    for g in sorted(set(list(grade_map.keys()) + grade_order), key=_grade_sort_key):
+        sections = grade_map.get(g) or {}
+        total = sum(len(v) for v in sections.values())
+        grade_cards.append({
+            'name': g,
+            'count': total,
+            'sections': sorted(sections.keys()),
+        })
+
+    section_cards = []
+    filtered_students = []
+    if selected_grade:
+        sections = grade_map.get(selected_grade) or {}
+        for sec in sorted(sections.keys()) or ['A', 'B', 'C', 'D']:
+            section_cards.append({
+                'name': sec,
+                'count': len(sections.get(sec) or []),
+            })
+        # Always offer A-D even if empty so admin can browse
+        for sec in ('A', 'B', 'C', 'D'):
+            if sec not in {c['name'] for c in section_cards}:
+                section_cards.append({'name': sec, 'count': 0})
+        section_cards.sort(key=lambda c: c['name'])
+        if selected_section:
+            filtered_students = sections.get(selected_section) or []
 
     teachers = []
     for doc in db.users.find({'role': {'$ne': 'admin'}}, {'password': 0}).sort('name', 1):
@@ -3928,6 +3976,11 @@ def utility_data_store():
         students=students,
         teachers=teachers,
         admins=admins,
+        grade_cards=grade_cards,
+        section_cards=section_cards,
+        filtered_students=filtered_students,
+        selected_grade=selected_grade,
+        selected_section=selected_section,
         counts={
             'students': len(students),
             'teachers': len(teachers),
