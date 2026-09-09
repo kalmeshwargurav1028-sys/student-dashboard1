@@ -1180,75 +1180,22 @@ def get_file(file_id):
         return "File not found", 404
 
 def initiate_2fa(email, session_data):
-    if _is_local_dev() and not _local_2fa_required():
-        return _finish_login(session_data)
-    otp = generate_otp()
-    expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-    session['otp_code'] = otp
-    session['otp_expiry'] = expiry
-    session['otp_email'] = email
-    import json
-    session['pending_2fa_data'] = json.dumps(session_data)
-    result = send_otp_email(email, otp)
-    if result is not True:
-        flash(f'Failed to send OTP email: {result}')
-    return redirect(url_for('verify_2fa', email=email))
+    """Complete login immediately — email two-step verification is disabled."""
+    session.pop('otp_code', None)
+    session.pop('otp_email', None)
+    session.pop('otp_expiry', None)
+    session.pop('pending_2fa_data', None)
+    return _finish_login(session_data)
 
 @app.route('/verify_2fa', methods=['GET', 'POST'])
 def verify_2fa():
-    email = request.args.get('email') or request.form.get('email')
-    if request.method == 'POST':
-        otp = request.form.get('otp')
-        
-        session_otp = session.get('otp_code')
-        session_email = session.get('otp_email')
-        expiry_str = session.get('otp_expiry')
-        
-        if session_otp and session_otp == otp and session_email == email:
-            if expiry_str and datetime.strptime(expiry_str, '%Y-%m-%d %H:%M:%S.%f') > datetime.now():
-                import json
-                session_data_str = session.get('pending_2fa_data')
-                if session_data_str:
-                    session_data = json.loads(session_data_str)
-                    session['logged_in'] = True
-                    for key, value in session_data.items():
-                        if key != 'redirect_url':
-                            session[key] = value
-                    
-                    session.pop('otp_code', None)
-                    session.pop('otp_email', None)
-                    session.pop('otp_expiry', None)
-                    session.pop('pending_2fa_data', None)
-                    
-
-                    return redirect(session_data.get('redirect_url', url_for('dashboard')))
-                else:
-                    flash('Session data missing. Please log in again.')
-                    return redirect(url_for('login'))
-            else:
-                flash('OTP has expired. Please try logging in again.')
-                return redirect(url_for('login'))
-        else:
-            flash('Incorrect verification code.')
-            
-    return render_template('verify_2fa.html', email=email)
+    flash('Two-step verification is turned off. Sign in with your email and password.')
+    return redirect(url_for('login'))
 
 @app.route('/resend_2fa', methods=['POST'])
 def resend_2fa():
-    email = (request.form.get('email') or session.get('otp_email') or '').strip()
-    if not email or not session.get('pending_2fa_data'):
-        flash('Session expired. Please log in again.')
-        return redirect(url_for('login'))
-    otp = generate_otp()
-    session['otp_code'] = otp
-    session['otp_expiry'] = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-    session['otp_email'] = email
-    result = send_otp_email(email, otp)
-    if result is True:
-        flash('A new verification code was sent to your email.')
-    else:
-        flash(f'Failed to resend the code: {result}')
-    return redirect(url_for('verify_2fa', email=email))
+    flash('Two-step verification is turned off. Sign in with your email and password.')
+    return redirect(url_for('login'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -1278,16 +1225,7 @@ def login():
             stored_email = user.get('email') or email
             upgrade_password_if_plaintext(db.users, {'_id': user['_id']}, user.get('password'), password)
             if user.get('verified') is False:
-                flash('This account is not verified yet. Please enter the verification code sent to your email.')
-                otp = generate_otp()
-                expiry = (datetime.now() + timedelta(minutes=5)).strftime('%Y-%m-%d %H:%M:%S.%f')
-                session['otp_code'] = otp
-                session['otp_expiry'] = expiry
-                session['otp_email'] = stored_email
-                result = send_otp_email(stored_email, otp)
-                if result is not True:
-                    flash(f'Failed to send OTP email: {result}')
-                return redirect(url_for('verify_otp', email=stored_email))
+                db.users.update_one({'_id': user['_id']}, {'$set': {'verified': True}})
 
             first = user.get('first_name') or ''
             last = user.get('last_name') or ''
