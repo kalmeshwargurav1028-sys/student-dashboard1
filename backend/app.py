@@ -1646,6 +1646,8 @@ def student_home():
     recent_grades.sort(key=lambda x: x.get('submitted_at', ''), reverse=True)
     recent_grades = recent_grades[:3]
 
+    my_subjects = _student_my_subjects(student)
+
     return render_template('student_home.html',
         student=student,
         courses=courses,
@@ -1662,7 +1664,8 @@ def student_home():
         upcoming_assignments=upcoming_assignments,
         current_weekday=current_weekday,
         today_schedule=today_schedule,
-        recent_grades=recent_grades
+        recent_grades=recent_grades,
+        my_subjects=my_subjects,
     )
 
 
@@ -2492,6 +2495,129 @@ DEFAULT_CLASS_SUBJECTS = [
     'Hindi', 'History', 'Physics', 'Chemistry', 'Biology',
     'Computer Science', 'Physical Education', 'Art', 'Music'
 ]
+
+# Visual accents for My Subjects cards (tone + icon key)
+_SUBJECT_VISUALS = [
+    ('sky', 'book'), ('emerald', 'landmark'), ('orange', 'pen'), ('fuchsia', 'dance'),
+    ('cyan', 'leaf'), ('violet', 'globe'), ('green', 'calc'), ('blue', 'flask'),
+    ('teal', 'code'), ('amber', 'music'), ('rose', 'mask'), ('indigo', 'network'),
+]
+
+
+def _subject_visual(name, index=0):
+    lower = (name or '').lower()
+    if any(k in lower for k in ('math', 'algebra', 'calculus')):
+        return 'green', 'calc'
+    if any(k in lower for k in ('english', 'language', 'literature', 'assembly')):
+        return 'sky', 'book'
+    if any(k in lower for k in ('histor',)):
+        return 'emerald', 'landmark'
+    if any(k in lower for k in ('geo',)):
+        return 'violet', 'globe'
+    if any(k in lower for k in ('computer', 'ict', 'coding')):
+        return 'teal', 'code'
+    if any(k in lower for k in ('chem', 'physics', 'general science')):
+        return 'blue', 'flask'
+    if lower == 'science' or lower.endswith(' science'):
+        return 'blue', 'flask'
+    if any(k in lower for k in ('bio',)):
+        return 'cyan', 'leaf'
+    if any(k in lower for k in ('pe', 'physical', 'sport')):
+        return 'emerald', 'dumbbell'
+    if any(k in lower for k in ('music',)):
+        return 'amber', 'music'
+    if any(k in lower for k in ('design', 'art', 'craft')):
+        return 'orange', 'pen'
+    if any(k in lower for k in ('dance',)):
+        return 'fuchsia', 'dance'
+    if any(k in lower for k in ('theatre', 'drama')):
+        return 'rose', 'mask'
+    if any(k in lower for k in ('econom', 'business', 'commerce')):
+        return 'indigo', 'network'
+    tone, icon = _SUBJECT_VISUALS[index % len(_SUBJECT_VISUALS)]
+    return tone, icon
+
+
+def _student_my_subjects(student):
+    """Build subject cards for the student home My Subjects section."""
+    if not student:
+        return []
+    grade = _grade_number(student.get('student_class'))
+    section = str(student.get('division') or '').strip().upper()
+    raw_class = str(student.get('student_class') or '').strip()
+    grade_keys = {k for k in (grade, raw_class) if k}
+    if raw_class:
+        grade_keys.update(get_class_variations(raw_class) or [])
+    if grade:
+        grade_keys.update(get_class_variations(grade) or [])
+
+    subject_teachers = {}  # subject -> ordered unique teacher names
+
+    def add_teacher(subject, teacher_name):
+        subject = str(subject or '').strip()
+        if not subject or subject.lower() in ('homeroom', 'class teacher'):
+            return
+        name = str(teacher_name or '').strip()
+        bucket = subject_teachers.setdefault(subject, [])
+        if name and name not in bucket:
+            bucket.append(name)
+
+    query_grade = {'grade': {'$in': list(grade_keys)}} if grade_keys else {}
+    section_q = {'section': {'$regex': f'^{re.escape(section)}$', '$options': 'i'}} if section else {}
+    for m in db.teacher_mappings.find({**query_grade, **section_q}):
+        add_teacher(m.get('subject'), m.get('teacher_name'))
+    sid = student.get('id')
+    for m in db.student_teacher_maps.find({
+        '$or': [
+            {'student_id': sid},
+            {**query_grade, **section_q, 'student_id': sid},
+        ]
+    }):
+        add_teacher(m.get('subject'), m.get('teacher_name'))
+
+    # Subjects from grades / timetable / assignments / courses for this class
+    for g in db.grades.find({'student_id': sid}, {'subject': 1}):
+        add_teacher(g.get('subject'), None)
+    class_vars = list({*(get_class_variations(raw_class) or []), *(get_class_variations(grade) or []), raw_class, grade} - {None, ''})
+    if class_vars:
+        for row in db.timetable.find({'class_name': {'$in': class_vars}}, {'subject': 1, 'teacher': 1}):
+            add_teacher(row.get('subject'), row.get('teacher'))
+        for row in db.assignments.find({
+            '$or': [
+                {'class_name': {'$in': class_vars}},
+                {'class': {'$in': class_vars}},
+            ]
+        }, {'subject': 1, 'teacher_name': 1}):
+            add_teacher(row.get('subject'), row.get('teacher_name'))
+        for row in db.courses.find({
+            '$or': [
+                {'grade': {'$in': list(grade_keys)}},
+                {'class_name': {'$in': class_vars}},
+            ]
+        }, {'subject': 1, 'title': 1, 'teacher_name': 1}):
+            add_teacher(row.get('subject') or row.get('title'), row.get('teacher_name'))
+
+    if not subject_teachers:
+        for name in DEFAULT_CLASS_SUBJECTS:
+            subject_teachers[name] = []
+    else:
+        # Keep a full year curriculum grid; attach mapped teachers where known.
+        for name in DEFAULT_CLASS_SUBJECTS:
+            subject_teachers.setdefault(name, [])
+
+    cards = []
+    for idx, subject in enumerate(sorted(subject_teachers.keys(), key=lambda s: s.lower())):
+        teachers = subject_teachers[subject]
+        tone, icon = _subject_visual(subject, idx)
+        cards.append({
+            'name': subject,
+            'teachers': teachers,
+            'teachers_label': ', '.join(teachers) if teachers else 'Teacher to be assigned',
+            'tone': tone,
+            'icon': icon,
+        })
+    return cards
+
 
 def _teacher_classrooms():
     by_key = {}
