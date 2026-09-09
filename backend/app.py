@@ -3694,7 +3694,25 @@ def utility_user_delete(kind, user_id):
 def utility_role_manager():
     if not _admin_required():
         return redirect(url_for('login'))
-    return redirect(url_for('admin_dashboard') + '#roles')
+    global_config = db.role_permissions.find_one({'_id': 'global_config'}) or {}
+    if not global_config.get('teacher'):
+        global_config['teacher'] = {
+            'view_dashboard': True,
+            'manage_students': True,
+            'edit_materials': True,
+            'modify_attendance': True,
+        }
+    if not global_config.get('student'):
+        global_config['student'] = {'view_dashboard': True}
+    # Strip Mongo id for template JSON
+    global_config.pop('_id', None)
+    return render_template(
+        'admin_role_permissions.html',
+        global_config=global_config,
+        teacher_count=db.users.count_documents({}),
+        student_count=db.student_users.count_documents({}),
+        admin_count=db.admins.count_documents({}),
+    )
 
 
 @app.route('/admin/utility/refresh', methods=['GET', 'POST'])

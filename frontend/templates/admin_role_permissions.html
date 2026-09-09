@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% block header_title %}Role permissions{% endblock %}
+
+{% block content %}
+{% set teacher = global_config.get('teacher', {}) %}
+{% set student = global_config.get('student', {}) %}
+{% set features = [
+  {'key': 'view_dashboard', 'label': 'View dashboard', 'hint': 'Open the home dashboard', 'group': 'Access', 'scope': false},
+  {'key': 'manage_students', 'label': 'Manage students', 'hint': 'View and update student records', 'group': 'Classroom', 'scope': true},
+  {'key': 'modify_attendance', 'label': 'Modify attendance', 'hint': 'Mark and edit attendance', 'group': 'Classroom', 'scope': true},
+  {'key': 'edit_materials', 'label': 'Edit study materials', 'hint': 'Upload and change learning resources', 'group': 'Classroom', 'scope': true},
+  {'key': 'send_announcements', 'label': 'Send announcements', 'hint': 'Publish school announcements', 'group': 'School', 'scope': true},
+  {'key': 'manage_fees', 'label': 'Manage fees', 'hint': 'Fee records and payments', 'group': 'School', 'scope': false},
+  {'key': 'view_system_health', 'label': 'View system health', 'hint': 'Cache and data health tools', 'group': 'School', 'scope': false},
+  {'key': 'ai_insights', 'label': 'AI Insights', 'hint': 'AI analysis and recommendations', 'group': 'Insights', 'scope': false},
+] %}
+
+<div class="w-full px-4 sm:px-6 lg:px-10 py-6 max-w-5xl mx-auto space-y-6 pb-28">
+
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div class="flex items-start gap-3 min-w-0">
+            <a href="{{ url_for('admin_dashboard') }}#your-tools" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back to tools">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Role permissions</h1>
+                <p class="text-sm text-slate-500 mt-1">Decide what teachers and students can do. Admin access stays full.</p>
+            </div>
+        </div>
+        <button type="button" onclick="openSaveRoleModal()" class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-5 py-2.5 shadow-sm">
+            Save changes
+        </button>
+    </div>
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+        {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% endwith %}
+
+    {# Role picker #}
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" role="tablist" aria-label="Roles">
+        <button type="button" data-role-tab="teacher" onclick="selectRoleTab('teacher')" class="role-tab text-left rounded-2xl border-2 border-sky-500 bg-sky-50 px-4 py-4 transition-colors">
+            <p class="text-xs font-semibold uppercase tracking-wide text-sky-700">Editable</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">Teacher</p>
+            <p class="mt-0.5 text-sm text-slate-500"><span id="teacherCountLabel">{{ teacher_count }}</span> accounts</p>
+        </button>
+        <button type="button" data-role-tab="student" onclick="selectRoleTab('student')" class="role-tab text-left rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 hover:border-slate-300 transition-colors">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Editable</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">Student</p>
+            <p class="mt-0.5 text-sm text-slate-500"><span id="studentCountLabel">{{ student_count }}</span> accounts</p>
+        </button>
+        <button type="button" data-role-tab="admin" onclick="selectRoleTab('admin')" class="role-tab text-left rounded-2xl border-2 border-slate-200 bg-white px-4 py-4 hover:border-slate-300 transition-colors">
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">Locked</p>
+            <p class="mt-1 text-lg font-semibold text-slate-900">Admin</p>
+            <p class="mt-0.5 text-sm text-slate-500">{{ admin_count }} operators · full access</p>
+        </button>
+    </div>
+
+    {# Teacher presets #}
+    <div id="templatePanel" class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+            <div>
+                <h2 class="text-sm font-semibold text-slate-900">Quick setup for teachers</h2>
+                <p class="text-xs text-slate-400 mt-0.5">Apply a preset, then fine-tune below</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <button type="button" onclick="applyTemplate('class_teacher', this)" class="template-btn text-left rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 px-4 py-3 transition-colors">
+                <p class="text-sm font-semibold text-slate-900">Class teacher</p>
+                <p class="text-xs text-slate-500 mt-1">Assigned classes only · no fees or system health</p>
+            </button>
+            <button type="button" onclick="applyTemplate('head_of_department', this)" class="template-btn text-left rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 px-4 py-3 transition-colors">
+                <p class="text-sm font-semibold text-slate-900">Head of department</p>
+                <p class="text-xs text-slate-500 mt-1">All classes · announcements and insights</p>
+            </button>
+            <button type="button" onclick="applyTemplate('read_only', this)" class="template-btn text-left rounded-xl border border-slate-200 hover:border-sky-300 hover:bg-sky-50/50 px-4 py-3 transition-colors">
+                <p class="text-sm font-semibold text-slate-900">Read-only staff</p>
+                <p class="text-xs text-slate-500 mt-1">Dashboard only · everything else off</p>
+            </button>
+        </div>
+    </div>
+
+    {# Permission list #}
+    <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between gap-3">
+            <div>
+                <h2 class="text-sm font-semibold text-slate-900"><span id="permPanelTitle">Teacher</span> capabilities</h2>
+                <p class="text-xs text-slate-400 mt-0.5" id="permPanelHint">Toggle access and set class scope where it applies</p>
+            </div>
+            <button type="button" onclick="addCustomRole()" class="hidden sm:inline-flex text-xs font-semibold text-sky-700 hover:text-sky-900">
+                + Custom role
+            </button>
+        </div>
+
+        <div id="adminLockedBanner" class="hidden px-5 py-3 bg-slate-50 border-b border-slate-100 text-sm text-slate-600">
+            Admins always have full portal access. These rows are shown for reference only.
+        </div>
+
+        {% set ns = namespace(prev_group='') %}
+        {% for f in features %}
+        {% if f.group != ns.prev_group %}
+        {% set ns.prev_group = f.group %}
+        <div class="px-5 py-2 bg-slate-50 border-b border-slate-100">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{{ f.group }}</p>
+        </div>
+        {% endif %}
+        <div class="perm-row px-5 py-4 border-b border-slate-100 last:border-b-0 flex flex-col sm:flex-row sm:items-center gap-3" data-perm="{{ f.key }}" data-has-scope="{{ '1' if f.scope else '0' }}">
+            <div class="min-w-0 flex-1">
+                <p class="text-sm font-medium text-slate-900">{{ f.label }}</p>
+                <p class="text-xs text-slate-400 mt-0.5">{{ f.hint }}</p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+                {% if f.scope %}
+                <select class="perm-scope hidden sm:block border border-slate-200 rounded-lg text-sm text-slate-700 px-3 py-1.5 bg-white focus:outline-none focus:ring-2 focus:ring-sky-200 min-w-[9.5rem]" data-perm="{{ f.key }}">
+                    <option value="all">All classes</option>
+                    <option value="assigned_classes">Assigned classes</option>
+                    <option value="none">No access</option>
+                </select>
+                {% endif %}
+                <button type="button" class="perm-toggle relative inline-flex h-7 w-12 shrink-0 items-center rounded-full bg-slate-200 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-200" role="switch" aria-checked="false" data-perm="{{ f.key }}">
+                    <span class="perm-knob inline-block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform"></span>
+                </button>
+            </div>
+            {% if f.scope %}
+            <select class="perm-scope sm:hidden w-full border border-slate-200 rounded-lg text-sm text-slate-700 px-3 py-2 bg-white" data-perm="{{ f.key }}">
+                <option value="all">All classes</option>
+                <option value="assigned_classes">Assigned classes</option>
+                <option value="none">No access</option>
+            </select>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{# Sticky save bar #}
+<div class="fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-10 py-3 flex flex-col sm:flex-row sm:items-center gap-3">
+        <p class="text-sm text-slate-500 flex-1">
+            Saving updates access for <strong class="text-slate-800 font-semibold">{{ teacher_count }}</strong> teachers and <strong class="text-slate-800 font-semibold">{{ student_count }}</strong> students.
+        </p>
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="addCustomRole()" class="sm:hidden inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700">Custom role</button>
+            <button type="button" onclick="openSaveRoleModal()" class="inline-flex items-center justify-center rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-5 py-2.5">
+                Save changes
+            </button>
+        </div>
+    </div>
+</div>
+
+{# Save modal #}
+<div id="saveRoleModal" class="fixed inset-0 z-[60] hidden" role="dialog" aria-modal="true" aria-labelledby="saveRoleTitle">
+    <div class="absolute inset-0 bg-slate-900/40" onclick="closeSaveRoleModal()"></div>
+    <div class="relative mx-auto mt-[12vh] w-full max-w-md rounded-2xl bg-white border border-slate-200 shadow-xl overflow-hidden">
+        <div class="px-5 py-4 border-b border-slate-100">
+            <h3 id="saveRoleTitle" class="text-lg font-semibold text-slate-900">Save permissions</h3>
+            <p class="text-sm text-slate-500 mt-1">Apply to the current roles, or save the teacher matrix as a named custom role.</p>
+        </div>
+        <div class="p-5 grid grid-cols-1 gap-3">
+            <button type="button" id="btnSaveExisting" onclick="saveExistingRoles()" class="rounded-xl bg-sky-600 hover:bg-sky-700 text-white px-4 py-3.5 text-left transition-colors">
+                <span class="block font-semibold">Apply to Teacher &amp; Student</span>
+                <span class="block text-xs text-sky-100 mt-0.5">Updates everyone in those roles</span>
+            </button>
+            <button type="button" onclick="saveNewRole()" class="rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-800 px-4 py-3.5 text-left transition-colors">
+                <span class="block font-semibold">Save teacher setup as new role</span>
+                <span class="block text-xs text-slate-500 mt-0.5">Create a named role you can assign later</span>
+            </button>
+        </div>
+        <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <button type="button" onclick="closeSaveRoleModal()" class="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const FEATURES = {{ features | map(attribute='key') | list | tojson }};
+    const SCOPED = {{ features | selectattr('scope') | map(attribute='key') | list | tojson }};
+    const initial = {
+        teacher: {{ teacher | tojson }},
+        student: {{ student | tojson }}
+    };
+
+    const state = {
+        teacher: normalizeRole(initial.teacher),
+        student: normalizeRole(initial.student)
+    };
+    let activeRole = 'teacher';
+
+    function normalizeRole(src) {
+        const out = {};
+        FEATURES.forEach(function (key) {
+            const v = src && src[key];
+            if (v === false || v === null || v === undefined || v === 'none') out[key] = false;
+            else if (v === true || v === 'all') out[key] = SCOPED.indexOf(key) >= 0 ? 'all' : true;
+            else out[key] = v;
+        });
+        return out;
+    }
+
+    function isOn(val) {
+        return !(val === false || val === 'none' || val === null || val === undefined);
+    }
+
+    function selectRoleTab(role) {
+        activeRole = role;
+        document.querySelectorAll('.role-tab').forEach(function (btn) {
+            const on = btn.getAttribute('data-role-tab') === role;
+            btn.classList.toggle('border-sky-500', on);
+            btn.classList.toggle('bg-sky-50', on);
+            btn.classList.toggle('border-slate-200', !on);
+            btn.classList.toggle('bg-white', !on);
+        });
+        const templatePanel = document.getElementById('templatePanel');
+        const locked = document.getElementById('adminLockedBanner');
+        const title = document.getElementById('permPanelTitle');
+        const hint = document.getElementById('permPanelHint');
+        if (role === 'admin') {
+            templatePanel.classList.add('hidden');
+            locked.classList.remove('hidden');
+            title.textContent = 'Admin';
+            hint.textContent = 'Full access is always enabled for operators';
+        } else {
+            templatePanel.classList.toggle('hidden', role !== 'teacher');
+            locked.classList.add('hidden');
+            title.textContent = role === 'teacher' ? 'Teacher' : 'Student';
+            hint.textContent = role === 'teacher'
+                ? 'Toggle access and set class scope where it applies'
+                : 'Keep student access limited to what they need';
+        }
+        renderPanel();
+    }
+    window.selectRoleTab = selectRoleTab;
+
+    function setToggleEl(btn, on, locked) {
+        btn.setAttribute('aria-checked', on ? 'true' : 'false');
+        btn.classList.toggle('bg-sky-600', on);
+        btn.classList.toggle('bg-slate-200', !on);
+        btn.classList.toggle('opacity-60', !!locked);
+        btn.classList.toggle('pointer-events-none', !!locked);
+        const knob = btn.querySelector('.perm-knob');
+        if (knob) knob.classList.toggle('translate-x-6', on);
+        if (knob) knob.classList.toggle('translate-x-1', !on);
+    }
+
+    function renderPanel() {
+        const locked = activeRole === 'admin';
+        document.querySelectorAll('.perm-row').forEach(function (row) {
+            const key = row.getAttribute('data-perm');
+            const hasScope = row.getAttribute('data-has-scope') === '1';
+            let val = locked ? true : state[activeRole][key];
+            const on = locked ? true : isOn(val);
+            const toggle = row.querySelector('.perm-toggle');
+            setToggleEl(toggle, on, locked);
+
+            row.querySelectorAll('.perm-scope').forEach(function (sel) {
+                if (!hasScope) {
+                    sel.classList.add('hidden');
+                    sel.disabled = true;
+                    return;
+                }
+                sel.disabled = locked || !on;
+                sel.classList.toggle('opacity-50', sel.disabled);
+                if (locked) {
+                    sel.value = 'all';
+                } else if (!on) {
+                    sel.value = 'none';
+                } else if (val === true || val === 'all') {
+                    sel.value = 'all';
+                } else if (val === 'assigned_classes') {
+                    sel.value = 'assigned_classes';
+                } else {
+                    sel.value = 'all';
+                }
+                if (activeRole === 'student' || window.innerWidth < 640) {
+                    // keep mobile select visible when scoped
+                }
+                if (!hasScope) return;
+                if (window.matchMedia('(min-width: 640px)').matches) {
+                    if (sel.classList.contains('sm:hidden')) return;
+                    sel.classList.remove('hidden');
+                }
+            });
+        });
+    }
+
+    document.querySelectorAll('.perm-toggle').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (activeRole === 'admin') return;
+            const key = btn.getAttribute('data-perm');
+            const currentlyOn = isOn(state[activeRole][key]);
+            if (currentlyOn) {
+                state[activeRole][key] = false;
+            } else {
+                state[activeRole][key] = SCOPED.indexOf(key) >= 0 ? 'assigned_classes' : true;
+            }
+            renderPanel();
+        });
+    });
+
+    document.querySelectorAll('.perm-scope').forEach(function (sel) {
+        sel.addEventListener('change', function () {
+            if (activeRole === 'admin') return;
+            const key = sel.getAttribute('data-perm');
+            const v = sel.value;
+            if (v === 'none') state[activeRole][key] = false;
+            else state[activeRole][key] = v;
+            // sync sibling selects for same perm
+            document.querySelectorAll('.perm-scope[data-perm="' + key + '"]').forEach(function (other) {
+                other.value = v;
+            });
+            renderPanel();
+        });
+    });
+
+    const TEMPLATES = {
+        class_teacher: {
+            view_dashboard: true,
+            manage_students: 'assigned_classes',
+            modify_attendance: 'assigned_classes',
+            manage_fees: false,
+            edit_materials: 'assigned_classes',
+            view_system_health: false,
+            send_announcements: 'assigned_classes',
+            ai_insights: false
+        },
+        head_of_department: {
+            view_dashboard: true,
+            manage_students: 'all',
+            modify_attendance: 'all',
+            manage_fees: false,
+            edit_materials: 'all',
+            view_system_health: true,
+            send_announcements: 'all',
+            ai_insights: true
+        },
+        read_only: {
+            view_dashboard: true,
+            manage_students: false,
+            modify_attendance: false,
+            manage_fees: false,
+            edit_materials: false,
+            view_system_health: false,
+            send_announcements: false,
+            ai_insights: false
+        }
+    };
+
+    window.applyTemplate = function (type, btn) {
+        if (activeRole !== 'teacher') selectRoleTab('teacher');
+        state.teacher = normalizeRole(TEMPLATES[type] || {});
+        document.querySelectorAll('.template-btn').forEach(function (b) {
+            b.classList.remove('border-sky-400', 'bg-sky-50');
+        });
+        if (btn) btn.classList.add('border-sky-400', 'bg-sky-50');
+        renderPanel();
+    };
+
+    function getPermissionsPayload() {
+        return {
+            teacher: Object.assign({}, state.teacher),
+            student: Object.assign({}, state.student)
+        };
+    }
+
+    window.openSaveRoleModal = function () {
+        window.pendingRolePayload = getPermissionsPayload();
+        document.getElementById('saveRoleModal').classList.remove('hidden');
+    };
+    window.closeSaveRoleModal = function () {
+        document.getElementById('saveRoleModal').classList.add('hidden');
+    };
+
+    window.saveExistingRoles = async function () {
+        try {
+            const btn = document.getElementById('btnSaveExisting');
+            btn.disabled = true;
+            const label = btn.querySelector('span');
+            const old = label ? label.textContent : '';
+            if (label) label.textContent = 'Saving…';
+            const res = await fetch('/api/role_permissions', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(window.pendingRolePayload)
+            });
+            const data = await res.json();
+            if (data.success) {
+                if (label) label.textContent = 'Saved';
+                setTimeout(function () { closeSaveRoleModal(); window.location.reload(); }, 700);
+            } else {
+                alert('Error saving permissions: ' + (data.error || 'unknown'));
+                btn.disabled = false;
+                if (label) label.textContent = old || 'Apply to Teacher & Student';
+            }
+        } catch (err) {
+            alert('Failed to connect to the server.');
+        }
+    };
+
+    window.saveNewRole = async function () {
+        const roleName = prompt('Name for the new custom role:');
+        if (!roleName || !roleName.trim()) return;
+        try {
+            const resAdd = await fetch('/api/roles/add', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ role: roleName.trim() })
+            });
+            const dataAdd = await resAdd.json();
+            if (dataAdd.success) {
+                const payload = getPermissionsPayload();
+                payload[dataAdd.role] = payload.teacher;
+                await fetch('/api/role_permissions', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+                alert("Role '" + dataAdd.role + "' created.");
+                closeSaveRoleModal();
+                window.location.reload();
+            } else {
+                alert('Error creating role: ' + (dataAdd.error || 'unknown'));
+            }
+        } catch (e) {
+            alert('Failed to create custom role.');
+        }
+    };
+
+    window.addCustomRole = function () {
+        openSaveRoleModal();
+        // focus path: user can choose "Save as new role"
+    };
+
+    selectRoleTab('teacher');
+})();
+</script>
+{% endblock %}
