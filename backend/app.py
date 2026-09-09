@@ -2280,13 +2280,15 @@ def school_updates():
     announcements = list(db.announcements.find(query).sort('date_sent', -1).limit(50))
     return render_template('school_updates.html', announcements=announcements)
 
-DEFAULT_SCHOOL_POLICIES = [
-    {'title': 'Attendance', 'body': 'Students should attend regularly. Absences must be informed to the class teacher. Teachers mark attendance in the portal every school day.', 'order': 1},
-    {'title': 'Assignments & assessments', 'body': 'Work should be posted with a due date. Late work is recorded. Tests and assignments stay linked to the mapped classroom and subject.', 'order': 2},
-]
+DEFAULT_SCHOOL_POLICIES = []
 
 # Legacy seed titles removed from the product; purge leftover DB docs on load.
-_REMOVED_POLICY_TITLES = ('Communication', 'Resources')
+_REMOVED_POLICY_TITLES = (
+    'Communication',
+    'Resources',
+    'Attendance',
+    'Assignments & assessments',
+)
 
 
 def _get_school_policies():
@@ -2295,7 +2297,7 @@ def _get_school_policies():
             _delete_gridfs_file(doc.get('pdf_file_id'))
             db.school_policies.delete_one({'_id': doc['_id']})
     policies = list(db.school_policies.find().sort('order', 1))
-    if not policies:
+    if not policies and DEFAULT_SCHOOL_POLICIES:
         db.school_policies.insert_many([dict(p) for p in DEFAULT_SCHOOL_POLICIES])
         policies = list(db.school_policies.find().sort('order', 1))
     for p in policies:
