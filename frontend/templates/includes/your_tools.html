@@ -21,9 +21,7 @@
                 <h2 class="text-xl font-bold text-slate-900 leading-tight">Your tools</h2>
                 {% if tools_role == 'teacher' %}
                 <p class="text-sm text-slate-500 mt-0.5">Everything you need to run your classroom</p>
-                {% elif tools_role == 'admin' %}
-                <p class="text-sm text-slate-500 mt-0.5">Your full admin menu — no sidebar needed</p>
-                {% else %}
+                {% elif tools_role != 'admin' %}
                 <p class="text-sm text-slate-500 mt-0.5">Everything you need for class, in one place</p>
                 {% endif %}
             </div>
@@ -39,53 +37,36 @@
     </div>
 
     {% if tools_role == 'admin' %}
-    <div class="space-y-7" id="admin-tools-groups">
-        <div data-tool-group>
-            <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">People &amp; classes</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {% call tool_card(url_for('admin_student_detail'), 'bg-emerald-500', 'Student Detail', 'Browse grades 1–12 and sections A–D') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('teacher_mapping'), 'bg-violet-500', 'Teacher Mapping', 'Assign classes and subjects') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
-                {% endcall %}
-            </div>
-        </div>
-
-        <div data-tool-group>
-            <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">School</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {% call tool_card(url_for('school_announcements'), 'bg-pink-500', 'Announcements', 'Publish school news and updates') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('admin_school_policies'), 'bg-teal-500', 'School Policies', 'Publish rules and guidelines') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
-                {% endcall %}
-            </div>
-        </div>
-
-        <div data-tool-group>
-            <h3 class="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400 mb-3">Utility</h3>
-            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-                {% call tool_card(url_for('utility_registration'), 'bg-sky-500', 'Registration', 'Add students, teachers and admins') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('utility_users_monitor'), 'bg-orange-500', 'Users Monitor', 'See every portal login') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('utility_role_manager'), 'bg-indigo-500', 'Role Manager', 'Set who can access each tool') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('utility_refresh_data'), 'bg-amber-500', 'Refresh Data', 'Reload counts and directories from the database') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                {% endcall %}
-                {% call tool_card(url_for('utility_cache_monitor'), 'bg-slate-600', 'Cache Monitor', 'Live inventory and data freshness map') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
-                {% endcall %}
-            </div>
-        </div>
-        <p id="tools-empty" class="hidden text-sm text-slate-500 text-center py-6">No tools match that search.</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="admin-tools-grid">
+        {% call tool_card(url_for('admin_student_detail'), 'bg-emerald-500', 'Student Detail', 'Browse grades 1–12 and sections A–D') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('teacher_mapping'), 'bg-violet-500', 'Teacher Mapping', 'Assign classes and subjects') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('school_announcements'), 'bg-pink-500', 'Announcements', 'Publish school news and updates') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('admin_school_policies'), 'bg-teal-500', 'School Policies', 'Publish rules and guidelines') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('utility_registration'), 'bg-sky-500', 'Registration', 'Add students, teachers and admins') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('utility_users_monitor'), 'bg-orange-500', 'Users Monitor', 'See every portal login') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('utility_role_manager'), 'bg-indigo-500', 'Role Manager', 'Set who can access each tool') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('utility_refresh_data'), 'bg-amber-500', 'Refresh Data', 'Reload counts and directories from the database') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('utility_cache_monitor'), 'bg-slate-600', 'Cache Monitor', 'Live inventory and data freshness map') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"/></svg>
+        {% endcall %}
     </div>
+    <p id="tools-empty" class="hidden text-sm text-slate-500 text-center py-6">No tools match that search.</p>
     <script>
     (function () {
         var input = document.getElementById('tools-search');
@@ -94,16 +75,12 @@
         input.addEventListener('input', function () {
             var q = (input.value || '').trim().toLowerCase();
             var visible = 0;
-            document.querySelectorAll('[data-tool-group]').forEach(function (group) {
-                var any = false;
-                group.querySelectorAll('[data-tool-card]').forEach(function (card) {
-                    var name = card.getAttribute('data-tool-name') || '';
-                    var desc = (card.textContent || '').toLowerCase();
-                    var show = !q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
-                    card.classList.toggle('hidden', !show);
-                    if (show) { any = true; visible += 1; }
-                });
-                group.classList.toggle('hidden', !any);
+            document.querySelectorAll('#admin-tools-grid [data-tool-card]').forEach(function (card) {
+                var name = card.getAttribute('data-tool-name') || '';
+                var desc = (card.textContent || '').toLowerCase();
+                var show = !q || name.indexOf(q) !== -1 || desc.indexOf(q) !== -1;
+                card.classList.toggle('hidden', !show);
+                if (show) visible += 1;
             });
             if (empty) empty.classList.toggle('hidden', visible > 0);
         });
