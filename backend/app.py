@@ -438,6 +438,38 @@ def academic_year_short():
     return f'{year}-{str(year + 1)[-2:]}'
 
 
+def _resolve_academic_period(preferred=None):
+    """Normalize to a key in AY_PERIODS (e.g. 2026-2027)."""
+    periods = AY_PERIODS if 'AY_PERIODS' in globals() else {
+        '2025-2026': ('2025-06-01', '2026-05-31'),
+        '2026-2027': ('2026-06-01', '2027-05-31'),
+    }
+    candidates = [
+        preferred,
+        request.args.get('period') if request else None,
+        session.get('academic_period') if session else None,
+    ]
+    try:
+        settings = (db.settings.find_one({}, {'_id': 0}) if db is not None else {}) or {}
+        candidates.append(settings.get('academic_year'))
+    except Exception:
+        pass
+    for raw in candidates:
+        period = (raw or '').strip()
+        if not period:
+            continue
+        if period in periods:
+            return period
+        years = re.findall(r'\d{4}|\d{2}', period)
+        if len(years) >= 2:
+            y1 = years[0] if len(years[0]) == 4 else f'20{years[0]}'
+            y2 = years[1] if len(years[1]) == 4 else f'20{years[1]}'
+            candidate = f'{y1}-{y2}'
+            if candidate in periods:
+                return candidate
+    return '2026-2027'
+
+
 @app.context_processor
 def inject_global_context():
     context = {
@@ -449,6 +481,7 @@ def inject_global_context():
         'academic_year_label': academic_year_label(),
         'academic_year_short': academic_year_short(),
         'ay_period_choices': ['2025-2026', '2026-2027'],
+        'selected_academic_period': _resolve_academic_period(),
     }
     if not session.get('logged_in'):
         return context
@@ -1856,24 +1889,11 @@ AY_PERIODS = {
 
 def _admin_academic_year():
     settings = db.settings.find_one({}, {'_id': 0}) or {}
-    period = (request.args.get('period') or settings.get('academic_year') or '2026-2027').strip()
-    # Normalize short forms like 2026-27 → 2026-2027
-    if period not in AY_PERIODS:
-        years = re.findall(r'\d{4}|\d{2}', period)
-        if len(years) >= 2:
-            y1 = years[0] if len(years[0]) == 4 else f'20{years[0]}'
-            y2 = years[1] if len(years[1]) == 4 else f'20{years[1]}'
-            candidate = f'{y1}-{y2}'
-            if candidate in AY_PERIODS:
-                period = candidate
-        if period not in AY_PERIODS:
-            period = '2026-2027'
+    period = _resolve_academic_period(request.args.get('period') or settings.get('academic_year'))
     period_start, period_end = AY_PERIODS[period]
     start = period_start
     end = period_end
-    active_year = (settings.get('academic_year') or '2026-2027').strip()
-    if active_year not in AY_PERIODS:
-        active_year = '2026-2027'
+    active_year = _resolve_academic_period(settings.get('academic_year'))
     is_active = active_year == period
 
     today = datetime.utcnow().date()
@@ -1973,12 +1993,7 @@ def _academic_year_dashboard():
     subject_filter = (request.args.get('subject') or '').strip()
     grade_filter = (request.args.get('grade') or '').strip()
     student_filter = (request.args.get('student_id') or '').strip()
-    period = (request.args.get('period') or '').strip()
-    if period not in AY_PERIODS:
-        settings_preview = db.settings.find_one({}, {'_id': 0}) or {}
-        period = (settings_preview.get('academic_year') or '2026-2027').strip()
-        if period not in AY_PERIODS:
-            period = '2026-2027'
+    period = _resolve_academic_period(request.args.get('period'))
     period_start, period_end = AY_PERIODS[period]
     start = (request.args.get('start') or period_start).strip() or period_start
     end = (request.args.get('end') or period_end).strip() or period_end
@@ -2189,6 +2204,16 @@ def _academic_year_dashboard():
     }
 
 
+@app.route('/select-academic-year')
+def select_academic_year():
+    """Store selected year and open the Academic Year page with that period's data."""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    period = _resolve_academic_period(request.args.get('period'))
+    session['academic_period'] = period
+    return redirect(url_for('school_calendar', period=period))
+
+
 @app.route('/school-calendar', methods=['GET', 'POST'])
 def school_calendar():
     if not session.get('logged_in'):
@@ -2207,9 +2232,12 @@ def school_calendar():
                     }},
                     upsert=True,
                 )
+                session['academic_period'] = period
                 flash(f'{period} is now the active academic year.')
                 return redirect(url_for('school_calendar', period=period))
         return redirect(url_for('school_calendar', **request.args.to_dict()))
+    period = _resolve_academic_period(request.args.get('period'))
+    session['academic_period'] = period
     return render_template('academic_year.html', **_academic_year_dashboard())
 
 

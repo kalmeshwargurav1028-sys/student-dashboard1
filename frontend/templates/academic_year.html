@@ -18,9 +18,17 @@
                 <p class="text-xs text-slate-500">{{ badge }} · {{ school_name }}</p>
             </div>
         </div>
-        <div class="sm:ml-auto flex items-center gap-2 text-sm text-slate-600">
-            <img src="{{ logo_url }}" alt="" class="h-8 w-8 object-contain">
-            <span>Use the header year menu to switch periods</span>
+        <div class="sm:ml-auto flex flex-col sm:items-end gap-2">
+            <div class="inline-flex items-stretch rounded-xl bg-slate-100 border border-slate-200 p-1 gap-1">
+                {% for period in period_choices %}
+                <a href="{{ url_for('select_academic_year', period=period) }}"
+                   class="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors
+                   {% if academic_period == period %}bg-white text-sky-700 shadow-sm{% else %}text-slate-600 hover:bg-white/70{% endif %}">
+                    {{ period }}
+                </a>
+                {% endfor %}
+            </div>
+            <p class="text-xs text-slate-400">Click a year to load its data</p>
         </div>
     </div>
 
@@ -171,7 +179,7 @@
         </a>
         <div>
             <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Academic Year {{ academic_period }}</h1>
-            <p class="text-sm text-slate-500 mt-1">{% if role == 'teacher' %}Class progress for the selected year{% else %}Your progress for the selected year{% endif %} · use the header year menu to switch periods</p>
+            <p class="text-sm text-slate-500 mt-1">{% if role == 'teacher' %}Class progress for the selected year{% else %}Your progress for the selected year{% endif %} · switch years from the home banner</p>
         </div>
     </div>
 
@@ -197,7 +205,15 @@
 
             <div class="flex items-center gap-2 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
                 <span class="text-slate-400 text-xs uppercase tracking-wide">Period</span>
-                <span class="font-semibold text-slate-800">{{ academic_period }}</span>
+                <div class="inline-flex items-stretch rounded-lg bg-white border border-slate-200 p-0.5 gap-0.5">
+                    {% for period in ['2025-2026', '2026-2027'] %}
+                    <a href="{{ url_for('select_academic_year', period=period) }}"
+                       class="px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap
+                       {% if academic_period == period %}bg-sky-600 text-white{% else %}text-slate-600 hover:bg-slate-50{% endif %}">
+                        {{ period }}
+                    </a>
+                    {% endfor %}
+                </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2 xl:ml-auto">
