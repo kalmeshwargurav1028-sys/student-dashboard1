@@ -49,77 +49,50 @@
                 </button>
             </div>
         </div>
-        <p class="text-xs text-slate-400 mt-3">Year operations for {{ academic_period }}. Calendar events follow the date range.</p>
+        <p class="text-xs text-slate-400 mt-3">Admin year calendar for {{ academic_period }}. Events follow the selected date range.</p>
     </form>
 
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Students</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.students }}</p>
-            <p class="mt-1 text-sm text-slate-500">{{ admin.logins }} with a portal login</p>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Admins</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.admins }}</p>
+            <p class="mt-1 text-sm text-slate-500">Portal operators this year</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Teachers</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.teachers }}</p>
-            <p class="mt-1 text-sm text-slate-500">{{ admin.mapped }} mapped · {{ admin.unmapped }} not mapped</p>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Terms</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.event_counts.term }}</p>
+            <p class="mt-1 text-sm text-slate-500">In the selected date range</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Classes</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.classes }}</p>
-            <p class="mt-1 text-sm text-slate-500">{{ admin.homerooms }} homeroom · {{ admin.subject_maps }} subject maps</p>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Holidays</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.event_counts.holiday }}</p>
+            <p class="mt-1 text-sm text-slate-500">School breaks and holidays</p>
         </div>
         <div class="bg-white border border-slate-200 rounded-lg px-5 py-4">
-            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Attendance</p>
-            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.avg_attendance }}%</p>
-            <p class="mt-1 text-sm text-slate-500">School average this year</p>
+            <p class="text-xs font-medium uppercase tracking-wider text-slate-400">Exams &amp; events</p>
+            <p class="mt-2 text-3xl font-semibold text-slate-900">{{ admin.event_counts.exam + admin.event_counts.event }}</p>
+            <p class="mt-1 text-sm text-slate-500">{{ admin.event_counts.exam }} exams · {{ admin.event_counts.event }} events</p>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white border border-slate-200 rounded-lg">
-            <div class="px-5 py-4 border-b border-slate-100">
-                <h2 class="text-sm font-semibold text-slate-900">Enrollment by class</h2>
-            </div>
-            <div class="divide-y divide-slate-100">
-                {% for row in admin.class_rows %}
-                <div class="px-5 py-3 flex items-center gap-4">
-                    <p class="w-24 text-sm font-medium text-slate-800 shrink-0">{{ row.name }}</p>
-                    <div class="flex-1 h-1.5 rounded-full bg-slate-100 overflow-hidden">
-                        <div class="h-full bg-sky-500 rounded-full" style="width: {{ row.pct }}%"></div>
-                    </div>
-                    <p class="w-10 text-right text-sm text-slate-600">{{ row.count }}</p>
-                </div>
-                {% else %}
-                <p class="px-5 py-8 text-sm text-slate-400 text-center">No students enrolled yet.</p>
-                {% endfor %}
-            </div>
+    <div class="bg-white border border-slate-200 rounded-lg mb-6">
+        <div class="px-5 py-4 border-b border-slate-100">
+            <h2 class="text-sm font-semibold text-slate-900">Year calendar</h2>
+            <p class="text-xs text-slate-400 mt-1">{{ admin.event_counts.term }} terms · {{ admin.event_counts.holiday }} holidays · {{ admin.event_counts.exam }} exams · {{ admin.event_counts.event }} events</p>
         </div>
-
-        <div class="bg-white border border-slate-200 rounded-lg">
-            <div class="px-5 py-4 border-b border-slate-100">
-                <h2 class="text-sm font-semibold text-slate-900">Year calendar</h2>
-                <p class="text-xs text-slate-400 mt-1">{{ admin.event_counts.term }} terms · {{ admin.event_counts.holiday }} holidays · {{ admin.event_counts.exam }} exams · {{ admin.event_counts.event }} events</p>
-            </div>
-            <div class="divide-y divide-slate-100 max-h-[22rem] overflow-y-auto">
-                {% for e in admin.events %}
-                <div class="px-5 py-3 flex items-start justify-between gap-3">
-                    <div>
-                        <p class="text-sm font-medium text-slate-800">{{ e.title }}</p>
-                        <p class="text-xs text-slate-400 mt-0.5 capitalize">{{ e.kind }}{% if e.notes %} · {{ e.notes }}{% endif %}</p>
-                    </div>
-                    <p class="text-xs text-slate-500 whitespace-nowrap">{{ e.date }}</p>
+        <div class="divide-y divide-slate-100 max-h-[28rem] overflow-y-auto">
+            {% for e in admin.events %}
+            <div class="px-5 py-3 flex items-start justify-between gap-3">
+                <div>
+                    <p class="text-sm font-medium text-slate-800">{{ e.title }}</p>
+                    <p class="text-xs text-slate-400 mt-0.5 capitalize">{{ e.kind }}{% if e.notes %} · {{ e.notes }}{% endif %}</p>
                 </div>
-                {% else %}
-                <p class="px-5 py-8 text-sm text-slate-400 text-center">No year events yet.</p>
-                {% endfor %}
+                <p class="text-xs text-slate-500 whitespace-nowrap">{{ e.date }}</p>
             </div>
+            {% else %}
+            <p class="px-5 py-8 text-sm text-slate-400 text-center">No year events yet.</p>
+            {% endfor %}
         </div>
-    </div>
-
-    <div class="flex flex-wrap gap-3">
-        <a href="{{ url_for('utility_users_monitor') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">Users Monitor</a>
-        <a href="{{ url_for('utility_registration') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">User Registration</a>
-        <a href="{{ url_for('admin_school_policies') }}" class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50">School Policies</a>
     </div>
 </div>
 <script>

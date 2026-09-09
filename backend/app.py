@@ -1924,31 +1924,6 @@ def _admin_academic_year():
     start = (request.args.get('start') or period_start).strip() or period_start
     end = (request.args.get('end') or period_end).strip() or period_end
 
-    students = list(db.students.find({}, {'_id': 0, 'password': 0}))
-    teachers = [t for t in db.users.find({}, {'password': 0}) if (t.get('role') or 'teacher') == 'teacher']
-    admins = list(db.admins.find({}, {'password': 0}))
-    mappings = list(db.teacher_mappings.find({}, {'_id': 0}))
-    mapped_ids = {str(m.get('teacher_id')) for m in mappings if m.get('teacher_id')}
-    teacher_ids = {str(t.get('_id')) for t in teachers}
-    mapped = len(teacher_ids & mapped_ids)
-    unmapped = max(0, len(teachers) - mapped)
-    homerooms = sum(1 for m in mappings if m.get('type') == 'homeroom')
-    subject_maps = sum(1 for m in mappings if m.get('type') == 'subject')
-
-    classes = {}
-    att_vals = []
-    for s in students:
-        grade = str(s.get('student_class') or 'Unassigned')
-        section = str(s.get('division') or '').strip().upper()
-        key = f'{grade} {section}'.strip()
-        classes.setdefault(key, {'name': key, 'grade': grade, 'section': section, 'count': 0})
-        classes[key]['count'] += 1
-        att_vals.append(_ay_float(s.get('attendance')))
-    class_rows = sorted(classes.values(), key=lambda r: (str(r['grade']), str(r['section'])))
-    class_max = max((r['count'] for r in class_rows), default=1)
-    for row in class_rows:
-        row['pct'] = round(100.0 * row['count'] / class_max, 1) if class_max else 0
-
     events = [e for e in _get_school_calendar_events() if _ay_in_range(e.get('date'), start, end)]
     event_counts = {
         'holiday': sum(1 for e in events if e.get('kind') == 'holiday'),
@@ -1967,17 +1942,7 @@ def _admin_academic_year():
         'photo_url': session.get('photo_url') or '',
         'logo_url': settings.get('logo_url') or url_for('static', filename='images/logo.png'),
         'admin': {
-            'students': len(students),
-            'teachers': len(teachers),
-            'admins': len(admins),
-            'classes': len(class_rows),
-            'mapped': mapped,
-            'unmapped': unmapped,
-            'homerooms': homerooms,
-            'subject_maps': subject_maps,
-            'avg_attendance': round(sum(att_vals) / len(att_vals), 1) if att_vals else 0,
-            'logins': db.student_users.count_documents({}),
-            'class_rows': class_rows,
+            'admins': db.admins.count_documents({}),
             'events': events,
             'event_counts': event_counts,
         },

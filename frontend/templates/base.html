@@ -198,12 +198,14 @@
                         </div>
                     </div>
                 </div>
+                {% if session.get('role') == 'admin' %}
                 <a href="{{ url_for('school_calendar') }}" id="calBtn" class="flex items-center gap-2 h-9 pl-2.5 pr-3 rounded-lg border border-sky-200 bg-white hover:bg-sky-50 text-slate-700 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-600 focus:outline-none {% if request.path.startswith('/school-calendar') %}border-sky-400 bg-sky-50{% endif %}" title="Open full academic year">
                     <svg class="h-4 w-4 text-sky-600 dark:text-sky-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span class="text-xs font-semibold whitespace-nowrap">Academic Year {{ academic_year_short }}</span>
                 </a>
+                {% endif %}
                 <!-- Live Date and Time -->
                 <div class="hidden md:flex flex-col text-right mr-1 text-gray-500 dark:text-gray-400">
                     <span id="nav-time" class="text-sm font-bold text-gray-700 dark:text-gray-200"></span>

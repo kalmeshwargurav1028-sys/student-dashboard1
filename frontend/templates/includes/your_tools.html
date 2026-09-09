@@ -61,9 +61,6 @@
                 {% call tool_card(url_for('admin_school_policies'), 'bg-teal-500', 'School Policies', 'Publish rules and guidelines') %}
                     <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
                 {% endcall %}
-                {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Enrolment, events and year view') %}
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                {% endcall %}
             </div>
         </div>
 
@@ -138,7 +135,7 @@
         {% call tool_card(url_for('school_policies'), 'bg-teal-500', 'School Policies', 'Rules and classroom guidelines') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18M8 21h8M4 8l4 2 4-4 4 4 4-2M4 8l-1 5a3 3 0 006 0L8 10m8-2l-1 5a3 3 0 006 0l-1-5"/></svg>
         {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'My Calendar', 'Deadlines, tests and submissions') %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Terms, events and year calendar') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
 
@@ -164,7 +161,7 @@
         {% call tool_card(url_for('student_attendance'), 'bg-orange-600', 'Attendance', 'Check your attendance') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
         {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'My Calendar', 'Deadlines, tests and submissions') %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Terms, events and year calendar') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
     {% endif %}
