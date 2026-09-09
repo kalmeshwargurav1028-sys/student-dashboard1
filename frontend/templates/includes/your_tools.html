@@ -38,6 +38,9 @@
 
     {% if tools_role == 'admin' %}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="tools-grid">
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-50 text-blue-600 ring-blue-100', 'Academic Year', 'Set active year and review year control') %}
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        {% endcall %}
         {% call tool_card(url_for('admin_student_detail'), 'bg-emerald-50 text-emerald-600 ring-emerald-100', 'Student Detail', 'Browse grades 1–12 and sections A–D') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         {% endcall %}
@@ -74,14 +77,14 @@
         {% call tool_card(url_for('ops_report_cards'), 'bg-rose-50 text-rose-600 ring-rose-100', 'Report cards', 'Printable term report with PG & attendance') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-50 text-blue-600 ring-blue-100', 'Academic Year', 'Set active year and review year control') %}
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-        {% endcall %}
     </div>
     {% else %}
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4" id="tools-grid">
 
     {% if tools_role == 'teacher' %}
+        {% call tool_card(url_for('school_calendar'), 'bg-blue-50 text-blue-600 ring-blue-100', 'Academic Year', 'Your year progress and assessment view') %}
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        {% endcall %}
         {% call tool_card(url_for('resources_assignments'), 'bg-violet-50 text-violet-600 ring-violet-100', 'Assignments and resources', 'Set work and share class materials') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         {% endcall %}
@@ -109,11 +112,11 @@
         {% call tool_card(url_for('ops_report_cards'), 'bg-rose-50 text-rose-600 ring-rose-100', 'Report cards', 'Printable term report with PG & attendance') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         {% endcall %}
+
+    {% else %}
         {% call tool_card(url_for('school_calendar'), 'bg-blue-50 text-blue-600 ring-blue-100', 'Academic Year', 'Your year progress and assessment view') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
-
-    {% else %}
         {% call tool_card(url_for('student_courses', student_id=student_id), 'bg-emerald-50 text-emerald-600 ring-emerald-100', 'Learning Pathway', 'Your personalised learning journey') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
         {% endcall %}
@@ -143,9 +146,6 @@
         {% endcall %}
         {% call tool_card(url_for('ops_report_cards'), 'bg-rose-50 text-rose-600 ring-rose-100', 'Report cards', 'Printable term report with PG & attendance') %}
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        {% endcall %}
-        {% call tool_card(url_for('school_calendar'), 'bg-blue-50 text-blue-600 ring-blue-100', 'Academic Year', 'Your year progress and assessment view') %}
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
     {% endif %}
 

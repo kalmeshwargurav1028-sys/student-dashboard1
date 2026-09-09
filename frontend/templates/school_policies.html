@@ -3,8 +3,23 @@
 
 {% block content %}
 {% set home = url_for('admin_dashboard') if session.get('role') == 'admin' else (url_for('student_home') if session.get('role') == 'student' else url_for('dashboard')) %}
-<div class="w-full px-4 sm:px-6 lg:px-10 py-6 max-w-5xl mx-auto space-y-6">
+<style>
+@keyframes policy-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.policy-card {
+  animation: policy-rise .55s ease both;
+}
+.policy-card:nth-child(1) { animation-delay: .05s; }
+.policy-card:nth-child(2) { animation-delay: .15s; }
+.policy-card:nth-child(3) { animation-delay: .25s; }
+@media (prefers-reduced-motion: reduce) {
+  .policy-card { animation: none !important; }
+}
+</style>
 
+<div class="w-full px-4 sm:px-6 lg:px-10 py-6 max-w-6xl mx-auto space-y-7">
     <div class="flex items-start justify-between gap-4">
         <div class="flex items-start gap-3 min-w-0">
             <a href="{{ home }}" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back">
@@ -12,7 +27,7 @@
             </a>
             <div>
                 <h1 class="text-2xl font-bold text-slate-900 tracking-tight">School Policies</h1>
-                <p class="text-sm text-slate-500 mt-1">Rules and guidelines for everyone in the school</p>
+                <p class="text-sm text-slate-500 mt-1">Three core rules — open each box for details and the branded PDF</p>
             </div>
         </div>
         {% if session.get('role') == 'admin' %}
@@ -21,24 +36,57 @@
     </div>
 
     {% if policies %}
-    <div class="space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
         {% for p in policies %}
-        <article class="bg-white border border-slate-200 rounded-2xl px-5 py-5 sm:px-6">
-            <div class="flex flex-col sm:flex-row sm:items-start gap-4">
-                <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-teal-700 text-sm font-bold tabular-nums">{{ loop.index }}</span>
-                <div class="min-w-0 flex-1">
-                    <h2 class="text-base font-semibold text-slate-900">{{ p.title }}</h2>
-                    {% if p.body %}
-                    <p class="text-sm text-slate-600 mt-2 leading-relaxed whitespace-pre-line">{{ p.body }}</p>
+        {% set i = loop.index0 % 3 %}
+        {% if i == 0 %}
+          {% set shell = 'from-sky-50 via-white to-white border-sky-100 hover:border-sky-300' %}
+          {% set badge = 'bg-sky-500 text-white shadow-sky-200' %}
+          {% set accent = 'text-sky-700' %}
+          {% set btn = 'bg-sky-600 hover:bg-sky-700 text-white' %}
+          {% set icon_bg = 'bg-sky-100 text-sky-700' %}
+        {% elif i == 1 %}
+          {% set shell = 'from-emerald-50 via-white to-white border-emerald-100 hover:border-emerald-300' %}
+          {% set badge = 'bg-emerald-500 text-white shadow-emerald-200' %}
+          {% set accent = 'text-emerald-700' %}
+          {% set btn = 'bg-emerald-600 hover:bg-emerald-700 text-white' %}
+          {% set icon_bg = 'bg-emerald-100 text-emerald-700' %}
+        {% else %}
+          {% set shell = 'from-violet-50 via-white to-white border-violet-100 hover:border-violet-300' %}
+          {% set badge = 'bg-violet-500 text-white shadow-violet-200' %}
+          {% set accent = 'text-violet-700' %}
+          {% set btn = 'bg-violet-600 hover:bg-violet-700 text-white' %}
+          {% set icon_bg = 'bg-violet-100 text-violet-700' %}
+        {% endif %}
+        <article class="policy-card group relative flex flex-col rounded-3xl border bg-gradient-to-b {{ shell }} px-5 py-6 shadow-[0_10px_30px_rgba(15,23,42,0.06)] hover:shadow-[0_18px_40px_rgba(15,23,42,0.1)] hover:-translate-y-1 transition-all min-h-[280px]">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <span class="inline-flex h-11 w-11 items-center justify-center rounded-2xl {{ badge }} text-sm font-bold shadow-md">{{ loop.index }}</span>
+                <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl {{ icon_bg }}">
+                    {% if i == 0 %}
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    {% elif i == 1 %}
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    {% else %}
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                     {% endif %}
-                    {% if p.pdf_url %}
-                    <a href="{{ p.pdf_url }}" target="_blank" rel="noopener" class="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-sky-50 hover:border-sky-200 px-3.5 py-2 text-sm font-semibold text-slate-800 hover:text-sky-800 transition-colors">
-                        <svg class="h-4 w-4 text-rose-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        Open PDF{% if p.pdf_filename %} · {{ p.pdf_filename }}{% endif %}
-                    </a>
-                    {% endif %}
-                </div>
+                </span>
             </div>
+            <h2 class="text-lg font-bold text-slate-900 leading-snug">{{ p.title }}</h2>
+            {% if p.body %}
+            <p class="text-sm text-slate-600 mt-3 leading-relaxed flex-1">{{ p.body }}</p>
+            {% else %}
+            <p class="text-sm text-slate-400 mt-3 flex-1">Details coming soon.</p>
+            {% endif %}
+            {% if p.pdf_url %}
+            <a href="{{ p.pdf_url }}" target="_blank" rel="noopener"
+               class="mt-5 inline-flex items-center justify-center gap-2 rounded-xl {{ btn }} px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors">
+                <svg class="h-4 w-4 shrink-0 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                Open PDF
+            </a>
+            {% if p.pdf_filename %}
+            <p class="mt-2 text-[11px] font-medium {{ accent }} truncate text-center">{{ p.pdf_filename }}</p>
+            {% endif %}
+            {% endif %}
         </article>
         {% endfor %}
     </div>

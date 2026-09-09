@@ -1,4 +1,4 @@
-{# Shared home blue banner — cartoon on the left; unique art per role. #}
+{# Shared home banner — animated background + living avatar for every role. #}
 {% if session.get('role') == 'student' and student is defined and student.get('name') %}
   {% set welcome_name = student.name %}
 {% elif session.get('username') %}
@@ -9,24 +9,133 @@
 {% if session.get('role') == 'admin' %}
   {% set welcome_role = 'Super Admin' %}
   {% set welcome_tagline = 'ready to lead something new?' %}
-  {% set banner_cartoon = 'images/admin-banner-cartoon.png' %}
+  {% set banner_tone = 'admin' %}
 {% elif session.get('role') == 'teacher' %}
   {% set welcome_role = 'Teacher' %}
   {% set welcome_tagline = 'ready to teach something new?' %}
-  {% set banner_cartoon = 'images/cartoon-teacher.png' %}
+  {% set banner_tone = 'teacher' %}
 {% else %}
   {% set welcome_role = 'Student' %}
   {% set welcome_tagline = 'ready to learn something new?' %}
-  {% set banner_cartoon = 'images/cartoon-student.png' %}
+  {% set banner_tone = 'student' %}
 {% endif %}
-<div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-5 py-5 sm:px-7 sm:py-6 shadow-md text-white mb-6 w-full overflow-hidden">
-    <div class="absolute inset-0 pointer-events-none">
-        <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
-        <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl"></div>
+
+<style>
+@keyframes banner-drift {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(18px,-12px,0) scale(1.08); }
+}
+@keyframes banner-drift-alt {
+  0%, 100% { transform: translate3d(0,0,0) scale(1); }
+  50% { transform: translate3d(-22px,14px,0) scale(1.12); }
+}
+@keyframes banner-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes banner-pulse {
+  0%, 100% { opacity: .45; }
+  50% { opacity: .85; }
+}
+@keyframes banner-shine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes avatar-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-6px) rotate(1.5deg); }
+}
+@keyframes avatar-glow {
+  0%, 100% { box-shadow: 0 10px 28px rgba(15,23,42,.18), 0 0 0 0 rgba(255,255,255,.15); }
+  50% { box-shadow: 0 16px 36px rgba(15,23,42,.22), 0 0 0 10px rgba(255,255,255,.08); }
+}
+@keyframes svg-wave {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+@keyframes svg-blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(.1); }
+}
+.home-banner {
+  background-size: 200% 200%;
+  animation: banner-shine 14s ease infinite;
+}
+.home-banner[data-tone="student"] {
+  background-image: linear-gradient(120deg, #0f4c81 0%, #1d4ed8 38%, #2563eb 68%, #38bdf8 100%);
+}
+.home-banner[data-tone="teacher"] {
+  background-image: linear-gradient(120deg, #0f3d5c 0%, #0369a1 40%, #0284c7 70%, #22d3ee 100%);
+}
+.home-banner[data-tone="admin"] {
+  background-image: linear-gradient(120deg, #1e293b 0%, #1e3a8a 42%, #4338ca 72%, #6366f1 100%);
+}
+.home-banner-orb { animation: banner-drift 9s ease-in-out infinite; }
+.home-banner-orb-alt { animation: banner-drift-alt 11s ease-in-out infinite; }
+.home-banner-spark { animation: banner-pulse 3.6s ease-in-out infinite; }
+.home-banner-float { animation: banner-float 5.5s ease-in-out infinite; }
+.home-banner-avatar {
+  animation: avatar-bob 4.8s ease-in-out infinite, avatar-glow 4.8s ease-in-out infinite;
+}
+.home-banner-svg-wave { animation: svg-wave 2.8s ease-in-out infinite; transform-origin: center; }
+.home-banner-svg-blink { animation: svg-blink 4.5s infinite; transform-origin: center; }
+@media (prefers-reduced-motion: reduce) {
+  .home-banner, .home-banner-orb, .home-banner-orb-alt, .home-banner-spark,
+  .home-banner-float, .home-banner-avatar, .home-banner-svg-wave, .home-banner-svg-blink {
+    animation: none !important;
+  }
+}
+</style>
+
+<div class="home-banner relative rounded-2xl px-5 py-6 sm:px-7 sm:py-7 shadow-lg text-white mb-6 w-full overflow-hidden" data-tone="{{ banner_tone }}">
+    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+        <div class="home-banner-orb absolute -right-10 -bottom-16 h-52 w-52 rounded-full bg-white/15 blur-2xl"></div>
+        <div class="home-banner-orb-alt absolute -left-12 -top-14 h-40 w-40 rounded-full bg-cyan-300/25 blur-2xl"></div>
+        <div class="home-banner-float absolute right-16 top-4 h-16 w-16 rounded-full border border-white/20 bg-white/10"></div>
+        <div class="home-banner-spark absolute left-1/3 bottom-3 h-2 w-2 rounded-full bg-white/80"></div>
+        <div class="home-banner-spark absolute right-1/4 top-8 h-1.5 w-1.5 rounded-full bg-cyan-100/90" style="animation-delay:.8s"></div>
+        <div class="home-banner-spark absolute right-10 top-1/2 h-1.5 w-1.5 rounded-full bg-white/70" style="animation-delay:1.4s"></div>
+        <div class="absolute inset-0 opacity-[0.12]" style="background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,.9) 1px, transparent 0);background-size:18px 18px;"></div>
     </div>
+
     <div class="relative z-10 flex items-center gap-4 sm:gap-5 min-w-0">
-        <div class="banner-avatar shrink-0 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-2xl bg-white p-1.5 shadow-lg ring-1 ring-white/40 flex items-center justify-center">
-            <img src="{{ url_for('static', filename=banner_cartoon) }}" alt="" class="h-full w-full object-contain rounded-xl">
+        <div class="home-banner-avatar shrink-0 h-20 w-20 sm:h-24 sm:w-24 md:h-28 md:w-28 rounded-2xl bg-white/95 p-2 ring-1 ring-white/50 flex items-center justify-center overflow-hidden">
+            {% if banner_tone == 'admin' %}
+            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <rect width="120" height="120" rx="18" fill="#EEF2FF"/>
+                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#C7D2FE"/>
+                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#312E81"/>
+                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#312E81" style="animation-delay:.15s"/>
+                <path d="M48 52c3 3 8 4 12 4s9-1 12-4" stroke="#4338CA" stroke-width="2" stroke-linecap="round"/>
+                <path d="M34 98c4-22 16-34 26-34s22 12 26 34" fill="#4F46E5"/>
+                <path d="M44 72h32v8H44z" fill="#312E81"/>
+                <circle class="home-banner-svg-wave" cx="88" cy="28" r="6" fill="#A5B4FC" style="animation-delay:.4s"/>
+            </svg>
+            {% elif banner_tone == 'teacher' %}
+            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <rect width="120" height="120" rx="18" fill="#ECFEFF"/>
+                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#A5F3FC"/>
+                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#155E75"/>
+                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#155E75" style="animation-delay:.12s"/>
+                <path d="M50 53c2.5 2.5 6.5 3.5 10 3.5s7.5-1 10-3.5" stroke="#0E7490" stroke-width="2" stroke-linecap="round"/>
+                <path d="M32 98c5-22 17-34 28-34s23 12 28 34" fill="#0891B2"/>
+                <rect x="42" y="70" width="36" height="8" rx="2" fill="#164E63"/>
+                <path class="home-banner-svg-wave" d="M78 34l14-8 2 4-14 8-2-4z" fill="#22D3EE" style="animation-delay:.5s"/>
+            </svg>
+            {% else %}
+            <svg class="h-full w-full" viewBox="0 0 120 120" fill="none" aria-hidden="true">
+                <rect width="120" height="120" rx="18" fill="#EFF6FF"/>
+                <circle class="home-banner-svg-wave" cx="60" cy="46" r="18" fill="#BFDBFE"/>
+                <ellipse class="home-banner-svg-blink" cx="53" cy="44" rx="2.2" ry="2.6" fill="#1E3A8A"/>
+                <ellipse class="home-banner-svg-blink" cx="67" cy="44" rx="2.2" ry="2.6" fill="#1E3A8A" style="animation-delay:.18s"/>
+                <path d="M50 53c2.5 2.8 7 4 10 4" stroke="#1D4ED8" stroke-width="2" stroke-linecap="round"/>
+                <path d="M33 98c5-22 16-34 27-34s22 12 27 34" fill="#2563EB"/>
+                <rect x="70" y="62" width="22" height="28" rx="4" fill="#93C5FD"/>
+                <rect x="74" y="68" width="14" height="16" rx="2" fill="#DBEAFE"/>
+                <circle class="home-banner-svg-wave" cx="30" cy="30" r="5" fill="#60A5FA" style="animation-delay:.6s"/>
+            </svg>
+            {% endif %}
         </div>
         <div class="min-w-0 flex-1">
             <p class="text-sm text-blue-100/95 font-medium">Welcome back</p>
