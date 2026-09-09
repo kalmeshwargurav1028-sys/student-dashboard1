@@ -65,6 +65,9 @@
         {% call tool_card(url_for('utility_data_store'), 'bg-cyan-600', 'Data Store', 'Student, teacher and admin MongoDB records') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18M7 7v10M12 7v10M17 7v10"/></svg>
         {% endcall %}
+        {% call tool_card(url_for('gradebook'), 'bg-amber-500', 'Gradebook', 'Enter and review marks school-wide') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        {% endcall %}
         {% call tool_card(url_for('school_calendar'), 'bg-blue-500', 'Academic Year', 'Set active year and review year control') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
         {% endcall %}
@@ -103,6 +106,9 @@
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
         {% endcall %}
         {% call tool_card(url_for('resources_assignments'), 'bg-violet-500', 'Assignments and resources', 'Resources and tasks to complete') %}
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        {% endcall %}
+        {% call tool_card(url_for('student_gradebook', student_id=student_id), 'bg-amber-500', 'Gradebook', 'See your subject marks and totals') %}
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         {% endcall %}
         {% call tool_card(url_for('student_gradebook', student_id=student_id), 'bg-orange-500', 'Progress Report', 'See how you are doing') %}
