@@ -2365,7 +2365,38 @@ def school_updates():
     announcements = list(db.announcements.find(query).sort('date_sent', -1).limit(50))
     return render_template('school_updates.html', announcements=announcements)
 
-DEFAULT_SCHOOL_POLICIES = []
+DEFAULT_SCHOOL_POLICIES = [
+    {
+        'title': 'Attendance & Punctuality',
+        'body': (
+            'Students must attend school regularly and arrive on time for every period. '
+            'Parents should inform the school of any absence the same day. '
+            'Repeated late arrival or unexplained absence will be followed up with families.'
+        ),
+        'order': 1,
+        'seed_key': 'rule_attendance',
+    },
+    {
+        'title': 'Respect & Conduct',
+        'body': (
+            'Treat teachers, staff, and classmates with courtesy at all times. '
+            'Bullying, harassment, and disrespectful language are not allowed on campus or online. '
+            'School property and facilities must be used carefully and kept clean.'
+        ),
+        'order': 2,
+        'seed_key': 'rule_respect',
+    },
+    {
+        'title': 'Academic Honesty',
+        'body': (
+            'All classwork, homework, quizzes, and exams must be your own work. '
+            'Cheating, copying, or submitting someone else’s work is not permitted. '
+            'Ask your teacher for help when you need support — honesty builds trust and real learning.'
+        ),
+        'order': 3,
+        'seed_key': 'rule_honesty',
+    },
+]
 
 # Legacy seed titles removed from the product; purge leftover DB docs on load.
 _REMOVED_POLICY_TITLES = (
@@ -2376,19 +2407,215 @@ _REMOVED_POLICY_TITLES = (
 )
 
 
+def _school_rules_pdf_bytes():
+    """Build a branded PDF of the three core school rules with the Indus logo."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from reportlab.lib.utils import ImageReader
+
+    buffer = io.BytesIO()
+    c = pdf_canvas.Canvas(buffer, pagesize=A4)
+    width, height = A4
+    margin = 22 * mm
+    y = height - margin
+
+    logo_path = os.path.join(app.static_folder, 'images', 'logo.png')
+    if os.path.isfile(logo_path):
+        try:
+            logo = ImageReader(logo_path)
+            c.drawImage(logo, margin, y - 22 * mm, width=22 * mm, height=22 * mm, mask='auto', preserveAspectRatio=True, anchor='c')
+        except Exception as e:
+            print(f'[POLICIES PDF] Logo embed failed: {e}')
+
+    c.setFillColorRGB(0.12, 0.25, 0.45)
+    c.setFont('Helvetica-Bold', 18)
+    c.drawString(margin + 28 * mm, y - 8 * mm, 'Indus Portal')
+    c.setFont('Helvetica', 11)
+    c.setFillColorRGB(0.35, 0.40, 0.48)
+    c.drawString(margin + 28 * mm, y - 15 * mm, 'Learning management system · School Rules')
+    y -= 32 * mm
+
+    c.setStrokeColorRGB(0.15, 0.35, 0.65)
+    c.setLineWidth(1.2)
+    c.line(margin, y, width - margin, y)
+    y -= 12 * mm
+
+    c.setFillColorRGB(0.12, 0.16, 0.22)
+    c.setFont('Helvetica-Bold', 14)
+    c.drawString(margin, y, 'Three core rules for every student')
+    y -= 8 * mm
+    c.setFont('Helvetica', 10)
+    c.setFillColorRGB(0.40, 0.45, 0.52)
+    c.drawString(margin, y, 'Please read carefully and follow these guidelines throughout the academic year.')
+    y -= 14 * mm
+
+    rules = [
+        (
+            '1. Attendance & Punctuality',
+            [
+                'Attend school regularly and arrive on time for every period.',
+                'Parents must inform the school of any absence on the same day.',
+                'Repeated late arrival or unexplained absence will be followed up with families.',
+            ],
+        ),
+        (
+            '2. Respect & Conduct',
+            [
+                'Treat teachers, staff, and classmates with courtesy at all times.',
+                'Bullying, harassment, and disrespectful language are not allowed on campus or online.',
+                'Use school property carefully and help keep classrooms and grounds clean.',
+            ],
+        ),
+        (
+            '3. Academic Honesty',
+            [
+                'All classwork, homework, quizzes, and exams must be your own work.',
+                'Cheating, copying, or submitting someone else’s work is not permitted.',
+                'Ask your teacher for help when you need support — honesty builds real learning.',
+            ],
+        ),
+    ]
+
+    for title, bullets in rules:
+        if y < 55 * mm:
+            c.showPage()
+            y = height - margin
+        c.setFillColorRGB(0.15, 0.35, 0.65)
+        c.setFont('Helvetica-Bold', 12)
+        c.drawString(margin, y, title)
+        y -= 7 * mm
+        c.setFillColorRGB(0.18, 0.22, 0.28)
+        c.setFont('Helvetica', 10)
+        for line in bullets:
+            # simple wrap
+            words = line.split()
+            current = ''
+            for w in words:
+                trial = (current + ' ' + w).strip()
+                if c.stringWidth(trial, 'Helvetica', 10) > (width - 2 * margin - 8 * mm):
+                    c.drawString(margin + 5 * mm, y, '•  ' + current)
+                    y -= 5.2 * mm
+                    current = w
+                else:
+                    current = trial
+            if current:
+                c.drawString(margin + 5 * mm, y, '•  ' + current)
+                y -= 5.2 * mm
+            y -= 1.5 * mm
+        y -= 6 * mm
+
+    y -= 4 * mm
+    c.setStrokeColorRGB(0.85, 0.88, 0.92)
+    c.setLineWidth(0.6)
+    c.line(margin, y, width - margin, y)
+    y -= 8 * mm
+    c.setFont('Helvetica-Oblique', 9)
+    c.setFillColorRGB(0.45, 0.48, 0.55)
+    c.drawString(margin, y, 'Published for students and families · Indus Portal LMS')
+    y -= 5 * mm
+    c.drawString(margin, y, datetime.now().strftime('Generated %d %B %Y'))
+
+    c.save()
+    return buffer.getvalue()
+
+
+def _ensure_school_rules_pdf_file_id():
+    """Store (or reuse) the branded school-rules PDF in GridFS; also write a static copy."""
+    docs_dir = os.path.join(app.static_folder, 'docs')
+    os.makedirs(docs_dir, exist_ok=True)
+    static_path = os.path.join(docs_dir, 'school_rules.pdf')
+
+    existing = db.settings.find_one({}, {'school_rules_pdf_id': 1}) or {}
+    file_id = existing.get('school_rules_pdf_id')
+    if file_id:
+        try:
+            if fs.exists(ObjectId(file_id)) and os.path.isfile(static_path):
+                return str(file_id)
+        except Exception:
+            file_id = None
+
+    pdf_bytes = _school_rules_pdf_bytes()
+    with open(static_path, 'wb') as f:
+        f.write(pdf_bytes)
+
+    if file_id:
+        try:
+            if fs.exists(ObjectId(file_id)):
+                return str(file_id)
+        except Exception:
+            pass
+
+    file_id = str(fs.put(
+        pdf_bytes,
+        filename='Indus_Portal_School_Rules.pdf',
+        content_type='application/pdf',
+        meta='school_rules',
+    ))
+    db.settings.update_one({}, {'$set': {'school_rules_pdf_id': file_id}}, upsert=True)
+    return file_id
+
+
 def _get_school_policies():
     for title in _REMOVED_POLICY_TITLES:
         for doc in db.school_policies.find({'title': title}):
             _delete_gridfs_file(doc.get('pdf_file_id'))
             db.school_policies.delete_one({'_id': doc['_id']})
+
+    seed_keys = {p['seed_key'] for p in DEFAULT_SCHOOL_POLICIES}
+    existing_keys = {
+        d.get('seed_key')
+        for d in db.school_policies.find({'seed_key': {'$in': list(seed_keys)}}, {'seed_key': 1})
+    }
+    # Also match by title if older seed without seed_key
+    existing_titles = {
+        d.get('title')
+        for d in db.school_policies.find({}, {'title': 1})
+    }
+
+    need_seed = [p for p in DEFAULT_SCHOOL_POLICIES if p['seed_key'] not in existing_keys and p['title'] not in existing_titles]
+    if need_seed or not list(db.school_policies.find().limit(1)):
+        try:
+            pdf_id = _ensure_school_rules_pdf_file_id()
+        except Exception as e:
+            print(f'[POLICIES] Could not build school rules PDF: {e}')
+            pdf_id = None
+        for p in (need_seed or DEFAULT_SCHOOL_POLICIES):
+            if p['seed_key'] in existing_keys or p['title'] in existing_titles:
+                continue
+            doc = {
+                'title': p['title'],
+                'body': p['body'],
+                'order': p['order'],
+                'seed_key': p['seed_key'],
+                'updated_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'updated_by': 'System',
+            }
+            if pdf_id:
+                doc['pdf_file_id'] = pdf_id
+                doc['pdf_filename'] = 'Indus_Portal_School_Rules.pdf'
+            db.school_policies.insert_one(doc)
+            existing_titles.add(p['title'])
+            existing_keys.add(p['seed_key'])
+
+    # Refresh PDF attachment on seeded rules if missing
+    try:
+        pdf_id = _ensure_school_rules_pdf_file_id()
+        db.school_policies.update_many(
+            {'seed_key': {'$in': list(seed_keys)}, '$or': [{'pdf_file_id': {'$exists': False}}, {'pdf_file_id': None}, {'pdf_file_id': ''}]},
+            {'$set': {'pdf_file_id': pdf_id, 'pdf_filename': 'Indus_Portal_School_Rules.pdf'}},
+        )
+    except Exception as e:
+        print(f'[POLICIES] PDF attach refresh failed: {e}')
+
     policies = list(db.school_policies.find().sort('order', 1))
-    if not policies and DEFAULT_SCHOOL_POLICIES:
-        db.school_policies.insert_many([dict(p) for p in DEFAULT_SCHOOL_POLICIES])
-        policies = list(db.school_policies.find().sort('order', 1))
     for p in policies:
         p['_id'] = str(p['_id'])
         if p.get('pdf_file_id'):
             p['pdf_url'] = url_for('get_file', file_id=p['pdf_file_id'])
+        elif os.path.isfile(os.path.join(app.static_folder, 'docs', 'school_rules.pdf')):
+            p['pdf_url'] = url_for('static', filename='docs/school_rules.pdf')
+            p['pdf_filename'] = p.get('pdf_filename') or 'Indus_Portal_School_Rules.pdf'
     return policies
 
 
