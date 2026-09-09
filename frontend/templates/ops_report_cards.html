@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block header_title %}Report cards{% endblock %}
+
+{% block content %}
+<style>
+@media print {
+  header, .no-print, #notifDropdown, #headerProfileDropdown { display: none !important; }
+  main { overflow: visible !important; }
+  body { background: white !important; }
+  .print-sheet { box-shadow: none !important; border: none !important; }
+}
+</style>
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 no-print">
+        <div class="flex items-start gap-3">
+            <a href="{{ home_url }}" class="mt-1 text-slate-400 hover:text-slate-700"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-rose-500">High impact</p>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Report cards / PDF export</h1>
+                <p class="text-sm text-slate-500 mt-1">Term report with attendance %, PG scores — printable & downloadable</p>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            {% if role != 'student' and students %}
+            <form method="GET" class="flex gap-2">
+                <select name="student_id" onchange="this.form.submit()" class="border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                    {% for s in students %}
+                    <option value="{{ s.id }}" {% if student and student.id == s.id %}selected{% endif %}>{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+            {% endif %}
+            <button type="button" onclick="window.print()" class="rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2.5">Print / Save PDF</button>
+        </div>
+    </div>
+
+    {% if student %}
+    <div class="print-sheet bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden max-w-4xl mx-auto">
+        <div class="bg-gradient-to-r from-slate-900 to-slate-700 text-white px-6 py-5 flex items-center justify-between gap-4">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-slate-300">{{ school_name }}</p>
+                <h2 class="text-xl font-bold mt-0.5">Term report card</h2>
+                <p class="text-sm text-slate-300 mt-1">Academic period {{ period }}</p>
+            </div>
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="" class="h-12 w-12 object-contain bg-white rounded-xl p-1">
+        </div>
+        <div class="px-6 py-5 grid grid-cols-1 sm:grid-cols-3 gap-4 border-b border-slate-100">
+            <div>
+                <p class="text-[11px] font-semibold uppercase text-slate-400">Student</p>
+                <p class="font-semibold text-slate-900">{{ student.name | title }}</p>
+                <p class="text-sm text-slate-500">ID {{ student.id }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase text-slate-400">Class</p>
+                <p class="font-semibold text-slate-900">Grade {{ student.student_class or '—' }} {{ student.division or '' }}</p>
+            </div>
+            <div>
+                <p class="text-[11px] font-semibold uppercase text-slate-400">Generated</p>
+                <p class="font-semibold text-slate-900">{{ generated_at }}</p>
+            </div>
+        </div>
+        <div class="px-6 py-5 grid grid-cols-2 gap-3 border-b border-slate-100">
+            <div class="rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase text-emerald-600">Attendance %</p>
+                <p class="text-2xl font-bold text-emerald-700 tabular-nums">{{ attendance_pct }}%</p>
+            </div>
+            <div class="rounded-xl bg-sky-50 border border-sky-100 px-4 py-3">
+                <p class="text-[11px] font-semibold uppercase text-sky-600">PG average</p>
+                <p class="text-2xl font-bold text-sky-700 tabular-nums">{{ pg_avg }}</p>
+            </div>
+        </div>
+        <div class="px-6 py-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-3">Subject performance</h3>
+            <table class="min-w-full text-sm">
+                <thead>
+                    <tr class="text-left text-[11px] uppercase tracking-wider text-slate-400 border-b border-slate-200">
+                        <th class="py-2 pr-3">Subject</th>
+                        <th class="py-2 pr-3">CA</th>
+                        <th class="py-2 pr-3">Exam</th>
+                        <th class="py-2">PG / Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for g in grades %}
+                    <tr>
+                        <td class="py-2.5 pr-3 font-medium text-slate-800">{{ g.subject }}</td>
+                        <td class="py-2.5 pr-3 tabular-nums">{{ g.ca_mark or '—' }}</td>
+                        <td class="py-2.5 pr-3 tabular-nums">{{ g.exam_mark or '—' }}</td>
+                        <td class="py-2.5 font-semibold tabular-nums">{{ g.pg }}</td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="4" class="py-8 text-center text-slate-400">No subject scores recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="mt-6 text-xs text-slate-400">Use Print / Save PDF in your browser to download this report card.</p>
+        </div>
+    </div>
+    {% else %}
+    <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-400">Select a student to generate a report card.</div>
+    {% endif %}
+</div>
+{% endblock %}

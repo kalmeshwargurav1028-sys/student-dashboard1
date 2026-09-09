@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="{{ url_for('pwa_manifest') }}">
     <title>Learning management system</title>
     <!-- Use Tailwind via CDN for modern UI based on prior preferences, or standard modern CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -619,5 +623,14 @@
             });
         });
     </script>
+    {% if session.get('logged_in') %}
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('{{ url_for("pwa_service_worker") }}').catch(function () {});
+        });
+    }
+    </script>
+    {% endif %}
 </body>
 </html>

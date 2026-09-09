@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block header_title %}Assignment workflow{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div class="flex items-start gap-3">
+            <a href="{{ home_url }}" class="mt-1 text-slate-400 hover:text-slate-700"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-violet-500">High impact</p>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Assignment workflow</h1>
+                <p class="text-sm text-slate-500 mt-1">Submit → upload → grade → return with comments · late flags</p>
+            </div>
+        </div>
+        <a href="{{ desk_url }}" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5">Assignments desk</a>
+    </div>
+
+    <div class="flex flex-wrap gap-2 text-xs font-semibold">
+        <span class="rounded-full bg-slate-100 text-slate-600 px-3 py-1">Assigned</span>
+        <span class="rounded-full bg-sky-50 text-sky-700 px-3 py-1">Submitted</span>
+        <span class="rounded-full bg-emerald-50 text-emerald-700 px-3 py-1">Returned</span>
+        <span class="rounded-full bg-rose-50 text-rose-700 px-3 py-1">Late</span>
+    </div>
+
+    <div class="space-y-4">
+        {% for row in rows %}
+        <article class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-start gap-4">
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-base font-bold text-slate-900">{{ row.title }}</h2>
+                        {% if row.late %}<span class="text-[10px] font-bold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md">Late</span>{% endif %}
+                    </div>
+                    <p class="text-sm text-slate-500 mt-1">{{ row.subject }} · Due {{ row.due_date }}{% if row.class_name %} · {{ row.class_name }}{% endif %}</p>
+                    <p class="text-xs font-semibold mt-2 text-slate-600">Status: {{ row.status }}</p>
+                    {% if role == 'student' and row.my %}
+                    <p class="text-sm text-slate-600 mt-2">Your file: {% if row.my.file_url %}<a class="text-violet-700 font-semibold" href="{{ row.my.file_url }}" target="_blank">Open upload</a>{% else %}none{% endif %}</p>
+                    {% if row.my.teacher_comment %}<p class="text-sm text-emerald-700 mt-1">Teacher: {{ row.my.teacher_comment }}{% if row.my.grade %} · Grade {{ row.my.grade }}{% endif %}</p>{% endif %}
+                    {% endif %}
+                </div>
+
+                {% if role == 'student' and row.status in ['assigned', 'late', 'submitted'] %}
+                <form method="POST" enctype="multipart/form-data" class="w-full lg:w-80 space-y-2 shrink-0">
+                    <input type="hidden" name="assignment_id" value="{{ row.id }}">
+                    <textarea name="comment" rows="2" placeholder="Submission note" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"></textarea>
+                    <input type="file" name="file" class="block w-full text-xs text-slate-500">
+                    <button type="submit" class="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold py-2.5">Submit / update</button>
+                </form>
+                {% elif role in ['teacher', 'admin'] %}
+                <div class="w-full lg:w-[22rem] shrink-0 space-y-2 max-h-56 overflow-y-auto">
+                    {% for s in row.submissions %}
+                    <form method="POST" class="rounded-xl border border-slate-100 bg-slate-50 p-3 space-y-2">
+                        <input type="hidden" name="assignment_id" value="{{ row.id }}">
+                        <input type="hidden" name="student_id" value="{{ s.student_id }}">
+                        <p class="text-xs font-semibold text-slate-800 truncate">{{ s.student_name or s.student_id }}</p>
+                        {% if s.file_url %}<a href="{{ s.file_url }}" target="_blank" class="text-[11px] text-violet-700 font-semibold">View file</a>{% endif %}
+                        <div class="flex gap-2">
+                            <input name="grade" value="{{ s.grade or '' }}" placeholder="Grade" class="w-20 border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                            <input name="teacher_comment" value="{{ s.teacher_comment or '' }}" placeholder="Comment" class="flex-1 border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                        </div>
+                        <button type="submit" class="text-xs font-semibold text-emerald-700 hover:text-emerald-900">Return with grade</button>
+                    </form>
+                    {% else %}
+                    <p class="text-xs text-slate-400">No submissions yet.</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </article>
+        {% else %}
+        <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-400 text-sm">No assignments in the workflow yet.</div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

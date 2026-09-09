@@ -2613,6 +2613,21 @@ def resources_assignments():
         classrooms = _teacher_classrooms()
     elif role == 'student':
         classrooms = _student_classrooms()
+    elif role == 'admin':
+        classrooms = []
+        for s in db.students.find({}, {'student_class': 1, 'division': 1}):
+            cls = s.get('student_class')
+            if cls:
+                classrooms.append({'class_name': cls, 'section': s.get('division') or ''})
+        # unique
+        seen = set()
+        uniq = []
+        for c in classrooms:
+            key = (c['class_name'], c['section'])
+            if key not in seen:
+                seen.add(key)
+                uniq.append(c)
+        classrooms = sorted(uniq, key=lambda x: (str(x['class_name']), str(x['section'])))
     else:
         return redirect(url_for('login'))
     return render_template(
@@ -8559,6 +8574,426 @@ def learning_forums():
         home_url=_learning_home_url(),
         can_moderate=role in ('teacher', 'admin'),
     )
+
+
+# ---------------------------------------------------------------------------
+# High-impact ops — Parent portal, Timetable+attendance, Assignments, Reports, PWA
+# ---------------------------------------------------------------------------
+@app.route('/ops/parent-portal', methods=['GET', 'POST'])
+def ops_parent_portal():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    if request.method == 'POST':
+        if role == 'student':
+            subject = (request.form.get('subject') or '').strip()
+            message = (request.form.get('message') or '').strip()
+            if subject and message:
+                student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0}) or {}
+                db.messages.insert_one({
+                    'student_id': session.get('user_id'),
+                    'student_name': student.get('name') or session.get('username'),
+                    'subject': subject,
+                    'message': message,
+                    'date_sent': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'status': 'unread',
+                    'channel': 'parent_portal',
+                })
+                flash('Message sent to teachers.')
+            return redirect(url_for('ops_parent_portal'))
+        if role in ('teacher', 'admin'):
+            sid = (request.form.get('student_id') or '').strip()
+            message = (request.form.get('message') or '').strip()
+            student = db.students.find_one(get_student_query({'id': sid}), {'_id': 0}) if sid else None
+            if student and message:
+                db.parent_alerts.insert_one({
+                    'student_id': sid,
+                    'student_name': student.get('name'),
+                    'message': message,
+                    'sent_by': session.get('username'),
+                    'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                    'channel': 'one_tap',
+                })
+                flash('Parent alert sent.')
+            return redirect(url_for('ops_parent_portal'))
+
+    attendance_pct = 0
+    marks = []
+    homework = []
+    alerts = []
+    students = []
+    focus_student = None
+
+    if role == 'student':
+        sid = session.get('user_id')
+        focus_student = db.students.find_one(get_student_query({'id': sid}), {'_id': 0}) or {}
+        attendance_pct = float(focus_student.get('attendance') or 0)
+        marks = list(db.grades.find({'student_id': sid}, {'_id': 0}))
+        for g in marks:
+            g['total'] = float(g.get('ca_mark') or 0) + float(g.get('exam_mark') or 0)
+        query = {}
+        if focus_student.get('student_class'):
+            query['class_name'] = {'$in': get_class_variations(focus_student.get('student_class'))}
+        homework = list(db.assignments.find(query).sort('due_date', 1).limit(12))
+        for a in homework:
+            due = str(a.get('due_date') or '')[:10]
+            a['is_late'] = bool(due and due < today)
+            a['id'] = str(a.get('_id'))
+            subs = a.get('submissions') or []
+            my = next((s for s in subs if s.get('student_id') == sid), None)
+            a['my_status'] = 'graded' if my and my.get('grade') not in (None, '') else ('submitted' if my else 'due')
+        alerts = list(db.parent_alerts.find({'student_id': sid}).sort('timestamp', -1).limit(8))
+    else:
+        students = list(db.students.find(get_student_query() if role == 'teacher' else {}, {'_id': 0}).limit(80))
+        pick = (request.args.get('student_id') or '').strip()
+        if pick:
+            focus_student = db.students.find_one(get_student_query({'id': pick}) if role == 'teacher' else {'id': pick}, {'_id': 0})
+        if not focus_student and students:
+            focus_student = students[0]
+        if focus_student:
+            sid = focus_student.get('id')
+            attendance_pct = float(focus_student.get('attendance') or 0)
+            marks = list(db.grades.find({'student_id': sid}, {'_id': 0}))
+            for g in marks:
+                g['total'] = float(g.get('ca_mark') or 0) + float(g.get('exam_mark') or 0)
+            query = {}
+            if focus_student.get('student_class'):
+                query['class_name'] = {'$in': get_class_variations(focus_student.get('student_class'))}
+            homework = list(db.assignments.find(query).sort('due_date', 1).limit(12))
+            for a in homework:
+                due = str(a.get('due_date') or '')[:10]
+                a['is_late'] = bool(due and due < today)
+                a['id'] = str(a.get('_id'))
+            alerts = list(db.parent_alerts.find({'student_id': sid}).sort('timestamp', -1).limit(8))
+
+    return render_template(
+        'ops_parent_portal.html',
+        role=role,
+        student=focus_student,
+        students=students,
+        attendance_pct=attendance_pct,
+        marks=marks,
+        homework=homework,
+        alerts=alerts,
+        home_url=_learning_home_url(),
+        messaging_url=url_for('parent_alerts_page') if role != 'student' else url_for('student_messages'),
+    )
+
+
+@app.route('/ops/timetable-attendance', methods=['GET', 'POST'])
+def ops_timetable_attendance():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    today = datetime.now()
+    today_str = today.strftime('%Y-%m-%d')
+    weekday = today.strftime('%A')
+
+    if request.method == 'POST' and role in ('teacher', 'admin'):
+        # Quick period attendance for selected period
+        period_subject = (request.form.get('period_subject') or '').strip()
+        period_time = (request.form.get('period_time') or '').strip()
+        students = list(db.students.find(get_student_query() if role == 'teacher' else {}, {'_id': 0}))
+        update_fields = {
+            'teacher_id': str(session.get('user_id') or 'staff'),
+            'teacher_name': session.get('username') or 'Staff',
+            'subject': period_subject or 'Period',
+            'mode': 'period',
+            'period_time': period_time,
+            'date': today_str,
+        }
+        for s in students:
+            sid = s.get('id')
+            status = request.form.get(f'status_{sid}', 'Present')
+            if status in ('Present', 'Absent', 'Late'):
+                update_fields[f'records.{sid}'] = status
+        db.attendance.update_one(
+            {'date': today_str, 'teacher_id': update_fields['teacher_id'], 'subject': update_fields['subject'], 'period_time': period_time},
+            {'$set': update_fields},
+            upsert=True,
+        )
+        recalculate_students_attendance()
+        flash(f'Period attendance saved for {period_subject or "class"} ({period_time}).')
+        return redirect(url_for('ops_timetable_attendance'))
+
+    query = {}
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
+        if student.get('student_class'):
+            query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
+        else:
+            query['class_name'] = '__none__'
+    elif role == 'teacher':
+        query['$or'] = [
+            {'teacher': session.get('username')},
+            {'teacher_id': session.get('user_id')},
+        ]
+    periods = list(db.timetable.find({**query, 'day': weekday}))
+    periods = sorted(periods, key=lambda x: x.get('time') or '')
+    for p in periods:
+        p['id'] = str(p.get('_id'))
+
+    # Today's attendance docs linked to periods
+    att_docs = list(db.attendance.find({'date': today_str}))
+    marked_subjects = {(d.get('subject') or '', d.get('period_time') or '') for d in att_docs}
+
+    students = []
+    if role in ('teacher', 'admin'):
+        students = list(db.students.find(get_student_query() if role == 'teacher' else {}, {'_id': 0}))
+        for s in students[:]:
+            pass
+
+    return render_template(
+        'ops_timetable_attendance.html',
+        role=role,
+        weekday=weekday,
+        today_str=today_str,
+        periods=periods,
+        marked_subjects=marked_subjects,
+        students=students,
+        home_url=_learning_home_url(),
+        timetable_url=url_for('timetable'),
+        attendance_url=url_for('attendance') if role != 'student' else url_for('student_attendance'),
+    )
+
+
+@app.route('/ops/assignment-workflow', methods=['GET', 'POST'])
+def ops_assignment_workflow():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    if request.method == 'POST' and role == 'student':
+        aid = request.form.get('assignment_id')
+        comment = (request.form.get('comment') or '').strip()
+        upload = request.files.get('file')
+        file_url = ''
+        if upload and upload.filename:
+            filename = secure_filename(upload.filename)
+            try:
+                file_id = str(fs.put(upload, filename=filename, content_type=upload.content_type))
+                file_url = url_for('get_file', file_id=file_id)
+            except Exception:
+                file_url = ''
+        if aid:
+            sub = {
+                'student_id': session.get('user_id'),
+                'student_name': session.get('username'),
+                'submitted_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                'comment': comment,
+                'file_url': file_url,
+                'grade': None,
+                'teacher_comment': '',
+            }
+            db.assignments.update_one(
+                {'_id': ObjectId(aid), 'submissions.student_id': {'$ne': session.get('user_id')}},
+                {'$push': {'submissions': sub}},
+            )
+            # If already submitted, update
+            db.assignments.update_one(
+                {'_id': ObjectId(aid), 'submissions.student_id': session.get('user_id')},
+                {'$set': {
+                    'submissions.$.submitted_at': sub['submitted_at'],
+                    'submissions.$.comment': comment,
+                    'submissions.$.file_url': file_url or None,
+                }},
+            )
+            flash('Assignment submitted.')
+        return redirect(url_for('ops_assignment_workflow'))
+
+    if request.method == 'POST' and role in ('teacher', 'admin'):
+        aid = request.form.get('assignment_id')
+        sid = request.form.get('student_id')
+        grade = (request.form.get('grade') or '').strip()
+        teacher_comment = (request.form.get('teacher_comment') or '').strip()
+        if aid and sid:
+            db.assignments.update_one(
+                {'_id': ObjectId(aid), 'submissions.student_id': sid},
+                {'$set': {
+                    'submissions.$.grade': grade,
+                    'submissions.$.teacher_comment': teacher_comment,
+                    'submissions.$.returned_at': datetime.now().strftime('%Y-%m-%d %H:%M'),
+                }},
+            )
+            flash('Submission graded and returned.')
+        return redirect(url_for('ops_assignment_workflow'))
+
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
+        query = {}
+        if student.get('student_class'):
+            query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
+        assignments = list(db.assignments.find(query).sort('due_date', -1).limit(40))
+        sid = session.get('user_id')
+    elif role == 'teacher':
+        assignments = list(db.assignments.find({'teacher_id': session.get('user_id')}).sort('due_date', -1).limit(40))
+        if not assignments:
+            assignments = list(db.assignments.find({}).sort('due_date', -1).limit(40))
+        sid = None
+        student = None
+    else:
+        assignments = list(db.assignments.find({}).sort('due_date', -1).limit(50))
+        sid = None
+        student = None
+
+    rows = []
+    for a in assignments:
+        due = str(a.get('due_date') or '')[:10]
+        late_flag = bool(due and due < today)
+        subs = a.get('submissions') or []
+        my = None
+        if role == 'student':
+            my = next((s for s in subs if s.get('student_id') == sid), None)
+            if my and my.get('grade') not in (None, ''):
+                status = 'returned'
+            elif my:
+                status = 'submitted'
+            elif late_flag:
+                status = 'late'
+            else:
+                status = 'assigned'
+        else:
+            graded = sum(1 for s in subs if s.get('grade') not in (None, ''))
+            status = f'{len(subs)} submitted · {graded} graded'
+            if late_flag:
+                status = 'late window · ' + status
+        rows.append({
+            'id': str(a.get('_id')),
+            'title': a.get('title') or 'Assignment',
+            'subject': a.get('subject') or 'General',
+            'due_date': due or '—',
+            'late': late_flag,
+            'status': status,
+            'my': my,
+            'submissions': subs,
+            'class_name': a.get('class_name') or '',
+        })
+
+    return render_template(
+        'ops_assignment_workflow.html',
+        role=role,
+        rows=rows,
+        home_url=_learning_home_url(),
+        desk_url=url_for('resources_assignments'),
+    )
+
+
+@app.route('/ops/report-cards')
+def ops_report_cards():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    role = session.get('role')
+    pick = (request.args.get('student_id') or '').strip()
+    students = []
+    student = None
+
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0})
+    else:
+        students = list(db.students.find(get_student_query() if role == 'teacher' else {}, {'_id': 0}))
+        if pick:
+            student = db.students.find_one({'id': pick}, {'_id': 0})
+        elif students:
+            student = students[0]
+
+    grades = []
+    attendance_pct = 0
+    pg_avg = 0
+    if student:
+        grades = list(db.grades.find({'student_id': student.get('id')}, {'_id': 0}))
+        totals = []
+        for g in grades:
+            total = float(g.get('ca_mark') or 0) + float(g.get('exam_mark') or 0)
+            g['total'] = total
+            g['pg'] = total
+            totals.append(total)
+        pg_avg = round(sum(totals) / len(totals), 1) if totals else float(student.get('performance') or 0)
+        attendance_pct = float(student.get('attendance') or 0)
+
+    school = (db.settings.find_one({}, {'_id': 0}) or {}).get('school_name') or 'Indus School'
+    period = session.get('academic_period') or academic_year_short()
+
+    return render_template(
+        'ops_report_cards.html',
+        role=role,
+        student=student,
+        students=students,
+        grades=grades,
+        attendance_pct=attendance_pct,
+        pg_avg=pg_avg,
+        school_name=school,
+        period=period,
+        home_url=_learning_home_url(),
+        generated_at=datetime.now().strftime('%Y-%m-%d %H:%M'),
+    )
+
+
+@app.route('/ops/mobile-pwa')
+def ops_mobile_pwa():
+    denied = _learning_require_login()
+    if denied:
+        return denied
+    return render_template(
+        'ops_mobile_pwa.html',
+        role=session.get('role'),
+        home_url=_learning_home_url(),
+    )
+
+
+@app.route('/manifest.webmanifest')
+def pwa_manifest():
+    return jsonify({
+        'name': 'Indus Portal LMS',
+        'short_name': 'Indus LMS',
+        'start_url': '/',
+        'display': 'standalone',
+        'background_color': '#eff6ff',
+        'theme_color': '#2563eb',
+        'description': 'Learning management system for students, teachers, and families.',
+        'icons': [
+            {'src': url_for('static', filename='images/logo.png'), 'sizes': '192x192', 'type': 'image/png'},
+            {'src': url_for('static', filename='images/logo.png'), 'sizes': '512x512', 'type': 'image/png'},
+        ],
+    }), 200, {'Content-Type': 'application/manifest+json'}
+
+
+@app.route('/sw.js')
+def pwa_service_worker():
+    js = """
+const CACHE = 'indus-lms-v1';
+const ASSETS = ['/', '/ops/mobile-pwa'];
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil(self.clients.claim());
+});
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      const fetched = fetch(event.request).then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(event.request, copy)).catch(() => {});
+        return res;
+      }).catch(() => cached);
+      return cached || fetched;
+    })
+  );
+});
+self.addEventListener('push', (event) => {
+  const data = event.data ? event.data.text() : 'Indus Portal update';
+  event.waitUntil(self.registration.showNotification('Indus Portal', { body: data, icon: '/static/images/logo.png' }));
+});
+"""
+    return Response(js, mimetype='application/javascript')
 
 
 if __name__ == '__main__':

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% block header_title %}Parent portal{% endblock %}
+
+{% block content %}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div class="flex items-start gap-3">
+            <a href="{{ home_url }}" class="mt-1 text-slate-400 hover:text-slate-700"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg></a>
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-sky-500">High impact</p>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Parent / family portal</h1>
+                <p class="text-sm text-slate-500 mt-1">Live attendance, marks, homework due, and one-tap messaging</p>
+            </div>
+        </div>
+        <a href="{{ messaging_url }}" class="inline-flex items-center gap-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-4 py-2.5">Open messaging</a>
+    </div>
+
+    {% if role != 'student' and students %}
+    <form method="GET" class="bg-white border border-slate-200 rounded-2xl px-4 py-3 flex flex-wrap items-end gap-3 shadow-sm">
+        <label class="min-w-[14rem] flex-1">
+            <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Focus student</span>
+            <select name="student_id" onchange="this.form.submit()" class="mt-1 w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                {% for s in students %}
+                <option value="{{ s.id }}" {% if student and student.id == s.id %}selected{% endif %}>{{ s.name }} · Grade {{ s.student_class or '—' }}</option>
+                {% endfor %}
+            </select>
+        </label>
+    </form>
+    {% endif %}
+
+    {% if student %}
+    <div class="grid grid-cols-2 xl:grid-cols-4 gap-3">
+        <div class="rounded-2xl border border-slate-200 bg-white px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Student</p>
+            <p class="mt-1 text-lg font-bold text-slate-900 truncate">{{ student.name | title }}</p>
+            <p class="text-xs text-slate-500">Grade {{ student.student_class or '—' }} {{ student.division or '' }}</p>
+        </div>
+        <div class="rounded-2xl border border-emerald-100 bg-emerald-50/60 px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-emerald-600">Attendance</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-emerald-700">{{ attendance_pct }}%</p>
+        </div>
+        <div class="rounded-2xl border border-amber-100 bg-amber-50/60 px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-amber-600">Subjects marked</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-amber-800">{{ marks|length }}</p>
+        </div>
+        <div class="rounded-2xl border border-rose-100 bg-rose-50/60 px-4 py-4">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-rose-600">Homework due</p>
+            <p class="mt-1 text-2xl font-bold tabular-nums text-rose-700">{{ homework|length }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-sm font-semibold text-slate-900">Live marks</h2></div>
+            <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {% for g in marks %}
+                <div class="px-5 py-3 flex justify-between gap-3">
+                    <p class="text-sm font-medium text-slate-800">{{ g.subject }}</p>
+                    <p class="text-sm font-semibold tabular-nums text-slate-900">{{ g.total }}</p>
+                </div>
+                {% else %}
+                <p class="px-5 py-10 text-center text-sm text-slate-400">No marks yet.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+            <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-sm font-semibold text-slate-900">Homework due</h2></div>
+            <div class="divide-y divide-slate-100 max-h-80 overflow-y-auto">
+                {% for a in homework %}
+                <div class="px-5 py-3">
+                    <p class="text-sm font-medium text-slate-800">{{ a.title }}</p>
+                    <p class="text-xs mt-0.5 {% if a.is_late %}text-rose-600{% else %}text-slate-400{% endif %}">Due {{ a.due_date or '—' }}{% if a.is_late %} · late{% endif %}{% if a.my_status %} · {{ a.my_status }}{% endif %}</p>
+                </div>
+                {% else %}
+                <p class="px-5 py-10 text-center text-sm text-slate-400">No homework listed.</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="space-y-4">
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                <div class="px-5 py-4 border-b border-slate-100"><h2 class="text-sm font-semibold text-slate-900">Recent family alerts</h2></div>
+                <ul class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                    {% for a in alerts %}
+                    <li class="px-5 py-3 text-sm text-slate-700">{{ a.message }}<span class="block text-[11px] text-slate-400 mt-1">{{ a.timestamp }}</span></li>
+                    {% else %}
+                    <li class="px-5 py-8 text-center text-sm text-slate-400">No alerts yet.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <form method="POST" class="bg-gradient-to-br from-sky-50 to-indigo-50 border border-sky-100 rounded-2xl p-5 space-y-3">
+                <p class="text-sm font-semibold text-slate-900">One-tap message</p>
+                {% if role == 'student' %}
+                <input name="subject" required placeholder="Subject" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white">
+                <textarea name="message" required rows="3" placeholder="Message teachers / school…" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white resize-none"></textarea>
+                {% else %}
+                <input type="hidden" name="student_id" value="{{ student.id }}">
+                <textarea name="message" required rows="3" placeholder="Send alert to family of {{ student.name | title }}…" class="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white resize-none"></textarea>
+                {% endif %}
+                <button type="submit" class="w-full rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold py-2.5">Send</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center text-slate-400">No student selected.</div>
+    {% endif %}
+</div>
+{% endblock %}
