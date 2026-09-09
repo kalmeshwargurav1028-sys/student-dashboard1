@@ -1765,7 +1765,8 @@ def dashboard():
         analytics=analytics,
         upcoming_assignments=upcoming_assignments,
         recent_activity=recent_activity,
-        teacher_mappings=teacher_mappings
+        teacher_mappings=teacher_mappings,
+        my_subjects=_teacher_my_subjects() if session.get('role') == 'teacher' else [],
     )
 
 @app.route('/school-announcements')
@@ -2496,6 +2497,27 @@ DEFAULT_CLASS_SUBJECTS = [
     'Computer Science', 'Physical Education', 'Art', 'Music'
 ]
 
+_SUBJECT_CANONICAL = {s.lower(): s for s in DEFAULT_CLASS_SUBJECTS}
+
+
+def _normalize_subject_name(name):
+    """Collapse casing variants (english / English) into one display name."""
+    raw = ' '.join(str(name or '').strip().split())
+    if not raw:
+        return ''
+    key = raw.lower()
+    if key in _SUBJECT_CANONICAL:
+        return _SUBJECT_CANONICAL[key]
+    # Title-case multi-word subjects while keeping short acronyms
+    parts = []
+    for w in raw.split(' '):
+        if w.isupper() and len(w) <= 4:
+            parts.append(w)
+        else:
+            parts.append(w[:1].upper() + w[1:].lower() if w else w)
+    return ' '.join(parts)
+
+
 # Visual accents for My Subjects cards (tone + icon key)
 _SUBJECT_VISUALS = [
     ('sky', 'book'), ('emerald', 'landmark'), ('orange', 'pen'), ('fuchsia', 'dance'),
@@ -2554,7 +2576,7 @@ def _student_my_subjects(student):
     subject_teachers = {}  # subject -> ordered unique teacher names
 
     def add_teacher(subject, teacher_name):
-        subject = str(subject or '').strip()
+        subject = _normalize_subject_name(subject)
         if not subject or subject.lower() in ('homeroom', 'class teacher'):
             return
         name = str(teacher_name or '').strip()
@@ -2609,12 +2631,103 @@ def _student_my_subjects(student):
     for idx, subject in enumerate(sorted(subject_teachers.keys(), key=lambda s: s.lower())):
         teachers = subject_teachers[subject]
         tone, icon = _subject_visual(subject, idx)
+        assignment_count = db.assignments.count_documents({
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+            **({'class_name': {'$in': class_vars}} if class_vars else {}),
+        }) if class_vars else db.assignments.count_documents({
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+        })
         cards.append({
             'name': subject,
+            'slug': subject,
             'teachers': teachers,
             'teachers_label': ', '.join(teachers) if teachers else 'Teacher to be assigned',
             'tone': tone,
             'icon': icon,
+            'assignment_count': assignment_count,
+            'href': url_for('my_subject_detail', subject=subject),
+        })
+    return cards
+
+
+def _teacher_my_subjects():
+    """Subjects the logged-in teacher teaches, with class coverage."""
+    tid = session.get('user_id')
+    subject_meta = {}
+    for m in db.teacher_mappings.find({'teacher_id': tid, 'type': 'subject'}):
+        subject = _normalize_subject_name(m.get('subject'))
+        if not subject:
+            continue
+        meta = subject_meta.setdefault(subject, {'classes': [], 'teachers': [session.get('username') or 'You']})
+        label = f"{m.get('grade') or ''}{m.get('section') or ''}".strip()
+        if label and label not in meta['classes']:
+            meta['classes'].append(label)
+    # Also subjects from assignments they created
+    for a in db.assignments.find({'$or': [{'teacher_id': tid}, {'created_by': session.get('username')}]}, {'subject': 1}):
+        subject = _normalize_subject_name(a.get('subject'))
+        if subject:
+            subject_meta.setdefault(subject, {'classes': [], 'teachers': [session.get('username') or 'You']})
+    if not subject_meta:
+        for name in DEFAULT_CLASS_SUBJECTS:
+            subject_meta[name] = {'classes': [], 'teachers': []}
+    cards = []
+    for idx, subject in enumerate(sorted(subject_meta.keys(), key=lambda s: s.lower())):
+        meta = subject_meta[subject]
+        tone, icon = _subject_visual(subject, idx)
+        teachers = [t for t in meta['teachers'] if t]
+        class_label = ', '.join(meta['classes']) if meta['classes'] else 'No class mapped yet'
+        count = db.assignments.count_documents({
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+            '$or': [{'teacher_id': tid}, {'created_by': session.get('username')}],
+        })
+        cards.append({
+            'name': subject,
+            'slug': subject,
+            'teachers': teachers,
+            'teachers_label': class_label if not teachers else (', '.join(teachers) + (f' · {class_label}' if meta['classes'] else '')),
+            'tone': tone,
+            'icon': icon,
+            'assignment_count': count,
+            'href': url_for('my_subject_detail', subject=subject),
+        })
+    return cards
+
+
+def _admin_my_subjects():
+    """School-wide subject directory for admin home."""
+    subject_teachers = {}
+    for m in db.teacher_mappings.find({'type': 'subject'}):
+        subject = _normalize_subject_name(m.get('subject'))
+        if not subject:
+            continue
+        name = str(m.get('teacher_name') or '').strip()
+        bucket = subject_teachers.setdefault(subject, [])
+        if name and name not in bucket:
+            bucket.append(name)
+    for a in db.assignments.find({}, {'subject': 1, 'teacher_name': 1, 'created_by': 1}):
+        subject = _normalize_subject_name(a.get('subject'))
+        if not subject:
+            continue
+        name = str(a.get('teacher_name') or a.get('created_by') or '').strip()
+        bucket = subject_teachers.setdefault(subject, [])
+        if name and name not in bucket:
+            bucket.append(name)
+    for name in DEFAULT_CLASS_SUBJECTS:
+        subject_teachers.setdefault(name, [])
+    cards = []
+    for idx, subject in enumerate(sorted(subject_teachers.keys(), key=lambda s: s.lower())):
+        teachers = subject_teachers[subject]
+        tone, icon = _subject_visual(subject, idx)
+        count = db.assignments.count_documents({'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'}})
+        cards.append({
+            'name': subject,
+            'slug': subject,
+            'teachers': teachers,
+            'teachers_label': ', '.join(teachers) if teachers else 'No teacher mapped',
+            'tone': tone,
+            'icon': icon,
+            'assignment_count': count,
+            'href': url_for('my_subject_detail', subject=subject),
         })
     return cards
 
@@ -3295,6 +3408,7 @@ def admin_dashboard():
         teacher_reports=teacher_reports,
         teacher_analytics=teacher_analytics,
         student_analytics=student_analytics,
+        my_subjects=_admin_my_subjects(),
     )
 
 @app.route('/staff_management')
@@ -4717,9 +4831,24 @@ def assignments():
                     filename = secure_filename(file.filename)
                     file_id = str(fs.put(file, filename=filename, content_type=file.content_type))
                     
+                subject = _normalize_subject_name(request.form.get('subject'))
+                if not subject:
+                    flash('Please choose a subject for this assignment.')
+                    return redirect(url_for('assignments', **{k: request.args[k] for k in ('grade', 'section', 'subject') if request.args.get(k)}))
+
+                teacher_name = session.get('username') or ''
+                if role == 'teacher':
+                    u = None
+                    try:
+                        u = db.users.find_one({'_id': ObjectId(session.get('user_id'))}, {'password': 0})
+                    except Exception:
+                        u = db.users.find_one({'id': session.get('user_id')}, {'password': 0})
+                    if u:
+                        teacher_name = _teacher_label(u) or teacher_name
+
                 db.assignments.insert_one({
                     'title': request.form.get('title'),
-                    'subject': request.form.get('subject'),
+                    'subject': subject,
                     'class_name': request.form.get('class_name'),
                     'gradebook_category': request.form.get('gradebook_category'),
                     'max_points': request.form.get('max_points'),
@@ -4729,9 +4858,10 @@ def assignments():
                     'filename': filename,
                     'created_by': session.get('username'),
                     'teacher_id': session.get('user_id'),
+                    'teacher_name': teacher_name,
                     'submissions': []
                 })
-                flash('Assignment created!')
+                flash(f'Assignment created for {subject}!')
             elif action == 'grade':
                 assignment_id = request.form.get('assignment_id')
                 student_id = request.form.get('student_id')
@@ -4811,7 +4941,26 @@ def assignments():
             'section': (request.args.get('section') or '').strip(),
             'subject': filter_subject,
         },
+        subject_options=_assignment_subject_options(),
     )
+
+
+def _assignment_subject_options():
+    """Subjects a teacher/admin can assign work for."""
+    role = session.get('role')
+    subjects = []
+    if role == 'teacher':
+        for m in db.teacher_mappings.find({'teacher_id': session.get('user_id'), 'type': 'subject'}):
+            name = _normalize_subject_name(m.get('subject'))
+            if name and name not in subjects:
+                subjects.append(name)
+    if not subjects:
+        subjects = list(DEFAULT_CLASS_SUBJECTS)
+    else:
+        for name in DEFAULT_CLASS_SUBJECTS:
+            if name not in subjects:
+                subjects.append(name)
+    return subjects
 
 @app.route('/daily_logs', methods=['GET', 'POST'])
 def daily_logs():
@@ -8433,6 +8582,124 @@ def _learning_require_login():
 # ---------------------------------------------------------------------------
 # Ops hubs — Assignment workflow & Report cards
 # ---------------------------------------------------------------------------
+@app.route('/my-subject/<path:subject>')
+def my_subject_detail(subject):
+    """Open a subject hub: teachers + assignments tied to that subject."""
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    role = session.get('role')
+    subject = _normalize_subject_name(subject)
+    if not subject:
+        flash('Subject not found.')
+        return redirect(url_for('student_home') if role == 'student' else url_for('dashboard'))
+
+    tone, icon = _subject_visual(subject, 0)
+    today = datetime.now().strftime('%Y-%m-%d')
+    teachers = []
+    assignments = []
+    home_url = url_for('student_home') if role == 'student' else (
+        url_for('admin_dashboard') if role == 'admin' else url_for('dashboard')
+    )
+
+    if role == 'student':
+        student = db.students.find_one(get_student_query({'id': session.get('user_id')}), {'_id': 0}) or {}
+        cards = _student_my_subjects(student)
+        card = next((c for c in cards if c['name'].lower() == subject.lower()), None)
+        teachers = (card or {}).get('teachers') or []
+        class_vars = list({
+            *(get_class_variations(student.get('student_class')) or []),
+            student.get('student_class'),
+            _grade_number(student.get('student_class')),
+        } - {None, ''})
+        query = {
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+        }
+        if class_vars:
+            query['$or'] = [
+                {'class_name': {'$in': class_vars}},
+                {'class': {'$in': class_vars}},
+            ]
+        assignments = list(db.assignments.find(query).sort('due_date', 1).limit(40))
+        sid = session.get('user_id')
+        for a in assignments:
+            a['id'] = str(a.get('_id'))
+            due = str(a.get('due_date') or '')[:10]
+            a['due_date'] = due or '—'
+            a['is_late'] = bool(due and due < today)
+            my = next((s for s in (a.get('submissions') or []) if s.get('student_id') == sid), None)
+            if my and my.get('grade') not in (None, ''):
+                a['my_status'] = 'returned'
+            elif my:
+                a['my_status'] = 'submitted'
+            elif a['is_late']:
+                a['my_status'] = 'late'
+            else:
+                a['my_status'] = 'assigned'
+            a['teacher_display'] = a.get('teacher_name') or a.get('created_by') or 'Teacher'
+    elif role == 'teacher':
+        for m in db.teacher_mappings.find({
+            'teacher_id': session.get('user_id'),
+            'type': 'subject',
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+        }):
+            name = m.get('teacher_name') or session.get('username')
+            if name and name not in teachers:
+                teachers.append(name)
+        if not teachers:
+            teachers = [session.get('username') or 'You']
+        assignments = list(db.assignments.find({
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+            '$or': [{'teacher_id': session.get('user_id')}, {'created_by': session.get('username')}],
+        }).sort('due_date', 1).limit(50))
+        for a in assignments:
+            a['id'] = str(a.get('_id'))
+            due = str(a.get('due_date') or '')[:10]
+            a['due_date'] = due or '—'
+            a['is_late'] = bool(due and due < today)
+            subs = a.get('submissions') or []
+            graded = sum(1 for s in subs if s.get('grade') not in (None, ''))
+            a['my_status'] = f'{len(subs)} submitted · {graded} graded'
+            a['teacher_display'] = a.get('teacher_name') or a.get('created_by') or 'You'
+    else:
+        for m in db.teacher_mappings.find({
+            'type': 'subject',
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+        }):
+            name = str(m.get('teacher_name') or '').strip()
+            if name and name not in teachers:
+                teachers.append(name)
+        assignments = list(db.assignments.find({
+            'subject': {'$regex': f'^{re.escape(subject)}$', '$options': 'i'},
+        }).sort('due_date', 1).limit(60))
+        for a in assignments:
+            a['id'] = str(a.get('_id'))
+            due = str(a.get('due_date') or '')[:10]
+            a['due_date'] = due or '—'
+            a['is_late'] = bool(due and due < today)
+            subs = a.get('submissions') or []
+            graded = sum(1 for s in subs if s.get('grade') not in (None, ''))
+            a['my_status'] = f'{len(subs)} submitted · {graded} graded'
+            a['teacher_display'] = a.get('teacher_name') or a.get('created_by') or 'Staff'
+
+    create_url = None
+    if role in ('teacher', 'admin'):
+        create_url = url_for('assignments', subject=subject)
+
+    return render_template(
+        'my_subject_detail.html',
+        role=role,
+        subject=subject,
+        tone=tone,
+        icon=icon,
+        teachers=teachers,
+        teachers_label=', '.join(teachers) if teachers else 'Teacher to be assigned',
+        assignments=assignments,
+        home_url=home_url + '#my-subjects',
+        workflow_url=url_for('ops_assignment_workflow', subject=subject),
+        create_url=create_url,
+    )
+
+
 @app.route('/ops/assignment-workflow', methods=['GET', 'POST'])
 def ops_assignment_workflow():
     denied = _learning_require_login()
@@ -8440,6 +8707,7 @@ def ops_assignment_workflow():
         return denied
     role = session.get('role')
     today = datetime.now().strftime('%Y-%m-%d')
+    filter_subject = _normalize_subject_name(request.values.get('subject') or '')
 
     if request.method == 'POST' and role == 'student':
         aid = request.form.get('assignment_id')
@@ -8477,7 +8745,7 @@ def ops_assignment_workflow():
                 }},
             )
             flash('Assignment submitted.')
-        return redirect(url_for('ops_assignment_workflow'))
+        return redirect(url_for('ops_assignment_workflow', subject=filter_subject or None))
 
     if request.method == 'POST' and role in ('teacher', 'admin'):
         aid = request.form.get('assignment_id')
@@ -8494,23 +8762,31 @@ def ops_assignment_workflow():
                 }},
             )
             flash('Submission graded and returned.')
-        return redirect(url_for('ops_assignment_workflow'))
+        return redirect(url_for('ops_assignment_workflow', subject=filter_subject or None))
 
     if role == 'student':
         student = db.students.find_one(get_student_query({'id': session.get('user_id')})) or {}
         query = {}
         if student.get('student_class'):
             query['class_name'] = {'$in': get_class_variations(student.get('student_class'))}
+        if filter_subject:
+            query['subject'] = {'$regex': f'^{re.escape(filter_subject)}$', '$options': 'i'}
         assignments = list(db.assignments.find(query).sort('due_date', -1).limit(40))
         sid = session.get('user_id')
     elif role == 'teacher':
-        assignments = list(db.assignments.find({'teacher_id': session.get('user_id')}).sort('due_date', -1).limit(40))
-        if not assignments:
+        query = {'teacher_id': session.get('user_id')}
+        if filter_subject:
+            query['subject'] = {'$regex': f'^{re.escape(filter_subject)}$', '$options': 'i'}
+        assignments = list(db.assignments.find(query).sort('due_date', -1).limit(40))
+        if not assignments and not filter_subject:
             assignments = list(db.assignments.find({}).sort('due_date', -1).limit(40))
         sid = None
         student = None
     else:
-        assignments = list(db.assignments.find({}).sort('due_date', -1).limit(50))
+        query = {}
+        if filter_subject:
+            query['subject'] = {'$regex': f'^{re.escape(filter_subject)}$', '$options': 'i'}
+        assignments = list(db.assignments.find(query).sort('due_date', -1).limit(50))
         sid = None
         student = None
 
@@ -8538,7 +8814,7 @@ def ops_assignment_workflow():
         rows.append({
             'id': str(a.get('_id')),
             'title': a.get('title') or 'Assignment',
-            'subject': a.get('subject') or 'General',
+            'subject': _normalize_subject_name(a.get('subject')) or (a.get('subject') or 'General'),
             'due_date': due or '—',
             'late': late_flag,
             'status': status,
@@ -8551,6 +8827,7 @@ def ops_assignment_workflow():
         'ops_assignment_workflow.html',
         role=role,
         rows=rows,
+        filter_subject=filter_subject,
         home_url=_learning_home_url(),
         desk_url=url_for('resources_assignments'),
     )

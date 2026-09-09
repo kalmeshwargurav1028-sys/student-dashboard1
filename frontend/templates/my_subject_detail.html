@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block header_title %}{{ subject }}{% endblock %}
+
+{% block content %}
+{% set icon_wrap =
+    'bg-sky-500' if tone == 'sky' else
+    'bg-emerald-500' if tone == 'emerald' else
+    'bg-orange-500' if tone == 'orange' else
+    'bg-fuchsia-500' if tone == 'fuchsia' else
+    'bg-cyan-500' if tone == 'cyan' else
+    'bg-violet-500' if tone == 'violet' else
+    'bg-green-500' if tone == 'green' else
+    'bg-blue-500' if tone == 'blue' else
+    'bg-teal-500' if tone == 'teal' else
+    'bg-amber-500' if tone == 'amber' else
+    'bg-rose-500' if tone == 'rose' else
+    'bg-indigo-500' if tone == 'indigo' else
+    'bg-sky-500'
+%}
+<div class="w-full py-6 px-4 sm:px-6 lg:px-10 space-y-5">
+    <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div class="flex items-start gap-3 min-w-0">
+            <a href="{{ home_url }}" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            </a>
+            <span class="h-12 w-12 rounded-2xl {{ icon_wrap }} text-white flex items-center justify-center shrink-0 shadow-sm">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+            </span>
+            <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wider text-sky-500">Subject</p>
+                <h1 class="text-2xl font-bold text-slate-900 tracking-tight truncate">{{ subject }}</h1>
+                <p class="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
+                    <svg class="h-4 w-4 text-slate-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    {{ teachers_label }}
+                </p>
+            </div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ workflow_url }}" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5">Assignment workflow</a>
+            {% if create_url %}
+            <a href="{{ create_url }}" class="rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-4 py-2.5">New {{ subject }} assignment</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="flex items-center justify-between gap-3 mb-4">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500">Assignments for {{ subject }}</h2>
+            <span class="text-xs font-semibold text-slate-400">{{ assignments|length }} item{% if assignments|length != 1 %}s{% endif %}</span>
+        </div>
+
+        {% if assignments %}
+        <div class="space-y-3">
+            {% for a in assignments %}
+            <article class="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3.5 flex flex-col sm:flex-row sm:items-center gap-3">
+                <div class="min-w-0 flex-1">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h3 class="text-sm font-semibold text-slate-900">{{ a.title or 'Assignment' }}</h3>
+                        {% if a.is_late %}<span class="text-[10px] font-bold uppercase tracking-wide bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md">Late</span>{% endif %}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">
+                        Due {{ a.due_date }}
+                        {% if a.class_name %} · Class {{ a.class_name }}{% endif %}
+                        · {{ a.teacher_display }}
+                    </p>
+                    <p class="text-xs font-semibold text-slate-600 mt-1">{{ a.my_status }}</p>
+                </div>
+                <a href="{{ url_for('ops_assignment_workflow', subject=subject) }}"
+                   class="shrink-0 text-xs font-semibold text-violet-700 hover:text-violet-900">Open in workflow →</a>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-14 text-center">
+            <p class="text-sm font-semibold text-slate-700">No assignments for {{ subject }} yet</p>
+            <p class="text-xs text-slate-400 mt-1">
+                {% if role in ['teacher', 'admin'] %}
+                Create one and it will stay linked to this subject.
+                {% else %}
+                When your teacher posts work for {{ subject }}, it will appear here.
+                {% endif %}
+            </p>
+            {% if create_url %}
+            <a href="{{ create_url }}" class="inline-flex mt-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold px-4 py-2.5">Create {{ subject }} assignment</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -146,14 +146,17 @@
                         <div>
                             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Subject <span class="text-red-500">*</span></label>
                             <select name="subject" required class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm appearance-none cursor-pointer">
-                                {% set selected_subject = request.args.get('subject') or 'Mathematics' %}
-                                {% for sub in ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science'] %}
+                                {% set selected_subject = request.args.get('subject') or '' %}
+                                {% set opts = subject_options if subject_options is defined and subject_options else ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science'] %}
+                                <option value="">— Select subject —</option>
+                                {% for sub in opts %}
                                 <option value="{{ sub }}" {% if selected_subject == sub %}selected{% endif %}>{{ sub }}</option>
                                 {% endfor %}
-                                {% if selected_subject not in ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Computer Science'] %}
+                                {% if selected_subject and selected_subject not in opts %}
                                 <option value="{{ selected_subject }}" selected>{{ selected_subject }}</option>
                                 {% endif %}
                             </select>
+                            <p class="mt-1.5 text-[11px] text-gray-400">Assignments are linked to this subject so students see them under My subjects.</p>
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Gradebook Category <span class="text-red-500">*</span></label>

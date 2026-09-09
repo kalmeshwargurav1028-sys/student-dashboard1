@@ -9,7 +9,7 @@
             <div>
                 <p class="text-xs font-semibold uppercase tracking-wider text-violet-500">High impact</p>
                 <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Assignment workflow</h1>
-                <p class="text-sm text-slate-500 mt-1">Submit → upload → grade → return with comments · late flags</p>
+                <p class="text-sm text-slate-500 mt-1">Submit → upload → grade → return with comments · late flags{% if filter_subject %} · filtered to <span class="font-semibold text-violet-700">{{ filter_subject }}</span>{% endif %}</p>
             </div>
         </div>
         <a href="{{ desk_url }}" class="rounded-xl bg-violet-600 hover:bg-violet-700 text-white text-sm font-semibold px-4 py-2.5">Assignments desk</a>
