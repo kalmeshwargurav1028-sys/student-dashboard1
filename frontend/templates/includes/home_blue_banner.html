@@ -1,4 +1,4 @@
-{# Shared home blue banner — welcome only; year lives in the header. #}
+{# Shared home blue banner — same pattern for student, teacher, admin. #}
 {% if session.get('role') == 'student' and student is defined and student.get('name') %}
   {% set welcome_name = student.name %}
 {% elif session.get('username') %}
@@ -8,30 +8,23 @@
 {% endif %}
 {% if session.get('role') == 'admin' %}
   {% set welcome_role = 'Super Admin' %}
+  {% set welcome_tagline = 'ready to lead something new?' %}
 {% elif session.get('role') == 'teacher' %}
   {% set welcome_role = 'Teacher' %}
+  {% set welcome_tagline = 'ready to teach something new?' %}
 {% else %}
   {% set welcome_role = 'Student' %}
+  {% set welcome_tagline = 'ready to learn something new?' %}
 {% endif %}
-<div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-4 py-4 sm:px-6 sm:py-5 shadow-md text-white mb-6 w-full">
+<div class="relative bg-gradient-to-r from-[#1e5a97] via-[#2563eb] to-[#3b82f6] rounded-2xl px-5 py-5 sm:px-7 sm:py-6 shadow-md text-white mb-6 w-full">
     <div class="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
         <div class="absolute -right-8 -bottom-10 w-40 h-40 bg-white/10 rounded-full blur-2xl"></div>
         <div class="absolute -left-6 -top-8 w-28 h-28 bg-sky-300/20 rounded-full blur-xl"></div>
     </div>
-    <div class="relative z-10 flex items-center gap-3 sm:gap-4 min-w-0">
-        <div class="banner-avatar shrink-0 h-12 w-12 sm:h-14 sm:w-14 rounded-xl bg-white p-0.5">
-            {% if session.get('role') == 'admin' %}
-            <img src="{{ url_for('static', filename='images/admin-banner-cartoon.png') }}" alt="" class="h-full w-full object-contain rounded-lg">
-            {% elif session.get('role') == 'student' %}
-            <img src="{{ url_for('static', filename='images/student-banner-study.png') }}" alt="" class="h-full w-full object-contain rounded-lg">
-            {% else %}
-            <img src="{{ url_for('static', filename='images/banner-emblem.png') }}" alt="" class="h-full w-full object-contain rounded-lg">
-            {% endif %}
-        </div>
-        <div class="min-w-0">
-            <p class="text-xs sm:text-sm text-blue-100 font-medium">Welcome back</p>
-            <h1 class="text-lg sm:text-2xl font-semibold tracking-wide truncate">{{ welcome_name | title }}</h1>
-            <p class="text-xs sm:text-sm text-blue-100 mt-0.5">{{ welcome_role }}</p>
-        </div>
+    <div class="relative z-10 min-w-0">
+        <p class="text-sm text-blue-100/95 font-medium">Welcome back</p>
+        <h1 class="mt-0.5 text-2xl sm:text-3xl font-semibold tracking-wide truncate">{{ welcome_name | title }}</h1>
+        <p class="mt-1 text-sm sm:text-base text-blue-50/95">{{ welcome_tagline }}</p>
+        <p class="mt-2 text-xs sm:text-sm font-medium text-blue-100">{{ welcome_role }} - {{ academic_year_short }}</p>
     </div>
 </div>
