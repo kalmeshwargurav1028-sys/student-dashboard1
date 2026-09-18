@@ -3,6 +3,7 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/freddie_chart.js') }}"></script>
 <style>
 .freddie-shell {
   background:
@@ -81,45 +82,10 @@
 
 <script>
 (function () {
-  let chart;
-  const colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#6366f1', '#14b8a6', '#f59e0b', '#f43f5e'];
-
   function setStatus(msg, isError) {
     const el = document.getElementById('freddieStatus');
     el.textContent = msg || '';
     el.className = 'text-xs ' + (isError ? 'text-red-500' : 'text-slate-400');
-  }
-
-  function renderChart(payload) {
-    const ctx = document.getElementById('freddieChart').getContext('2d');
-    const type = payload.type || 'bar';
-    const labels = payload.labels || [];
-    const values = payload.values || [];
-    document.getElementById('freddieChartTitle').textContent = payload.title || 'Chart box';
-    if (chart) chart.destroy();
-    chart = new Chart(ctx, {
-      type: type,
-      data: {
-        labels: labels,
-        datasets: [{
-          label: payload.title || 'Value',
-          data: values,
-          backgroundColor: labels.map((_, i) => colors[i % colors.length]),
-          borderColor: '#0369a1',
-          borderWidth: type === 'line' ? 2 : 0,
-          tension: 0.3,
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: type === 'doughnut' || type === 'pie' } },
-        scales: (type === 'doughnut' || type === 'pie') ? {} : {
-          y: { beginAtZero: true, ticks: { precision: 0 } },
-          x: { ticks: { maxRotation: 45, minRotation: 0 } }
-        }
-      }
-    });
   }
 
   document.querySelectorAll('.freddie-chip').forEach(function (btn) {
@@ -183,7 +149,7 @@
         chip.textContent = (s.source || 'source') + (s.score != null ? ' · ' + s.score : '');
         sources.appendChild(chip);
       });
-      renderChart(data.chart || {});
+      if (typeof renderFreddieChart === 'function') renderFreddieChart('freddieChart', data.chart || {});
       setStatus('Done.');
     } catch (err) {
       setStatus('Network error while asking Freddie', true);
