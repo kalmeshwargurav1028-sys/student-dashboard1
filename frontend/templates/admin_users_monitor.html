@@ -124,30 +124,52 @@
                         <td class="border-b border-r border-slate-100 px-4 py-3 text-slate-600">{{ person.department or '—' }}</td>
                         <td class="border-b border-r border-slate-100 px-4 py-3 text-slate-500 whitespace-nowrap tabular-nums">{{ person.last_active }}</td>
                         <td class="border-b border-slate-100 px-4 py-3 text-right">
-                            <div class="inline-flex items-center justify-end gap-1.5">
+                            <div class="relative inline-flex justify-end" data-user-menu>
                                 <button type="button"
-                                        class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200"
-                                        title="Change / revert password"
-                                        data-name="{{ person.name }}"
-                                        data-email="{{ person.email }}"
-                                        data-can-revert="{{ '1' if person.can_revert_password else '0' }}"
-                                        data-set-action="{{ url_for('utility_user_set_password', kind=person.kind, user_id=person.id) }}"
-                                        data-revert-action="{{ url_for('utility_user_revert_password', kind=person.kind, user_id=person.id) }}"
-                                        onclick="openPasswordUser(this)">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                        class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-800"
+                                        title="More actions"
+                                        aria-haspopup="true"
+                                        aria-expanded="false"
+                                        onclick="toggleUserMenu(this)">
+                                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                        <circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/>
+                                    </svg>
                                 </button>
-                                <a href="{{ url_for('utility_user_edit', kind=person.kind, user_id=person.id, page=page) }}" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-sky-50 hover:text-sky-700 hover:border-sky-200" title="Edit">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M4 20h4l10.5-10.5a2.5 2.5 0 00-3.536-3.536L4 16.464V20z"/></svg>
-                                </a>
-                                {% if person.can_delete %}
-                                <button type="button" class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-200 bg-white text-slate-500 hover:bg-red-50 hover:text-red-600 hover:border-red-200" title="Delete" data-name="{{ person.name }}" data-email="{{ person.email }}" data-role="{{ person.role }}" data-action="{{ url_for('utility_user_delete', kind=person.kind, user_id=person.id) }}" onclick="openDeleteUser(this)">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
-                                </button>
-                                {% else %}
-                                <span class="inline-flex items-center justify-center h-8 w-8 rounded-md border border-slate-100 bg-slate-50 text-slate-300 cursor-not-allowed" title="You cannot delete your own account">
-                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
-                                </span>
-                                {% endif %}
+                                <div data-user-dropdown class="hidden absolute right-0 top-full mt-1.5 w-48 rounded-xl border border-slate-200 bg-white py-1 shadow-lg z-30 text-left">
+                                    <a href="{{ url_for('utility_user_edit', kind=person.kind, user_id=person.id, page=page) }}"
+                                       class="flex items-center gap-2 px-3.5 py-2 text-sm text-slate-700 hover:bg-sky-50 hover:text-sky-800">
+                                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                                        View detail
+                                    </a>
+                                    <button type="button"
+                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-sm text-slate-700 hover:bg-amber-50 hover:text-amber-800"
+                                            data-name="{{ person.name }}"
+                                            data-email="{{ person.email }}"
+                                            data-can-revert="{{ '1' if person.can_revert_password else '0' }}"
+                                            data-set-action="{{ url_for('utility_user_set_password', kind=person.kind, user_id=person.id) }}"
+                                            data-revert-action="{{ url_for('utility_user_revert_password', kind=person.kind, user_id=person.id) }}"
+                                            onclick="closeAllUserMenus(); openPasswordUser(this)">
+                                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+                                        Change password
+                                    </button>
+                                    {% if person.can_delete %}
+                                    <button type="button"
+                                            class="w-full flex items-center gap-2 px-3.5 py-2 text-sm text-red-600 hover:bg-red-50"
+                                            data-name="{{ person.name }}"
+                                            data-email="{{ person.email }}"
+                                            data-role="{{ person.role }}"
+                                            data-action="{{ url_for('utility_user_delete', kind=person.kind, user_id=person.id) }}"
+                                            onclick="closeAllUserMenus(); openDeleteUser(this)">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
+                                        Delete user
+                                    </button>
+                                    {% else %}
+                                    <span class="flex items-center gap-2 px-3.5 py-2 text-sm text-slate-300 cursor-not-allowed" title="You cannot delete your own account">
+                                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3m-9 0h10"/></svg>
+                                        Delete user
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </td>
                     </tr>
@@ -260,6 +282,26 @@
 </div>
 
 <script>
+function closeAllUserMenus() {
+    document.querySelectorAll('[data-user-dropdown]').forEach(function (el) {
+        el.classList.add('hidden');
+    });
+    document.querySelectorAll('[data-user-menu] button[aria-expanded]').forEach(function (btn) {
+        btn.setAttribute('aria-expanded', 'false');
+    });
+}
+function toggleUserMenu(btn) {
+    var menu = btn.closest('[data-user-menu]');
+    if (!menu) return;
+    var dropdown = menu.querySelector('[data-user-dropdown]');
+    if (!dropdown) return;
+    var willOpen = dropdown.classList.contains('hidden');
+    closeAllUserMenus();
+    if (willOpen) {
+        dropdown.classList.remove('hidden');
+        btn.setAttribute('aria-expanded', 'true');
+    }
+}
 function openPasswordUser(btn) {
     var modal = document.getElementById('passwordUserModal');
     var setForm = document.getElementById('passwordSetForm');
@@ -294,10 +336,14 @@ function openDeleteUser(btn) {
 function closeDeleteUser() {
     document.getElementById('deleteUserModal').classList.add('hidden');
 }
+document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-user-menu]')) closeAllUserMenus();
+});
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         closeDeleteUser();
         closePasswordUser();
+        closeAllUserMenus();
     }
 });
 </script>

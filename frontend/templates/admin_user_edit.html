@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block header_title %}Edit User{% endblock %}
+{% block header_title %}User Detail{% endblock %}
 
 {% block content %}
 <div class="w-full py-8 px-4 sm:px-8 lg:px-10">
@@ -21,7 +21,7 @@
         {% endwith %}
 
         <div class="bg-white border border-slate-200 rounded-lg p-6 sm:p-8">
-            <h1 class="text-lg font-semibold text-slate-900">Edit user</h1>
+            <h1 class="text-lg font-semibold text-slate-900">User detail</h1>
             <p class="text-sm text-slate-500 mt-1">{{ person.role }} · {{ person.email }}</p>
 
             <form method="POST" class="space-y-5 mt-6">
