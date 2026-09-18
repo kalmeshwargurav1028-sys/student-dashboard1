@@ -9333,6 +9333,70 @@ def ops_report_cards():
     )
 
 
+# ---------------------------------------------------------------------------
+# Freddie — RAG chart box (ingest → embed → retrieve + table tools)
+# ---------------------------------------------------------------------------
+
+@app.route('/freddie')
+def freddie_chart_box():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    role = session.get('role') or 'student'
+    home = url_for('admin_dashboard') if role == 'admin' else (
+        url_for('student_home') if role == 'student' else url_for('dashboard')
+    )
+    from backend.freddie import CHUNK_COLLECTION
+    indexed = 0
+    try:
+        indexed = db[CHUNK_COLLECTION].count_documents({})
+    except Exception:
+        pass
+    return render_template(
+        'freddie.html',
+        role=role,
+        home=home,
+        indexed_chunks=indexed,
+        academic_year_short=academic_year_short(),
+    )
+
+
+@app.route('/api/freddie/ingest', methods=['POST'])
+def freddie_ingest():
+    if not session.get('logged_in'):
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+    role = session.get('role') or 'student'
+    user_id = session.get('user_id') if role == 'student' else None
+    client, _ = configure_gemini()
+    if not client:
+        return jsonify({'ok': False, 'error': 'Gemini API key is not configured. Add GEMINI_API_KEY to .env'}), 400
+    from backend.freddie import ingest_and_index
+    result = ingest_and_index(db, client, role=role, user_id=user_id, replace=True)
+    if result.get('ok'):
+        log_notification(
+            'Freddie indexed data',
+            f"{session.get('username') or role} refreshed Freddie with {result.get('chunks', 0)} chunks.",
+            type='info',
+            role_target='admin',
+        )
+    return jsonify(result)
+
+
+@app.route('/api/freddie/ask', methods=['POST'])
+def freddie_ask():
+    if not session.get('logged_in'):
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
+    payload = request.get_json(silent=True) or {}
+    question = (payload.get('question') or request.form.get('question') or '').strip()
+    if not question:
+        return jsonify({'ok': False, 'error': 'Ask a question first.'}), 400
+    role = session.get('role') or 'student'
+    user_id = session.get('user_id') if role == 'student' else None
+    client, _ = configure_gemini()
+    from backend.freddie import answer_with_freddie
+    result = answer_with_freddie(db, client, question, role=role, user_id=user_id)
+    status = 200 if result.get('ok') else 400
+    return jsonify(result), status
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block header_title %}Freddie{% endblock %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.freddie-shell {
+  background:
+    radial-gradient(ellipse at top right, rgba(56,189,248,.18), transparent 45%),
+    radial-gradient(ellipse at bottom left, rgba(99,102,241,.12), transparent 40%),
+    linear-gradient(180deg, #f8fafc 0%, #eff6ff 100%);
+}
+.freddie-card { animation: freddie-rise .45s ease both; }
+@keyframes freddie-rise {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .freddie-card { animation: none !important; }
+}
+</style>
+
+<div class="freddie-shell w-full min-h-full py-6 px-4 sm:px-6 lg:px-10">
+  <div class="max-w-6xl mx-auto space-y-5">
+    <div class="flex items-start justify-between gap-4">
+      <div class="flex items-start gap-3 min-w-0">
+        <a href="{{ home }}" class="mt-1 text-slate-400 hover:text-slate-700 shrink-0" title="Back">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+        </a>
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-wider text-sky-600">AI chart box</p>
+          <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">Freddie</h1>
+          <p class="text-sm text-slate-500 mt-1">Ask in plain language. Freddie uses RAG + table tools on portal data for {{ academic_year_short }}.</p>
+        </div>
+      </div>
+      <button type="button" id="freddieIngestBtn" class="shrink-0 inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-white hover:bg-sky-50 text-sky-800 text-sm font-semibold px-3.5 py-2.5 shadow-sm">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        Refresh data
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <section class="freddie-card lg:col-span-2 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm space-y-4">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-900">Ask Freddie</h2>
+          <p class="text-xs text-slate-500 mt-0.5">Indexed chunks: <span id="freddieChunkCount" class="font-semibold tabular-nums text-slate-700">{{ indexed_chunks }}</span></p>
+        </div>
+        <form id="freddieAskForm" class="space-y-3">
+          <label class="block">
+            <span class="sr-only">Question</span>
+            <textarea id="freddieQuestion" rows="4" required
+              class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-300 focus:bg-white"
+              placeholder="e.g. Show attendance breakdown this year"></textarea>
+          </label>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" data-q="Show attendance breakdown" class="freddie-chip text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-600 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-800">Attendance</button>
+            <button type="button" data-q="Compare subject averages" class="freddie-chip text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-600 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-800">Subjects</button>
+            <button type="button" data-q="Assignments by subject" class="freddie-chip text-xs rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-slate-600 hover:bg-sky-50 hover:border-sky-200 hover:text-sky-800">Assignments</button>
+          </div>
+          <button type="submit" id="freddieAskBtn" class="w-full rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-sm font-semibold py-2.5">Ask Freddie</button>
+        </form>
+        <p id="freddieStatus" class="text-xs text-slate-400">Uses embeddings, vector search, and live table tools.</p>
+      </section>
+
+      <section class="freddie-card lg:col-span-3 rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-sm space-y-4">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="freddieChartTitle" class="text-sm font-semibold text-slate-900">Chart box</h2>
+          <span id="freddieTools" class="text-[11px] text-slate-400 truncate"></span>
+        </div>
+        <div class="relative h-64 sm:h-72">
+          <canvas id="freddieChart"></canvas>
+        </div>
+        <div id="freddieAnswer" class="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700 leading-relaxed">
+          Ask a question to see Freddie’s answer and chart.
+        </div>
+        <div id="freddieSources" class="flex flex-wrap gap-1.5"></div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  let chart;
+  const colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#6366f1', '#14b8a6', '#f59e0b', '#f43f5e'];
+
+  function setStatus(msg, isError) {
+    const el = document.getElementById('freddieStatus');
+    el.textContent = msg || '';
+    el.className = 'text-xs ' + (isError ? 'text-red-500' : 'text-slate-400');
+  }
+
+  function renderChart(payload) {
+    const ctx = document.getElementById('freddieChart').getContext('2d');
+    const type = payload.type || 'bar';
+    const labels = payload.labels || [];
+    const values = payload.values || [];
+    document.getElementById('freddieChartTitle').textContent = payload.title || 'Chart box';
+    if (chart) chart.destroy();
+    chart = new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          label: payload.title || 'Value',
+          data: values,
+          backgroundColor: labels.map((_, i) => colors[i % colors.length]),
+          borderColor: '#0369a1',
+          borderWidth: type === 'line' ? 2 : 0,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: type === 'doughnut' || type === 'pie' } },
+        scales: (type === 'doughnut' || type === 'pie') ? {} : {
+          y: { beginAtZero: true, ticks: { precision: 0 } },
+          x: { ticks: { maxRotation: 45, minRotation: 0 } }
+        }
+      }
+    });
+  }
+
+  document.querySelectorAll('.freddie-chip').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('freddieQuestion').value = btn.getAttribute('data-q') || '';
+    });
+  });
+
+  document.getElementById('freddieIngestBtn').addEventListener('click', async function () {
+    const btn = this;
+    btn.disabled = true;
+    setStatus('Ingesting + embedding portal data…');
+    try {
+      const res = await fetch('{{ url_for("freddie_ingest") }}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json' },
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setStatus(data.error || 'Ingest failed', true);
+        if (typeof showToast === 'function') showToast(data.error || 'Ingest failed', 'error');
+      } else {
+        document.getElementById('freddieChunkCount').textContent = data.chunks || 0;
+        setStatus('Indexed ' + (data.chunks || 0) + ' chunks (' + (data.embedded || 0) + ' embedded).');
+        if (typeof showToast === 'function') showToast('Freddie data refreshed');
+      }
+    } catch (e) {
+      setStatus('Network error while ingesting', true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById('freddieAskForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const question = document.getElementById('freddieQuestion').value.trim();
+    if (!question) return;
+    const btn = document.getElementById('freddieAskBtn');
+    btn.disabled = true;
+    setStatus('Retrieving context + running table tools…');
+    try {
+      const res = await fetch('{{ url_for("freddie_ask") }}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ question: question }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setStatus(data.error || 'Ask failed', true);
+        return;
+      }
+      document.getElementById('freddieAnswer').textContent = data.answer || '';
+      document.getElementById('freddieTools').textContent = (data.tools_used || []).join(' · ');
+      const sources = document.getElementById('freddieSources');
+      sources.innerHTML = '';
+      (data.sources || []).forEach(function (s) {
+        const chip = document.createElement('span');
+        chip.className = 'inline-flex items-center rounded-md bg-sky-50 text-sky-700 ring-1 ring-sky-100 px-2 py-0.5 text-[11px] font-medium';
+        chip.textContent = (s.source || 'source') + (s.score != null ? ' · ' + s.score : '');
+        sources.appendChild(chip);
+      });
+      renderChart(data.chart || {});
+      setStatus('Done.');
+    } catch (err) {
+      setStatus('Network error while asking Freddie', true);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+})();
+</script>
+{% endblock %}
