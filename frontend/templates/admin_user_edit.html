@@ -64,12 +64,31 @@
         </div>
 
         <div class="bg-white border border-slate-200 rounded-lg p-6 sm:p-8">
-            <h2 class="text-base font-semibold text-slate-900">Password</h2>
-            <p class="text-sm text-slate-500 mt-1">Admin can set a new password for this user, or restore the previous one.</p>
+            <h2 class="text-base font-semibold text-slate-900">Login password</h2>
+            <p class="text-sm text-slate-500 mt-1">Set a temporary password for this user, then restore their old password when they no longer need it.</p>
+
+            {% if can_revert_password %}
+            <div class="mt-5 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div>
+                        <p class="text-sm font-semibold text-amber-900">Previous password is saved</p>
+                        <p class="text-sm text-amber-800/80 mt-0.5">Revert to let them log in with their old password again.</p>
+                    </div>
+                    <form method="POST" action="{{ url_for('utility_user_revert_password', kind=kind, user_id=user_id) }}">
+                        <input type="hidden" name="page" value="{{ page }}">
+                        <input type="hidden" name="next" value="{{ url_for('utility_user_edit', kind=kind, user_id=user_id, page=page) }}">
+                        <button type="submit" class="inline-flex items-center justify-center rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 font-semibold py-2.5 px-4 text-sm shadow-sm">
+                            Revert old password
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
 
             <form method="POST" action="{{ url_for('utility_user_set_password', kind=kind, user_id=user_id) }}" class="mt-5 space-y-4">
                 <input type="hidden" name="page" value="{{ page }}">
                 <input type="hidden" name="next" value="{{ url_for('utility_user_edit', kind=kind, user_id=user_id, page=page) }}">
+                <p class="text-sm font-medium text-slate-800">Set a new password</p>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label for="new_password" class="block text-sm font-medium text-slate-700 mb-1">New password</label>
@@ -83,18 +102,12 @@
                     </div>
                 </div>
                 <button type="submit" class="inline-flex items-center justify-center bg-sky-600 hover:bg-sky-700 text-white font-medium py-2.5 px-4 rounded-md text-sm">Save new password</button>
+                {% if not can_revert_password %}
+                <p class="text-xs text-slate-400">After you save once, <span class="font-medium text-slate-500">Revert old password</span> will appear above so you can restore their previous login.</p>
+                {% else %}
+                <p class="text-xs text-slate-400">Saving again replaces the current password and keeps the last one available for revert.</p>
+                {% endif %}
             </form>
-
-            {% if can_revert_password %}
-            <form method="POST" action="{{ url_for('utility_user_revert_password', kind=kind, user_id=user_id) }}" class="mt-5 pt-5 border-t border-slate-100">
-                <input type="hidden" name="page" value="{{ page }}">
-                <input type="hidden" name="next" value="{{ url_for('utility_user_edit', kind=kind, user_id=user_id, page=page) }}">
-                <p class="text-sm text-slate-600 mb-3">A previous password is saved. Use this if you need to undo the last change.</p>
-                <button type="submit" class="inline-flex items-center justify-center border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-800 font-medium py-2.5 px-4 rounded-md text-sm">Revert to previous password</button>
-            </form>
-            {% else %}
-            <p class="mt-5 pt-5 border-t border-slate-100 text-sm text-slate-400">No previous password saved yet. After you change once, revert will appear here.</p>
-            {% endif %}
         </div>
     </div>
 </div>
