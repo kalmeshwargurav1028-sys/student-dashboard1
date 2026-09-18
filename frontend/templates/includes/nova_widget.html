@@ -1,13 +1,32 @@
-{# Nova floating widget — opened from the right-side round button #}
+{# Nova floating widget — fixed bottom-right dock (outside page flex layout) #}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="{{ url_for('static', filename='js/nova_chart.js') }}"></script>
 <script src="{{ url_for('static', filename='js/nova_panel.js') }}"></script>
 <style>
+  /* Keep Nova glued to bottom-right — body is display:flex and would otherwise push it up */
+  #novaDock {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.5rem;
+    z-index: 95;
+    width: 3.5rem;
+    height: 3.5rem;
+    pointer-events: none;
+  }
+  #novaFab {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    pointer-events: auto;
+  }
   #novaPanel {
+    position: absolute;
+    right: 0;
+    bottom: calc(3.5rem + 0.75rem);
+    pointer-events: none;
     opacity: 0;
     visibility: hidden;
     transform: translateY(16px) scale(0.96);
-    pointer-events: none;
     transition: opacity .22s ease, transform .22s ease, visibility .22s;
   }
   #novaPanel.is-open {
@@ -33,13 +52,14 @@
   }
 </style>
 
+<div id="novaDock">
 <button type="button"
         id="novaFab"
         title="Ask Nova"
         aria-label="Open Nova"
         aria-expanded="false"
         aria-controls="novaPanel"
-        class="fixed bottom-6 right-5 z-[95] group relative h-14 w-14 overflow-hidden rounded-full bg-emerald-100 p-0 shadow-lg shadow-emerald-900/15 ring-4 ring-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 transition-all duration-200">
+        class="group relative h-14 w-14 overflow-hidden rounded-full bg-emerald-100 p-0 shadow-lg shadow-emerald-900/15 ring-4 ring-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 transition-all duration-200">
   <img src="{{ url_for('static', filename='images/nova-logo.png') }}"
        alt=""
        class="nova-fab-logo absolute inset-0 h-full w-full object-cover object-[center_18%] transition-opacity duration-200"
@@ -56,7 +76,7 @@
      role="dialog"
      aria-modal="true"
      aria-labelledby="novaPanelTitle"
-     class="fixed z-[94] bottom-[5.5rem] right-4 sm:right-5 w-[min(100vw-1.5rem,22.5rem)] sm:w-[24rem] max-h-[min(78vh,36rem)] flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
+     class="w-[min(100vw-1.5rem,22.5rem)] sm:w-[24rem] max-h-[min(78vh,36rem)] flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
   <header class="shrink-0 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-700 to-sky-600 text-white">
     <span class="h-9 w-9 rounded-full overflow-hidden ring-2 ring-white/40 shadow-sm shrink-0 bg-emerald-50">
       <img src="{{ url_for('static', filename='images/nova-logo.png') }}" alt="" class="h-full w-full object-cover object-[center_18%]" draggable="false">
@@ -117,4 +137,5 @@
       </button>
     </div>
   </form>
+</div>
 </div>
