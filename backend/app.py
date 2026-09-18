@@ -4246,6 +4246,61 @@ def _find_monitor_user(kind, user_id):
     return coll.find_one({'_id': user_id}) or coll.find_one({'email': user_id})
 
 
+def _monitor_person_detail(kind, user_id):
+    """Build editable person payload for Users Monitor detail drawer / edit page."""
+    if kind not in ('admin', 'staff', 'student'):
+        return None
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        return None
+    student = db.students.find_one({'id': doc.get('student_id')}) if kind == 'student' else {}
+    if kind == 'admin':
+        name = doc.get('name') or doc.get('email') or 'Admin'
+        person = {
+            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': doc.get('email', ''),
+            'role': 'Super Admin',
+            'department': doc.get('department') or '',
+        }
+    elif kind == 'staff':
+        name = doc.get('name') or f"{doc.get('first_name', '')} {doc.get('last_name', '')}".strip() or doc.get('email')
+        person = {
+            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
+            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
+            'email': doc.get('email', ''),
+            'role': (doc.get('custom_role') or doc.get('role') or 'teacher').replace('_', ' ').title(),
+            'department': doc.get('department') or '',
+        }
+    else:
+        name = (student or {}).get('name') or doc.get('email') or 'Student'
+        person = {
+            'first_name': name.split(' ')[0] if name else '',
+            'last_name': ' '.join(name.split(' ')[1:]) if name and ' ' in name else '',
+            'email': doc.get('email') or (student or {}).get('email') or '',
+            'role': 'Student',
+            'department': (student or {}).get('department') or (student or {}).get('student_class') or '',
+        }
+    return {
+        'kind': kind,
+        'user_id': str(doc.get('_id')),
+        'person': person,
+        'can_revert_password': bool(doc.get('previous_password')),
+        'doc': doc,
+    }
+
+
+def _monitor_detail_url(kind, user_id, page='1', role='all', q=''):
+    return url_for(
+        'utility_users_monitor',
+        page=page,
+        role=role or 'all',
+        q=q or None,
+        detail_kind=kind,
+        detail_id=user_id,
+    )
+
+
 @app.route('/admin/utility/users')
 def utility_users_monitor():
     if not _admin_required():
@@ -4281,6 +4336,13 @@ def utility_users_monitor():
     page = min(page, pages)
     start = (page - 1) * per_page
     page_people = people[start:start + per_page]
+
+    detail = None
+    detail_kind = (request.args.get('detail_kind') or '').strip().lower()
+    detail_id = (request.args.get('detail_id') or '').strip()
+    if detail_kind and detail_id:
+        detail = _monitor_person_detail(detail_kind, detail_id)
+
     return render_template(
         'admin_users_monitor.html',
         people=page_people,
@@ -4293,6 +4355,8 @@ def utility_users_monitor():
         role_filter=role_filter if role_filter in ('all', 'admin', 'staff', 'student') else 'all',
         q=request.args.get('q') or '',
         counts=counts,
+        detail=detail,
+        departments=UTILITY_DEPARTMENTS,
     )
 
 
@@ -4300,90 +4364,57 @@ def utility_users_monitor():
 def utility_user_edit(kind, user_id):
     if not _admin_required():
         return redirect(url_for('login'))
-    if kind not in ('admin', 'staff', 'student'):
-        flash('User not found.')
-        return redirect(url_for('utility_users_monitor'))
-    doc = _find_monitor_user(kind, user_id)
-    if not doc:
-        flash('User not found.')
-        return redirect(url_for('utility_users_monitor'))
-
     page = request.args.get('page') or request.form.get('page') or '1'
-    student = db.students.find_one({'id': doc.get('student_id')}) if kind == 'student' else {}
-    if kind == 'admin':
-        name = doc.get('name') or doc.get('email') or 'Admin'
-        person = {
-            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
-            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
-            'email': doc.get('email', ''),
-            'role': 'Super Admin',
-            'department': doc.get('department') or '',
-        }
-    elif kind == 'staff':
-        name = doc.get('name') or f"{doc.get('first_name', '')} {doc.get('last_name', '')}".strip() or doc.get('email')
-        person = {
-            'first_name': doc.get('first_name') or (name.split(' ')[0] if name else ''),
-            'last_name': doc.get('last_name') or (' '.join(name.split(' ')[1:]) if name and ' ' in name else ''),
-            'email': doc.get('email', ''),
-            'role': (doc.get('custom_role') or doc.get('role') or 'teacher').replace('_', ' ').title(),
-            'department': doc.get('department') or '',
-        }
-    else:
-        name = (student or {}).get('name') or doc.get('email') or 'Student'
-        person = {
-            'first_name': name.split(' ')[0] if name else '',
-            'last_name': ' '.join(name.split(' ')[1:]) if name and ' ' in name else '',
-            'email': doc.get('email') or (student or {}).get('email') or '',
-            'role': 'Student',
-            'department': (student or {}).get('department') or (student or {}).get('student_class') or '',
-        }
-
-    if request.method == 'POST':
-        first_name = (request.form.get('first_name') or '').strip()
-        last_name = (request.form.get('last_name') or '').strip()
-        email = (request.form.get('email') or '').strip().lower()
-        department = (request.form.get('department') or '').strip()
-        name = f'{first_name} {last_name}'.strip() or email.split('@')[0]
-        if not email or '@' not in email:
-            flash('Enter a valid email address.')
-            return redirect(url_for('utility_user_edit', kind=kind, user_id=user_id, page=page))
-        current_email = (doc.get('email') or '').strip().lower()
-        if email != current_email and _email_in_use(email):
-            flash(f'{email} is already registered.')
-            return redirect(url_for('utility_user_edit', kind=kind, user_id=user_id, page=page))
-        oid = doc.get('_id')
-        if kind == 'admin':
-            db.admins.update_one({'_id': oid}, {'$set': {
-                'first_name': first_name, 'last_name': last_name, 'name': name,
-                'email': email, 'department': department,
-            }})
-            if str(oid) == str(session.get('user_id')):
-                session['username'] = name
-                session['email'] = email
-                session.modified = True
-        elif kind == 'staff':
-            db.users.update_one({'_id': oid}, {'$set': {
-                'first_name': first_name, 'last_name': last_name, 'name': name,
-                'email': email, 'department': department,
-            }})
-        else:
-            db.student_users.update_one({'_id': oid}, {'$set': {'email': email}})
-            if doc.get('student_id'):
-                db.students.update_one({'id': doc.get('student_id')}, {'$set': {
-                    'name': name, 'email': email, 'department': department,
-                }})
-        flash('User updated.')
+    role_filter = request.args.get('role') or request.form.get('role') or 'all'
+    q = request.args.get('q') or request.form.get('q') or ''
+    detail = _monitor_person_detail(kind, user_id)
+    if not detail:
+        flash('User not found.')
         return redirect(url_for('utility_users_monitor', page=page))
 
-    return render_template(
-        'admin_user_edit.html',
-        person=person,
-        kind=kind,
-        user_id=user_id,
-        page=page,
-        departments=UTILITY_DEPARTMENTS,
-        can_revert_password=bool(doc.get('previous_password')),
-    )
+    # Prefer the Users Monitor right drawer for viewing/editing
+    if request.method == 'GET':
+        return redirect(_monitor_detail_url(kind, user_id, page=page, role=role_filter, q=q))
+
+    person = detail['person']
+    doc = detail['doc']
+    next_url = request.form.get('next') or _monitor_detail_url(kind, user_id, page=page, role=role_filter, q=q)
+
+    first_name = (request.form.get('first_name') or '').strip()
+    last_name = (request.form.get('last_name') or '').strip()
+    email = (request.form.get('email') or '').strip().lower()
+    department = (request.form.get('department') or '').strip()
+    name = f'{first_name} {last_name}'.strip() or email.split('@')[0]
+    if not email or '@' not in email:
+        flash('Enter a valid email address.')
+        return redirect(next_url)
+    current_email = (doc.get('email') or '').strip().lower()
+    if email != current_email and _email_in_use(email):
+        flash(f'{email} is already registered.')
+        return redirect(next_url)
+    oid = doc.get('_id')
+    if kind == 'admin':
+        db.admins.update_one({'_id': oid}, {'$set': {
+            'first_name': first_name, 'last_name': last_name, 'name': name,
+            'email': email, 'department': department,
+        }})
+        if str(oid) == str(session.get('user_id')):
+            session['username'] = name
+            session['email'] = email
+            session.modified = True
+    elif kind == 'staff':
+        db.users.update_one({'_id': oid}, {'$set': {
+            'first_name': first_name, 'last_name': last_name, 'name': name,
+            'email': email, 'department': department,
+        }})
+    else:
+        db.student_users.update_one({'_id': oid}, {'$set': {'email': email}})
+        if doc.get('student_id'):
+            db.students.update_one({'id': doc.get('student_id')}, {'$set': {
+                'name': name, 'email': email, 'department': department,
+            }})
+    flash('User updated.')
+    return redirect(next_url)
 
 
 @app.route('/admin/utility/users/<kind>/<user_id>/password', methods=['POST'])
@@ -4392,17 +4423,15 @@ def utility_user_set_password(kind, user_id):
     if not _admin_required():
         return redirect(url_for('login'))
     page = request.form.get('page') or request.args.get('page') or '1'
-    next_url = request.form.get('next') or url_for('utility_users_monitor', page=page)
+    role_filter = request.form.get('role') or 'all'
+    q = request.form.get('q') or ''
+    next_url = request.form.get('next') or _monitor_detail_url(kind, user_id, page=page, role=role_filter, q=q)
     if kind not in ('admin', 'staff', 'student'):
         flash('User not found.')
         return redirect(next_url)
     new_password = (request.form.get('new_password') or '').strip()
-    confirm = (request.form.get('confirm_password') or '').strip()
     if len(new_password) < 6:
         flash('Password must be at least 6 characters.')
-        return redirect(next_url)
-    if confirm and confirm != new_password:
-        flash('Passwords do not match.')
         return redirect(next_url)
     doc = _find_monitor_user(kind, user_id)
     if not doc:
@@ -4424,7 +4453,7 @@ def utility_user_set_password(kind, user_id):
         type='info',
         role_target='admin',
     )
-    flash(f'Password updated for {doc.get("email") or user_id}. You can revert to the previous password if needed.')
+    flash(f'Password updated for {doc.get("email") or user_id}. Use Revert old password to restore the previous login.')
     return redirect(next_url)
 
 
@@ -4434,7 +4463,9 @@ def utility_user_revert_password(kind, user_id):
     if not _admin_required():
         return redirect(url_for('login'))
     page = request.form.get('page') or request.args.get('page') or '1'
-    next_url = request.form.get('next') or url_for('utility_users_monitor', page=page)
+    role_filter = request.form.get('role') or 'all'
+    q = request.form.get('q') or ''
+    next_url = request.form.get('next') or _monitor_detail_url(kind, user_id, page=page, role=role_filter, q=q)
     if kind not in ('admin', 'staff', 'student'):
         flash('User not found.')
         return redirect(next_url)
