@@ -9339,25 +9339,27 @@ def ops_report_cards():
 
 @app.route('/freddie')
 def freddie_chart_box():
+    """Legacy URL — send users to home with the floating Freddie panel open."""
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     role = session.get('role') or 'student'
-    home = url_for('admin_dashboard') if role == 'admin' else (
-        url_for('student_home') if role == 'student' else url_for('dashboard')
-    )
+    if role == 'admin':
+        return redirect(url_for('admin_dashboard', freddie=1))
+    if role == 'student':
+        return redirect(url_for('student_home', freddie=1))
+    return redirect(url_for('dashboard', freddie=1))
+
+
+@app.route('/api/freddie/status')
+def freddie_status():
+    if not session.get('logged_in'):
+        return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
     from backend.freddie import CHUNK_COLLECTION
-    indexed = 0
     try:
-        indexed = db[CHUNK_COLLECTION].count_documents({})
+        chunks = db[CHUNK_COLLECTION].count_documents({})
     except Exception:
-        pass
-    return render_template(
-        'freddie.html',
-        role=role,
-        home=home,
-        indexed_chunks=indexed,
-        academic_year_short=academic_year_short(),
-    )
+        chunks = 0
+    return jsonify({'ok': True, 'chunks': chunks, 'collection': CHUNK_COLLECTION})
 
 
 @app.route('/api/freddie/ingest', methods=['POST'])

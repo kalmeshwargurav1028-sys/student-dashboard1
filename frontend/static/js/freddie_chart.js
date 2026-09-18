@@ -1,4 +1,4 @@
-/* Freddie Chart.js renderer — used by frontend/templates/freddie.html */
+/* Freddie Chart.js renderer — used by the floating Freddie widget */
 (function (global) {
   let chart;
   const colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#6366f1', '#14b8a6', '#f59e0b', '#f43f5e'];
@@ -11,8 +11,10 @@
     const labels = (payload && payload.labels) || [];
     const values = (payload && payload.values) || [];
     const titleEl = document.getElementById('freddieChartTitle');
-    if (titleEl) titleEl.textContent = (payload && payload.title) || 'Chart box';
+    if (titleEl) titleEl.textContent = (payload && payload.title) || 'Chart';
     if (chart) chart.destroy();
+    var empty = document.getElementById('freddieChartEmpty');
+    if (empty) empty.classList.add('hidden');
     chart = new Chart(ctx, {
       type: type,
       data: {

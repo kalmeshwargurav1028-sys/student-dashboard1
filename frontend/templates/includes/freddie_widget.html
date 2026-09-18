@@ -1,0 +1,120 @@
+{# Freddie floating widget — opened from the right-side round button #}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/freddie_chart.js') }}"></script>
+<script src="{{ url_for('static', filename='js/freddie_panel.js') }}"></script>
+<style>
+  #freddiePanel {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(16px) scale(0.96);
+    pointer-events: none;
+    transition: opacity .22s ease, transform .22s ease, visibility .22s;
+  }
+  #freddiePanel.is-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+  }
+  #freddieFab.is-open {
+    box-shadow: 0 10px 28px rgba(14, 116, 144, 0.35);
+  }
+  #freddieFab .freddie-fab-open {
+    display: none;
+  }
+  #freddieFab.is-open .freddie-fab-open {
+    display: flex;
+  }
+  #freddieFab.is-open .freddie-fab-logo {
+    opacity: 0.35;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #freddiePanel { transition: none; }
+  }
+</style>
+
+<button type="button"
+        id="freddieFab"
+        title="Ask Freddie"
+        aria-label="Open Freddie"
+        aria-expanded="false"
+        aria-controls="freddiePanel"
+        class="fixed bottom-6 right-5 z-[95] group relative h-14 w-14 overflow-hidden rounded-full bg-emerald-100 p-0 shadow-lg shadow-emerald-900/15 ring-4 ring-white hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 focus-visible:ring-offset-2 transition-all duration-200">
+  <img src="{{ url_for('static', filename='images/freddie-logo.png') }}"
+       alt=""
+       class="freddie-fab-logo absolute inset-0 h-full w-full object-cover object-[center_18%] transition-opacity duration-200"
+       draggable="false">
+  <span class="freddie-fab-open absolute inset-0 items-center justify-center bg-slate-900/55 text-white">
+    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.25" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </span>
+  <span class="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-[.is-open]:hidden">Freddie</span>
+</button>
+
+<div id="freddiePanel"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="freddiePanelTitle"
+     class="fixed z-[94] bottom-[5.5rem] right-4 sm:right-5 w-[min(100vw-1.5rem,22.5rem)] sm:w-[24rem] max-h-[min(78vh,36rem)] flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_20px_50px_rgba(15,23,42,0.18)]">
+  <header class="shrink-0 flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-cyan-700 to-sky-600 text-white">
+    <span class="h-9 w-9 rounded-full overflow-hidden ring-2 ring-white/40 shadow-sm shrink-0 bg-emerald-50">
+      <img src="{{ url_for('static', filename='images/freddie-logo.png') }}" alt="" class="h-full w-full object-cover object-[center_18%]" draggable="false">
+    </span>
+    <div class="min-w-0 flex-1">
+      <h2 id="freddiePanelTitle" class="text-sm font-semibold leading-tight">Freddie</h2>
+      <p class="text-[11px] text-cyan-50/90 truncate">Ask · chart · portal data</p>
+    </div>
+    <button type="button" id="freddieIngestBtn" class="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Refresh indexed data" aria-label="Refresh data">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    </button>
+    <button type="button" id="freddieCloseBtn" class="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" title="Close" aria-label="Close Freddie">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+    </button>
+  </header>
+
+  <div class="flex-1 min-h-0 overflow-y-auto">
+    <div class="px-4 pt-3 pb-2 border-b border-slate-100 bg-slate-50/80">
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <p id="freddieChartTitle" class="text-xs font-semibold text-slate-700 truncate">Chart</p>
+        <span id="freddieTools" class="text-[10px] text-slate-400 truncate max-w-[45%]"></span>
+      </div>
+      <div class="relative h-40 rounded-xl bg-white border border-slate-100 px-2 py-2">
+        <canvas id="freddieChart"></canvas>
+        <div id="freddieChartEmpty" class="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-400 pointer-events-none">
+          <svg class="h-8 w-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span class="text-[11px]">Ask to see a live chart</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-4 py-3 space-y-2">
+      <div id="freddieAnswer" class="text-sm text-slate-700 leading-relaxed">
+        Hi — ask about attendance, subjects, or assignments and I’ll chart it from your Mongo data.
+      </div>
+      <div id="freddieSources" class="flex flex-wrap gap-1.5"></div>
+      <p id="freddieStatus" class="text-[11px] text-slate-400">
+        Indexed: <span id="freddieChunkCount" class="font-semibold tabular-nums text-slate-600">—</span> chunks
+      </p>
+    </div>
+  </div>
+
+  <form id="freddieAskForm" class="shrink-0 border-t border-slate-100 bg-white px-3 pt-2.5 pb-3 space-y-2">
+    <div class="flex flex-wrap gap-1.5">
+      <button type="button" data-q="Show attendance breakdown" class="freddie-chip text-[11px] rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600 hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-800 transition-colors">Attendance</button>
+      <button type="button" data-q="Compare subject averages" class="freddie-chip text-[11px] rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600 hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-800 transition-colors">Subjects</button>
+      <button type="button" data-q="Assignments by subject" class="freddie-chip text-[11px] rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-600 hover:bg-cyan-50 hover:border-cyan-200 hover:text-cyan-800 transition-colors">Assignments</button>
+    </div>
+    <div class="flex items-end gap-2">
+      <label class="flex-1 min-w-0">
+        <span class="sr-only">Question</span>
+        <textarea id="freddieQuestion" rows="2" required
+          class="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-300 focus:bg-white focus:border-cyan-200"
+          placeholder="Ask Freddie…"></textarea>
+      </label>
+      <button type="submit" id="freddieAskBtn" class="shrink-0 h-10 w-10 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white flex items-center justify-center shadow-sm disabled:opacity-50 transition-colors" aria-label="Ask Freddie">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </button>
+    </div>
+  </form>
+</div>
