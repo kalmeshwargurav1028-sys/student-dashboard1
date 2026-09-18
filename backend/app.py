@@ -4184,6 +4184,7 @@ def _monitor_people():
             'last_active': _monitor_when(a.get('last_active') or a.get('created_at')),
             'department': a.get('department') or '',
             'can_delete': uid != current_id,
+            'can_revert_password': bool(a.get('previous_password')),
         })
     for u in db.users.find({}, {'password': 0}):
         uid = str(u.get('_id'))
@@ -4199,6 +4200,7 @@ def _monitor_people():
             'last_active': _monitor_when(u.get('last_active') or u.get('created_at')),
             'department': u.get('department') or '',
             'can_delete': uid != current_id,
+            'can_revert_password': bool(u.get('previous_password')),
         })
     for su in db.student_users.find({}, {'password': 0}):
         student = db.students.find_one({'id': su.get('student_id')}) or {}
@@ -4216,6 +4218,7 @@ def _monitor_people():
             'last_active': _monitor_when(student.get('last_active') or student.get('created_at')),
             'department': student.get('department') or student.get('student_class') or '',
             'can_delete': True,
+            'can_revert_password': bool(su.get('previous_password')),
         })
     people.sort(key=lambda p: (p['role'], p['name'] or ''))
     return people
@@ -4379,7 +4382,86 @@ def utility_user_edit(kind, user_id):
         user_id=user_id,
         page=page,
         departments=UTILITY_DEPARTMENTS,
+        can_revert_password=bool(doc.get('previous_password')),
     )
+
+
+@app.route('/admin/utility/users/<kind>/<user_id>/password', methods=['POST'])
+def utility_user_set_password(kind, user_id):
+    """Admin sets a new password for any portal user; previous hash is kept for revert."""
+    if not _admin_required():
+        return redirect(url_for('login'))
+    page = request.form.get('page') or request.args.get('page') or '1'
+    next_url = request.form.get('next') or url_for('utility_users_monitor', page=page)
+    if kind not in ('admin', 'staff', 'student'):
+        flash('User not found.')
+        return redirect(next_url)
+    new_password = (request.form.get('new_password') or '').strip()
+    confirm = (request.form.get('confirm_password') or '').strip()
+    if len(new_password) < 6:
+        flash('Password must be at least 6 characters.')
+        return redirect(next_url)
+    if confirm and confirm != new_password:
+        flash('Passwords do not match.')
+        return redirect(next_url)
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        flash('User not found.')
+        return redirect(next_url)
+    coll = {'admin': db.admins, 'staff': db.users, 'student': db.student_users}[kind]
+    current_hash = doc.get('password')
+    update = {
+        'password': generate_password_hash(new_password),
+        'password_changed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'password_changed_by': session.get('username') or session.get('email') or 'admin',
+    }
+    if current_hash:
+        update['previous_password'] = current_hash
+    coll.update_one({'_id': doc['_id']}, {'$set': update})
+    log_notification(
+        'Password changed',
+        f"{session.get('username')} set a new password for {doc.get('email') or user_id}.",
+        type='info',
+        role_target='admin',
+    )
+    flash(f'Password updated for {doc.get("email") or user_id}. You can revert to the previous password if needed.')
+    return redirect(next_url)
+
+
+@app.route('/admin/utility/users/<kind>/<user_id>/password/revert', methods=['POST'])
+def utility_user_revert_password(kind, user_id):
+    """Admin restores the previous password for any portal user."""
+    if not _admin_required():
+        return redirect(url_for('login'))
+    page = request.form.get('page') or request.args.get('page') or '1'
+    next_url = request.form.get('next') or url_for('utility_users_monitor', page=page)
+    if kind not in ('admin', 'staff', 'student'):
+        flash('User not found.')
+        return redirect(next_url)
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        flash('User not found.')
+        return redirect(next_url)
+    prev = doc.get('previous_password')
+    if not prev:
+        flash('No previous password is saved for this user yet.')
+        return redirect(next_url)
+    coll = {'admin': db.admins, 'staff': db.users, 'student': db.student_users}[kind]
+    # Swap so admin can flip back again if needed
+    coll.update_one({'_id': doc['_id']}, {'$set': {
+        'password': prev,
+        'previous_password': doc.get('password'),
+        'password_reverted_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'password_changed_by': session.get('username') or session.get('email') or 'admin',
+    }})
+    log_notification(
+        'Password reverted',
+        f"{session.get('username')} restored the previous password for {doc.get('email') or user_id}.",
+        type='info',
+        role_target='admin',
+    )
+    flash(f'Previous password restored for {doc.get("email") or user_id}.')
+    return redirect(next_url)
 
 
 @app.route('/admin/utility/users/<kind>/<user_id>/delete', methods=['GET', 'POST'])
@@ -5039,28 +5121,30 @@ def admin_reset_password():
     
     if not all([user_type, user_id, new_password]):
         return jsonify({'success': False, 'error': 'Missing required fields'}), 400
-        
+
+    kind = 'staff' if user_type == 'teacher' else ('student' if user_type == 'student' else None)
+    if not kind:
+        return jsonify({'success': False, 'error': 'Invalid user type'}), 400
+
+    doc = _find_monitor_user(kind, user_id)
+    if not doc:
+        return jsonify({'success': False, 'error': 'User not found'}), 404
+
     hashed_password = generate_password_hash(new_password)
-    
+    update = {
+        'password': hashed_password,
+        'password_changed_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'password_changed_by': session.get('username') or 'admin',
+    }
+    if doc.get('password'):
+        update['previous_password'] = doc.get('password')
+
     try:
-        if user_type == 'teacher':
-            result = db.users.update_one(
-                {'_id': ObjectId(user_id)},
-                {'$set': {'password': hashed_password}}
-            )
-        elif user_type == 'student':
-            result = db.student_users.update_one(
-                {'_id': ObjectId(user_id)},
-                {'$set': {'password': hashed_password}}
-            )
-        else:
-            return jsonify({'success': False, 'error': 'Invalid user type'}), 400
-            
-        if result.modified_count == 1:
+        coll = db.users if kind == 'staff' else db.student_users
+        result = coll.update_one({'_id': doc['_id']}, {'$set': update})
+        if result.matched_count == 1:
             return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'User not found or password already identical'}), 200
-            
+        return jsonify({'success': False, 'error': 'User not found'}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
