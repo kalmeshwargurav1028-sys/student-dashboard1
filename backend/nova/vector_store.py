@@ -1,4 +1,4 @@
-"""Freddie MongoDB vector store — collection `freddie_chunks`."""
+"""Nova MongoDB vector store — collection `nova_chunks`."""
 from __future__ import annotations
 
 import math
@@ -33,7 +33,7 @@ def clear_scopes(db, role='all'):
 
 
 def save_chunks(db, chunk_docs):
-    """Insert embedded chunk docs into Mongo `freddie_chunks`."""
+    """Insert embedded chunk docs into Mongo `nova_chunks`."""
     if not chunk_docs:
         return 0
     db[CHUNK_COLLECTION].insert_many(chunk_docs)

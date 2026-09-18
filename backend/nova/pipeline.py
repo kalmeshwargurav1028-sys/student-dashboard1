@@ -1,4 +1,4 @@
-"""Freddie pipeline — orchestrate ingest → chunk → embed → Mongo store."""
+"""Nova pipeline — orchestrate ingest → chunk → embed → Mongo store."""
 from __future__ import annotations
 
 from .embed import embed_texts
@@ -12,7 +12,7 @@ def ingest_and_index(db, client, role='all', user_id=None, replace=True):
       1) ingest live collections
       2) chunks already produced by ingest/chunking
       3) embed with Gemini
-      4) write to Mongo collection `freddie_chunks`
+      4) write to Mongo collection `nova_chunks`
     """
     corpus = ingest_from_mongo(db, role=role, user_id=user_id)
     if not corpus:
@@ -32,5 +32,5 @@ def ingest_and_index(db, client, role='all', user_id=None, replace=True):
         'ok': True,
         'chunks': saved,
         'embedded': sum(1 for d in docs if d.get('embedding')),
-        'collection': 'freddie_chunks',
+        'collection': 'nova_chunks',
     }

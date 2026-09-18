@@ -1,19 +1,19 @@
-/* Freddie Chart.js renderer — used by the floating Freddie widget */
+/* Nova Chart.js renderer — used by the floating Nova widget */
 (function (global) {
   let chart;
   const colors = ['#0284c7', '#0ea5e9', '#38bdf8', '#6366f1', '#14b8a6', '#f59e0b', '#f43f5e'];
 
-  function renderFreddieChart(canvasId, payload) {
-    const canvas = document.getElementById(canvasId || 'freddieChart');
+  function renderNovaChart(canvasId, payload) {
+    const canvas = document.getElementById(canvasId || 'novaChart');
     if (!canvas || typeof Chart === 'undefined') return;
     const ctx = canvas.getContext('2d');
     const type = (payload && payload.type) || 'bar';
     const labels = (payload && payload.labels) || [];
     const values = (payload && payload.values) || [];
-    const titleEl = document.getElementById('freddieChartTitle');
+    const titleEl = document.getElementById('novaChartTitle');
     if (titleEl) titleEl.textContent = (payload && payload.title) || 'Chart';
     if (chart) chart.destroy();
-    var empty = document.getElementById('freddieChartEmpty');
+    var empty = document.getElementById('novaChartEmpty');
     if (empty) empty.classList.add('hidden');
     chart = new Chart(ctx, {
       type: type,
@@ -41,5 +41,5 @@
     return chart;
   }
 
-  global.renderFreddieChart = renderFreddieChart;
+  global.renderNovaChart = renderNovaChart;
 })(window);

@@ -1,4 +1,4 @@
-"""Freddie data ingestion — pull records from the app MongoDB into text chunks."""
+"""Nova data ingestion — pull records from the app MongoDB into text chunks."""
 from __future__ import annotations
 
 from .chunking import chunk_text
@@ -24,7 +24,7 @@ def ingest_from_mongo(db, role='all', user_id=None):
                 meta={'title': title},
             ))
     except Exception as e:
-        print(f'[Freddie:ingest] policies: {e}')
+        print(f'[Nova:ingest] policies: {e}')
 
     # Announcements
     try:
@@ -38,7 +38,7 @@ def ingest_from_mongo(db, role='all', user_id=None):
                 meta={'title': title},
             ))
     except Exception as e:
-        print(f'[Freddie:ingest] announcements: {e}')
+        print(f'[Nova:ingest] announcements: {e}')
 
     # Attendance
     try:
@@ -68,7 +68,7 @@ def ingest_from_mongo(db, role='all', user_id=None):
                 meta={},
             ))
     except Exception as e:
-        print(f'[Freddie:ingest] attendance: {e}')
+        print(f'[Nova:ingest] attendance: {e}')
 
     # Grades / performance
     try:
@@ -111,7 +111,7 @@ def ingest_from_mongo(db, role='all', user_id=None):
                     meta={'count': len(students)},
                 ))
     except Exception as e:
-        print(f'[Freddie:ingest] grades: {e}')
+        print(f'[Nova:ingest] grades: {e}')
 
     # Assignments
     try:
@@ -123,7 +123,7 @@ def ingest_from_mongo(db, role='all', user_id=None):
             meta={'count': n},
         ))
     except Exception as e:
-        print(f'[Freddie:ingest] assignments: {e}')
+        print(f'[Nova:ingest] assignments: {e}')
 
     return chunks
 

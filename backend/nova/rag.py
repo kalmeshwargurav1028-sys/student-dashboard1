@@ -1,4 +1,4 @@
-"""Freddie RAG — retrieve from Mongo vectors + answer with Gemini + chart payload."""
+"""Nova RAG — retrieve from Mongo vectors + answer with Gemini + chart payload."""
 from __future__ import annotations
 
 from .config import CHAT_MODEL, TOP_K
@@ -9,7 +9,7 @@ from .vector_store import cosine, count_chunks, load_candidates
 
 
 def retrieve(db, client, query, role='all', user_id=None, top_k=TOP_K):
-    """RAG retrieve against Mongo `freddie_chunks` with keyword boost."""
+    """RAG retrieve against Mongo `nova_chunks` with keyword boost."""
     scopes = ['all']
     if role == 'student':
         scopes.append('student')
@@ -41,11 +41,11 @@ def retrieve(db, client, query, role='all', user_id=None, top_k=TOP_K):
     return hits
 
 
-def answer_with_freddie(db, client, question, role='all', user_id=None):
-    """Full Freddie turn: RAG retrieve + table tools + LLM + Chart.js payload."""
+def answer_with_nova(db, client, question, role='all', user_id=None):
+    """Full Nova turn: RAG retrieve + table tools + LLM + Chart.js payload."""
     question = (question or '').strip()
     if not question:
-        return {'ok': False, 'error': 'Ask Freddie a question first.'}
+        return {'ok': False, 'error': 'Ask Nova a question first.'}
 
     if count_chunks(db) == 0 and client:
         ingest_and_index(db, client, role=role, user_id=user_id)
@@ -61,7 +61,7 @@ def answer_with_freddie(db, client, question, role='all', user_id=None):
     answer = ''
     if client:
         prompt = (
-            'You are Freddie, the Indus Portal analytics assistant. '
+            'You are Nova, the Indus Portal analytics assistant. '
             'Answer clearly for a school LMS. Use only the context and tool numbers. '
             'If data is missing, say what is missing. Keep answer under 120 words.\n\n'
             f'Role: {role}\nQuestion: {question}\n\n'
@@ -73,11 +73,11 @@ def answer_with_freddie(db, client, question, role='all', user_id=None):
             resp = client.models.generate_content(model=CHAT_MODEL, contents=prompt)
             answer = (getattr(resp, 'text', None) or '').strip()
         except Exception as e:
-            print(f'[Freddie:rag] generate failed: {e}')
+            print(f'[Nova:rag] generate failed: {e}')
             answer = ''
 
     if not answer:
-        bits = [f"Here's what Freddie found for: {question}"]
+        bits = [f"Here's what Nova found for: {question}"]
         for t in tools:
             if t['labels'] and t['values'] and t['labels'][0] != 'No data':
                 pairs = ', '.join(f"{l}={v}" for l, v in zip(t['labels'], t['values']))
@@ -93,7 +93,7 @@ def answer_with_freddie(db, client, question, role='all', user_id=None):
         'sources': [{'source': h['source'], 'score': h['score']} for h in hits],
         'chart': {
             'type': primary.get('chart_type') or 'bar',
-            'title': primary.get('title') or 'Freddie chart',
+            'title': primary.get('title') or 'Nova chart',
             'labels': primary.get('labels') or [],
             'values': primary.get('values') or [],
         },

@@ -1,15 +1,15 @@
-/* Freddie floating panel — open/close + ask/ingest */
+/* Nova floating panel — open/close + ask/ingest */
 (function () {
-  var ingestUrl = '/api/freddie/ingest';
-  var askUrl = '/api/freddie/ask';
-  var statusUrl = '/api/freddie/status';
+  var ingestUrl = '/api/nova/ingest';
+  var askUrl = '/api/nova/ask';
+  var statusUrl = '/api/nova/status';
 
   function $(id) { return document.getElementById(id); }
 
   function setStatus(msg, isError) {
-    var el = $('freddieStatus');
+    var el = $('novaStatus');
     if (!el) return;
-    var count = $('freddieChunkCount');
+    var count = $('novaChunkCount');
     var countHtml = count ? count.outerHTML : '';
     if (msg) {
       el.innerHTML = msg;
@@ -21,30 +21,30 @@
   }
 
   function setChunkCount(n) {
-    var el = $('freddieChunkCount');
+    var el = $('novaChunkCount');
     if (el) el.textContent = n == null ? '—' : String(n);
   }
 
   function showChartEmpty(show) {
-    var empty = $('freddieChartEmpty');
+    var empty = $('novaChartEmpty');
     if (empty) empty.classList.toggle('hidden', !show);
   }
 
   function openPanel() {
-    var panel = $('freddiePanel');
-    var fab = $('freddieFab');
+    var panel = $('novaPanel');
+    var fab = $('novaFab');
     if (!panel || !fab) return;
     panel.classList.add('is-open');
     fab.classList.add('is-open');
     fab.setAttribute('aria-expanded', 'true');
     loadStatus();
-    var q = $('freddieQuestion');
+    var q = $('novaQuestion');
     if (q) setTimeout(function () { q.focus(); }, 180);
   }
 
   function closePanel() {
-    var panel = $('freddiePanel');
-    var fab = $('freddieFab');
+    var panel = $('novaPanel');
+    var fab = $('novaFab');
     if (!panel || !fab) return;
     panel.classList.remove('is-open');
     fab.classList.remove('is-open');
@@ -52,7 +52,7 @@
   }
 
   function togglePanel() {
-    var panel = $('freddiePanel');
+    var panel = $('novaPanel');
     if (panel && panel.classList.contains('is-open')) closePanel();
     else openPanel();
   }
@@ -66,8 +66,8 @@
   }
 
   function bind() {
-    var fab = $('freddieFab');
-    var panel = $('freddiePanel');
+    var fab = $('novaFab');
+    var panel = $('novaPanel');
     if (!fab || !panel) return;
 
     fab.addEventListener('click', function (e) {
@@ -75,7 +75,7 @@
       togglePanel();
     });
 
-    var closeBtn = $('freddieCloseBtn');
+    var closeBtn = $('novaCloseBtn');
     if (closeBtn) closeBtn.addEventListener('click', closePanel);
 
     document.addEventListener('keydown', function (e) {
@@ -88,9 +88,9 @@
       closePanel();
     });
 
-    document.querySelectorAll('.freddie-chip').forEach(function (btn) {
+    document.querySelectorAll('.nova-chip').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        var q = $('freddieQuestion');
+        var q = $('novaQuestion');
         if (q) {
           q.value = btn.getAttribute('data-q') || '';
           q.focus();
@@ -98,7 +98,7 @@
       });
     });
 
-    var ingestBtn = $('freddieIngestBtn');
+    var ingestBtn = $('novaIngestBtn');
     if (ingestBtn) {
       ingestBtn.addEventListener('click', async function () {
         ingestBtn.disabled = true;
@@ -118,7 +118,7 @@
           } else {
             setChunkCount(data.chunks || 0);
             setStatus('Ready · ' + (data.chunks || 0) + ' chunks indexed');
-            if (typeof showToast === 'function') showToast('Freddie data refreshed');
+            if (typeof showToast === 'function') showToast('Nova data refreshed');
           }
         } catch (err) {
           setStatus('Network error while refreshing', true);
@@ -129,13 +129,13 @@
       });
     }
 
-    var form = $('freddieAskForm');
+    var form = $('novaAskForm');
     if (form) {
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        var question = ($('freddieQuestion').value || '').trim();
+        var question = ($('novaQuestion').value || '').trim();
         if (!question) return;
-        var btn = $('freddieAskBtn');
+        var btn = $('novaAskBtn');
         btn.disabled = true;
         setStatus('Thinking…');
         try {
@@ -150,9 +150,9 @@
             setStatus(data.error || 'Ask failed', true);
             return;
           }
-          $('freddieAnswer').textContent = data.answer || '';
-          $('freddieTools').textContent = (data.tools_used || []).join(' · ');
-          var sources = $('freddieSources');
+          $('novaAnswer').textContent = data.answer || '';
+          $('novaTools').textContent = (data.tools_used || []).join(' · ');
+          var sources = $('novaSources');
           sources.innerHTML = '';
           (data.sources || []).forEach(function (s) {
             var chip = document.createElement('span');
@@ -162,26 +162,26 @@
           });
           var hasChart = data.chart && ((data.chart.labels || []).length || (data.chart.values || []).length);
           showChartEmpty(!hasChart);
-          if (hasChart && typeof renderFreddieChart === 'function') {
-            renderFreddieChart('freddieChart', data.chart || {});
+          if (hasChart && typeof renderNovaChart === 'function') {
+            renderNovaChart('novaChart', data.chart || {});
           }
           setStatus('');
-          setChunkCount(($('freddieChunkCount').textContent === '—') ? null : $('freddieChunkCount').textContent);
+          setChunkCount(($('novaChunkCount').textContent === '—') ? null : $('novaChunkCount').textContent);
           loadStatus();
         } catch (err) {
-          setStatus('Network error while asking Freddie', true);
+          setStatus('Network error while asking Nova', true);
         } finally {
           btn.disabled = false;
         }
       });
     }
 
-    // Deep-link: /freddie or ?freddie=1 opens the panel
+    // Deep-link: /nova or ?nova=1 opens the panel
     try {
       var params = new URLSearchParams(window.location.search);
-      if (params.get('freddie') === '1') {
+      if (params.get('nova') === '1') {
         openPanel();
-        params.delete('freddie');
+        params.delete('nova');
         var next = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
         window.history.replaceState({}, '', next);
       }

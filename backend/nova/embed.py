@@ -1,4 +1,4 @@
-"""Freddie embeddings — Gemini text-embedding-004 via google-genai Client."""
+"""Nova embeddings — Gemini text-embedding-004 via google-genai Client."""
 from __future__ import annotations
 
 from .config import EMBED_MODEL
@@ -24,6 +24,6 @@ def embed_texts(client, texts):
                 values = (resp.get('embedding') or {}).get('values')
             vectors.append(list(values) if values else [])
         except Exception as e:
-            print(f'[Freddie:embed] failed: {e}')
+            print(f'[Nova:embed] failed: {e}')
             vectors.append([])
     return vectors

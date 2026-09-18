@@ -1,4 +1,4 @@
-"""Freddie chunking — split long text into RAG-ready pieces."""
+"""Nova chunking — split long text into RAG-ready pieces."""
 from __future__ import annotations
 
 import re

@@ -1,4 +1,4 @@
-"""Freddie table tools — live Mongo aggregates for Chart.js."""
+"""Nova table tools — live Mongo aggregates for Chart.js."""
 from __future__ import annotations
 
 
@@ -29,7 +29,7 @@ def tool_attendance_breakdown(db, role='all', user_id=None):
                 labels.append((key or 'Other').title())
                 values.append(val)
     except Exception as e:
-        print(f'[Freddie:tools] attendance: {e}')
+        print(f'[Nova:tools] attendance: {e}')
     return {
         'tool': 'attendance_breakdown',
         'title': 'Attendance breakdown',
@@ -72,7 +72,7 @@ def tool_subject_averages(db, role='all', user_id=None):
                     labels.append(f'Grade {cls}')
                     values.append(round(sum(vals) / len(vals), 1))
     except Exception as e:
-        print(f'[Freddie:tools] subjects: {e}')
+        print(f'[Nova:tools] subjects: {e}')
     return {
         'tool': 'subject_averages',
         'title': 'Subject / class averages',
@@ -94,7 +94,7 @@ def tool_assignment_load(db, role='all', user_id=None):
             labels.append(r['_id'] or 'General')
             values.append(int(r['count']))
     except Exception as e:
-        print(f'[Freddie:tools] assignments: {e}')
+        print(f'[Nova:tools] assignments: {e}')
     return {
         'tool': 'assignment_load',
         'title': 'Assignments by subject',

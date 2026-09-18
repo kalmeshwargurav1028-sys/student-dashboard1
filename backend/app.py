@@ -9334,27 +9334,33 @@ def ops_report_cards():
 
 
 # ---------------------------------------------------------------------------
-# Freddie — RAG chart box (ingest → embed → retrieve + table tools)
+# Nova — RAG chart box (ingest → embed → retrieve + table tools)
 # ---------------------------------------------------------------------------
 
 @app.route('/freddie')
-def freddie_chart_box():
-    """Legacy URL — send users to home with the floating Freddie panel open."""
+def freddie_legacy_redirect():
+    """Old Freddie URL — redirect to Nova."""
+    return redirect(url_for('nova_chart_box'), code=301)
+
+
+@app.route('/nova')
+def nova_chart_box():
+    """Send users to home with the floating Nova panel open."""
     if not session.get('logged_in'):
         return redirect(url_for('login'))
     role = session.get('role') or 'student'
     if role == 'admin':
-        return redirect(url_for('admin_dashboard', freddie=1))
+        return redirect(url_for('admin_dashboard', nova=1))
     if role == 'student':
-        return redirect(url_for('student_home', freddie=1))
-    return redirect(url_for('dashboard', freddie=1))
+        return redirect(url_for('student_home', nova=1))
+    return redirect(url_for('dashboard', nova=1))
 
 
-@app.route('/api/freddie/status')
-def freddie_status():
+@app.route('/api/nova/status')
+def nova_status():
     if not session.get('logged_in'):
         return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
-    from backend.freddie import CHUNK_COLLECTION
+    from backend.nova import CHUNK_COLLECTION
     try:
         chunks = db[CHUNK_COLLECTION].count_documents({})
     except Exception:
@@ -9362,8 +9368,8 @@ def freddie_status():
     return jsonify({'ok': True, 'chunks': chunks, 'collection': CHUNK_COLLECTION})
 
 
-@app.route('/api/freddie/ingest', methods=['POST'])
-def freddie_ingest():
+@app.route('/api/nova/ingest', methods=['POST'])
+def nova_ingest():
     if not session.get('logged_in'):
         return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
     role = session.get('role') or 'student'
@@ -9371,20 +9377,20 @@ def freddie_ingest():
     client, _ = configure_gemini()
     if not client:
         return jsonify({'ok': False, 'error': 'Gemini API key is not configured. Add GEMINI_API_KEY to .env'}), 400
-    from backend.freddie import ingest_and_index
+    from backend.nova import ingest_and_index
     result = ingest_and_index(db, client, role=role, user_id=user_id, replace=True)
     if result.get('ok'):
         log_notification(
-            'Freddie indexed data',
-            f"{session.get('username') or role} refreshed Freddie with {result.get('chunks', 0)} chunks.",
+            'Nova indexed data',
+            f"{session.get('username') or role} refreshed Nova with {result.get('chunks', 0)} chunks.",
             type='info',
             role_target='admin',
         )
     return jsonify(result)
 
 
-@app.route('/api/freddie/ask', methods=['POST'])
-def freddie_ask():
+@app.route('/api/nova/ask', methods=['POST'])
+def nova_ask():
     if not session.get('logged_in'):
         return jsonify({'ok': False, 'error': 'Unauthorized'}), 401
     payload = request.get_json(silent=True) or {}
@@ -9394,8 +9400,8 @@ def freddie_ask():
     role = session.get('role') or 'student'
     user_id = session.get('user_id') if role == 'student' else None
     client, _ = configure_gemini()
-    from backend.freddie import answer_with_freddie
-    result = answer_with_freddie(db, client, question, role=role, user_id=user_id)
+    from backend.nova import answer_with_nova
+    result = answer_with_nova(db, client, question, role=role, user_id=user_id)
     status = 200 if result.get('ok') else 400
     return jsonify(result), status
 
